@@ -72,5 +72,15 @@ Route::prefix('reportes')->group(function () {
 });
 
 
+Route::get('/db-check', function () {
+    // Lee 5 usuarios (si no hay, retorna arreglo vacío)
+    $usuarios = Usuario::with(['persona', 'rol'])->limit(5)->get();
 
+    // Devuelve JSON simple para verificar
+    return response()->json([
+        'ok' => true,
+        'count' => $usuarios->count(),
+        'data' => $usuarios,
+    ]);
+});
 

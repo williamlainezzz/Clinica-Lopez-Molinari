@@ -26,11 +26,12 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ];
+    return [
+        'USR_USUARIO' => ['required','string'],
+        'password'    => ['required','string'],
+    ];
     }
+
 
     /**
      * Attempt to authenticate the request's credentials.
@@ -39,18 +40,22 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        $this->ensureIsNotRateLimited();
+    $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+    if (! \Auth::attempt(
+            $this->only('USR_USUARIO', 'password'),
+            $this->boolean('remember')
+        )) {
+        \Illuminate\Support\Facades\RateLimiter::hit($this->throttleKey());
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
-        }
-
-        RateLimiter::clear($this->throttleKey());
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'USR_USUARIO' => trans('auth.failed'),
+        ]);
     }
+
+    \Illuminate\Support\Facades\RateLimiter::clear($this->throttleKey());
+    }
+
 
     /**
      * Ensure the login request is not rate limited.
@@ -80,6 +85,7 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+    return strtolower($this->input('USR_USUARIO')).'|'.$this->ip();
     }
+
 }

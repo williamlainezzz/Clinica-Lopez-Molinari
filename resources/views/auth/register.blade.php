@@ -1,160 +1,192 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registro — Clínica Dental</title>
+<x-guest-layout>
+  <div class="min-h-screen flex flex-col items-center">
+    <div class="w-full max-w-4xl md:max-w-5xl mx-auto mt-8 mb-12">
+      <div class="bg-white shadow-sm ring-1 ring-slate-200 rounded-xl">
+        <form method="POST" action="{{ route('register') }}" class="p-6 md:p-8">
+          @csrf
 
-  <!-- Tailwind por CDN (perfecto para prototipo) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+          {{-- Header: título + preview del usuario (no interfiere) --}}
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-xl md:text-2xl font-semibold text-slate-800">Crear cuenta</h1>
 
-  <!-- Estilos para que los campos se vean claros y consistentes -->
-  <style>
-    .field{
-      background:#fff;
-      border:1px solid #cbd5e1;   /* slate-300 */
-      border-radius:0.5rem;        /* rounded-lg */
-      padding:0.5rem 0.75rem;      /* px-3 py-2 */
-      width:100%;
-    }
-    .field:focus{
-      outline:none;
-      border-color:#0ea5e9;        /* sky-500 */
-      box-shadow:0 0 0 3px rgba(14,165,233,.25);
-    }
-    .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px rgba(2, 6, 23, .06);
-    }
-  </style>
-</head>
-<body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50 text-slate-800">
+            {{-- Pastilla de usuario generado (discreta) --}}
+            <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
+              <span class="font-medium text-slate-600 mr-1">Usuario:</span>
+              <code id="username-preview" class="font-semibold"></code>
+            </div>
+          </div>
 
-  <div class="max-w-3xl mx-auto my-10 card p-8">
-    <div class="flex items-center gap-3 mb-6">
-      <img src="{{ asset('images/logo_clinica.avif') }}" class="h-10 w-10 rounded-full shadow" alt="Logo">
-      <h1 class="text-2xl font-semibold">Crear cuenta</h1>
+          {{-- ===== DATOS PERSONALES ===== --}}
+          <h2 class="text-sm font-semibold text-slate-700 mb-3">Datos personales</h2>
+
+          {{-- Nombres (2 columnas) --}}
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
+              <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
+                            :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
+              <x-input-error :messages="$errors->get('PRIMER_NOMBRE')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
+              <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
+                            :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
+              <x-input-error :messages="$errors->get('SEGUNDO_NOMBRE')" class="mt-2" />
+            </div>
+          </div>
+
+          {{-- Apellidos (2 columnas) --}}
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
+              <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
+                            :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
+              <x-input-error :messages="$errors->get('PRIMER_APELLIDO')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
+              <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
+                            :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
+              <x-input-error :messages="$errors->get('SEGUNDO_APELLIDO')" class="mt-2" />
+            </div>
+          </div>
+
+          {{-- Género + Teléfono (2 columnas) --}}
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="TIPO_GENERO" :value="__('Género')" />
+              <select id="TIPO_GENERO" name="TIPO_GENERO" class="block mt-1 w-full rounded-md border-slate-300" required>
+                <option value="" disabled {{ old('TIPO_GENERO') ? '' : 'selected' }}>Seleccione...</option>
+                <option value="1" {{ old('TIPO_GENERO')=='1' ? 'selected' : '' }}>Masculino</option>
+                <option value="2" {{ old('TIPO_GENERO')=='2' ? 'selected' : '' }}>Femenino</option>
+                <option value="3" {{ old('TIPO_GENERO')=='3' ? 'selected' : '' }}>Otro / Prefiero no decir</option>
+              </select>
+              <x-input-error :messages="$errors->get('TIPO_GENERO')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
+              <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
+                            :value="old('NUM_TELEFONO')" placeholder="99991234" />
+              <p class="text-[11px] text-slate-500 mt-1">Solo números. (8–10 dígitos).</p>
+              <x-input-error :messages="$errors->get('NUM_TELEFONO')" class="mt-2" />
+            </div>
+          </div>
+
+          {{-- Departamento + Municipio (2 columnas) --}}
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
+              <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
+                            :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+              <x-input-error :messages="$errors->get('DEPARTAMENTO')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
+              <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
+                            :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
+              <x-input-error :messages="$errors->get('MUNICIPIO')" class="mt-2" />
+            </div>
+          </div>
+
+          {{-- Ciudad + Colonia (2 columnas) --}}
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="CIUDAD" :value="__('Ciudad')" />
+              <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
+                            :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
+              <x-input-error :messages="$errors->get('CIUDAD')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="COLONIA" :value="__('Colonia')" />
+              <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
+                            :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
+              <x-input-error :messages="$errors->get('COLONIA')" class="mt-2" />
+            </div>
+          </div>
+
+          {{-- Dirección / Referencia (ancho) --}}
+          <div class="mt-4">
+            <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
+            <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
+                      class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
+                      placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
+            <x-input-error :messages="$errors->get('REFERENCIA')" class="mt-2" />
+          </div>
+
+          {{-- ===== DATOS DE LA CUENTA ===== --}}
+          <h2 class="text-sm font-semibold text-slate-700 mt-8 mb-3">Datos de la cuenta</h2>
+
+          {{-- Correo (ancho) --}}
+          <div>
+            <x-input-label for="CORREO" :value="__('Correo electrónico')" />
+            <x-text-input id="CORREO" class="block mt-1 w-full" type="email" name="CORREO"
+                          :value="old('CORREO')" placeholder="tucorreo@ejemplo.com" required />
+            <x-input-error :messages="$errors->get('CORREO')" class="mt-2" />
+          </div>
+
+          {{-- Password + Confirmación (2 columnas) --}}
+          <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div>
+              <x-input-label for="password" :value="__('Contraseña')" />
+              <x-text-input id="password" class="block mt-1 w-full" type="password" name="password"
+                            required autocomplete="new-password" />
+              <x-input-error :messages="$errors->get('password')" class="mt-2" />
+            </div>
+            <div>
+              <x-input-label for="password_confirmation" :value="__('Confirmar contraseña')" />
+              <x-text-input id="password_confirmation" class="block mt-1 w-full" type="password"
+                            name="password_confirmation" required autocomplete="new-password" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between mt-8">
+            <a class="text-sm text-slate-600 hover:text-slate-900 underline" href="{{ route('login') }}">
+              ¿Ya tienes cuenta? Inicia sesión
+            </a>
+            <x-primary-button class="px-5">Registrarme</x-primary-button>
+          </div>
+        </form>
+      </div>
     </div>
-
-    {{-- Errores de validación --}}
-    @if ($errors->any())
-      <div class="mb-6 rounded-md border border-red-200 bg-red-50 p-4 text-red-700">
-        <div class="font-medium mb-1">Hay errores en el formulario:</div>
-        <ul class="list-disc list-inside text-sm">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
-    @endif
-
-    <form method="POST" action="{{ route('register') }}" id="formRegister" class="space-y-8">
-      @csrf
-
-      {{-- DATOS PERSONALES (TBL_PERSONA) --}}
-      <div>
-        <h2 class="text-lg font-semibold mb-3">Datos personales</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="primer_nombre" class="block text-sm font-medium">Primer nombre</label>
-            <input id="primer_nombre" name="primer_nombre" type="text" required
-                   class="field mt-1" placeholder="Ej. Ana" value="{{ old('primer_nombre') }}">
-          </div>
-
-          <div>
-            <label for="segundo_nombre" class="block text-sm font-medium">Segundo nombre (opcional)</label>
-            <input id="segundo_nombre" name="segundo_nombre" type="text"
-                   class="field mt-1" placeholder="Ej. María" value="{{ old('segundo_nombre') }}">
-          </div>
-
-          <div>
-            <label for="primer_apellido" class="block text-sm font-medium">Primer apellido</label>
-            <input id="primer_apellido" name="primer_apellido" type="text" required
-                   class="field mt-1" placeholder="Ej. Rivera" value="{{ old('primer_apellido') }}">
-          </div>
-
-          <div>
-            <label for="segundo_apellido" class="block text-sm font-medium">Segundo apellido (opcional)</label>
-            <input id="segundo_apellido" name="segundo_apellido" type="text"
-                   class="field mt-1" placeholder="Ej. López" value="{{ old('segundo_apellido') }}">
-          </div>
-
-          <div>
-            <label for="cod_genero" class="block text-sm font-medium">Género</label>
-            <select id="cod_genero" name="cod_genero" required class="field mt-1">
-              <option value="" disabled {{ old('cod_genero') ? '' : 'selected' }}>Seleccione…</option>
-              <option value="1" {{ old('cod_genero')=='1' ? 'selected' : '' }}>Masculino</option>
-              <option value="2" {{ old('cod_genero')=='2' ? 'selected' : '' }}>Femenino</option>
-              <option value="3" {{ old('cod_genero')=='3' ? 'selected' : '' }}>Otro</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="tel_persona" class="block text-sm font-medium">Teléfono</label>
-            <input id="tel_persona" name="tel_persona" type="tel" required maxlength="10"
-                   pattern="[0-9]{8,10}" placeholder="99991234"
-                   class="field mt-1" value="{{ old('tel_persona') }}">
-            <p class="text-xs text-gray-500 mt-1">Solo números (8–10 dígitos).</p>
-          </div>
-
-          <div class="md:col-span-2">
-            <label for="dir_persona" class="block text-sm font-medium">Dirección</label>
-            <textarea id="dir_persona" name="dir_persona" rows="3" required
-                      class="field mt-1" placeholder="Col. Centro, Calle 1 #123">{{ old('dir_persona') }}</textarea>
-          </div>
-        </div>
-      </div>
-
-      {{-- DATOS DE LA CUENTA (Breeze) --}}
-      <div>
-        <h2 class="text-lg font-semibold mb-3">Datos de la cuenta</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {{-- Breeze espera un campo "name" => lo completamos antes de enviar --}}
-          <input type="hidden" name="name" id="name">
-
-          <div class="md:col-span-2">
-            <label for="email" class="block text-sm font-medium">Correo electrónico</label>
-            <input id="email" name="email" type="email" required
-                   class="field mt-1" placeholder="tucorreo@ejemplo.com" value="{{ old('email') }}">
-          </div>
-
-          <div>
-            <label for="password" class="block text-sm font-medium">Contraseña</label>
-            <input id="password" name="password" type="password" required autocomplete="new-password"
-                   class="field mt-1" placeholder="••••••••">
-          </div>
-
-          <div>
-            <label for="password_confirmation" class="block text-sm font-medium">Confirmar contraseña</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" required
-                   class="field mt-1" placeholder="••••••••">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between">
-        <a href="{{ route('login') }}" class="text-sm text-sky-700 hover:underline">
-          ¿Ya tienes cuenta? Inicia sesión
-        </a>
-        <button type="submit" class="px-6 py-3 rounded-xl bg-sky-600 text-white hover:bg-sky-700 shadow">
-          Registrarme
-        </button>
-      </div>
-    </form>
   </div>
 
+  {{-- Script: genera y muestra el usuario en la pastilla superior --}}
   <script>
-    // Armar el "name" que exige Breeze con los datos de persona (por si luego guardas la entidad Persona aparte)
-    document.getElementById('formRegister').addEventListener('submit', function () {
-      const pn = document.getElementById('primer_nombre').value.trim();
-      const sn = document.getElementById('segundo_nombre').value.trim();
-      const pa = document.getElementById('primer_apellido').value.trim();
-      const sa = document.getElementById('segundo_apellido').value.trim();
-      const parts = [pn, sn, pa, sa].filter(Boolean);
-      document.getElementById('name').value = parts.join(' ');
-    });
+    (function () {
+      const maxLen = 50;
+      const $nombre = document.getElementById('PRIMER_NOMBRE');
+      const $apellido = document.getElementById('PRIMER_APELLIDO');
+      const $pill = document.getElementById('username-pill');
+      const $out = document.getElementById('username-preview');
+
+      function stripDiacritics(str) {
+        return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      }
+      function makeUsername(nombre, apellido) {
+        const first = (nombre || '').trim().charAt(0);
+        const last  = (apellido || '').trim().replace(/\s+/g, '');
+        let base = (first + last).toLowerCase();
+        base = stripDiacritics(base).replace(/[^a-z0-9]/g, '');
+        if (!base) base = 'user';
+        return base.slice(0, maxLen);
+      }
+      function update() {
+        const n = $nombre?.value || '';
+        const a = $apellido?.value || '';
+        const u = makeUsername(n, a);
+        if ((n && n.trim()) || (a && a.trim())) {
+          $pill.classList.remove('hidden');
+          $out.textContent = u;
+        } else {
+          $pill.classList.add('hidden');
+          $out.textContent = '';
+        }
+      }
+      ['input','change'].forEach(evt => {
+        $nombre?.addEventListener(evt, update);
+        $apellido?.addEventListener(evt, update);
+      });
+      update();
+    })();
   </script>
-</body>
-</html>
+</x-guest-layout>
