@@ -5,15 +5,9 @@
         <form method="POST" action="{{ route('register') }}" class="p-6 md:p-8">
           @csrf
 
-          {{-- Header: título + preview del usuario (no interfiere) --}}
+          {{-- Header: título (sin la pastilla aquí) --}}
           <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl md:text-2xl font-semibold text-slate-800">Crear cuenta</h1>
-
-            {{-- Pastilla de usuario generado (discreta) --}}
-            <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
-              <span class="font-medium text-slate-600 mr-1">Usuario:</span>
-              <code id="username-preview" class="font-semibold"></code>
-            </div>
           </div>
 
           {{-- ===== DATOS PERSONALES ===== --}}
@@ -124,6 +118,15 @@
             <x-input-error :messages="$errors->get('CORREO')" class="mt-2" />
           </div>
 
+          {{-- AVISO: Usuario autogenerado (movido aquí, antes de contraseña) --}}
+          <div id="username-pill" class="hidden bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-4 py-3 text-sm leading-5 mt-4">
+            <div class="font-semibold mb-1">Este será tu usuario para iniciar sesión.</div>
+            <div>
+              <span class="mr-1">Anótalo y no lo olvides:</span>
+              <code id="username-preview" class="px-2 py-0.5 rounded bg-white/70 border border-amber-200 font-semibold"></code>
+            </div>
+          </div>
+
           {{-- Password + Confirmación (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
@@ -150,7 +153,7 @@
     </div>
   </div>
 
-  {{-- Script: genera y muestra el usuario en la pastilla superior --}}
+  {{-- Script: genera y muestra el usuario en la nueva ubicación --}}
   <script>
     (function () {
       const maxLen = 50;
