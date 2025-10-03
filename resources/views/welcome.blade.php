@@ -298,7 +298,7 @@
           </div>
 
           {{-- Credenciales --}}
-          <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Credenciales</h3>
+          <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Usuario asigndo</h3>
 
           <div class="mb-3 text-xs text-slate-600">
             Este será tu usuario para iniciar sesión: <code class="font-semibold" id="username-preview-inline"></code>
