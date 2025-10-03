@@ -6,8 +6,9 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
 
 class LoginRequest extends FormRequest
 {
@@ -20,18 +21,15 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Validation rules (un solo campo: login = usuario o correo).
      */
     public function rules(): array
     {
-    return [
-        'USR_USUARIO' => ['required','string'],
-        'password'    => ['required','string'],
-    ];
+        return [
+            'login'    => ['required', 'string'],
+            'password' => ['required', 'string'],
+        ];
     }
-
 
     /**
      * Attempt to authenticate the request's credentials.
@@ -40,22 +38,50 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-    $this->ensureIsNotRateLimited();
+        $this->ensureIsNotRateLimited();
 
-    if (! \Auth::attempt(
-            $this->only('USR_USUARIO', 'password'),
-            $this->boolean('remember')
-        )) {
-        \Illuminate\Support\Facades\RateLimiter::hit($this->throttleKey());
+        $login    = Str::of($this->string('login'))->trim()->toString();
+        $remember = $this->boolean('remember');
 
-        throw \Illuminate\Validation\ValidationException::withMessages([
-            'USR_USUARIO' => trans('auth.failed'),
-        ]);
+        // Armamos el arreglo de credenciales que espera Auth::attempt()
+        // (tu proveedor usa la columna USR_USUARIO como "username").
+        $credentials = [
+            'password'    => $this->input('password'),
+            'USR_USUARIO' => null, // lo resolvemos abajo
+        ];
+
+        // Si escribieron un correo, buscamos el USR_USUARIO asociado
+        if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+            $row = DB::table('tbl_correo')
+                ->join('tbl_persona', 'tbl_persona.COD_PERSONA', '=', 'tbl_correo.FK_COD_PERSONA')
+                ->join('tbl_usuario', 'tbl_usuario.FK_COD_PERSONA', '=', 'tbl_persona.COD_PERSONA')
+                ->where('tbl_correo.CORREO', $login)
+                ->select('tbl_usuario.USR_USUARIO')
+                ->first();
+
+            if (!$row) {
+                RateLimiter::hit($this->throttleKey());
+                throw ValidationException::withMessages([
+                    'login' => trans('auth.failed'),
+                ]);
+            }
+
+            $credentials['USR_USUARIO'] = $row->USR_USUARIO;
+        } else {
+            // Es un nombre de usuario directamente
+            $credentials['USR_USUARIO'] = $login;
+        }
+
+        if (!Auth::attempt($credentials, $remember)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'login' => trans('auth.failed'),
+            ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
     }
-
-    \Illuminate\Support\Facades\RateLimiter::clear($this->throttleKey());
-    }
-
 
     /**
      * Ensure the login request is not rate limited.
@@ -73,7 +99,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
+            'login' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -85,7 +111,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-    return strtolower($this->input('USR_USUARIO')).'|'.$this->ip();
+        return Str::lower($this->input('login')).'|'.$this->ip();
     }
-
 }

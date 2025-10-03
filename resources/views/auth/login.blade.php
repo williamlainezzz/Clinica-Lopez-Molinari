@@ -5,19 +5,21 @@
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <!-- Usuario (antes era email) -->
+        <!-- Usuario o correo -->
         <div>
-            <x-input-label for="USR_USUARIO" :value="__('Usuario')" />
+            <x-input-label for="login" :value="__('Usuario o correo')" />
             <x-text-input
-                id="USR_USUARIO"
+                id="login"
                 class="block mt-1 w-full"
                 type="text"
-                name="USR_USUARIO"
-                :value="old('USR_USUARIO')"
+                name="login"
+                :value="old('login')"
                 required
                 autofocus
-                autocomplete="username"
+                autocomplete="username email"
             />
+            {{-- mostramos errores del nuevo campo y, por compatibilidad, del antiguo --}}
+            <x-input-error :messages="$errors->get('login')" class="mt-2" />
             <x-input-error :messages="$errors->get('USR_USUARIO')" class="mt-2" />
         </div>
 
