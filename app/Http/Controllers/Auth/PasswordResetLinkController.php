@@ -3,42 +3,42 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\View\View;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class PasswordResetLinkController extends Controller
 {
-    /**
-     * Display the password reset link request view.
-     */
-    public function create(): View
+    public function create()
     {
+        // Vista de Breeze/AdminLTE para "Olvidé mi contraseña"
         return view('auth.forgot-password');
     }
 
-    /**
-     * Handle an incoming password reset link request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
+        $request->validate(['email' => 'required|email']);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        // 1) Buscar el usuario por el correo (join con persona y correo)
+        $user = Usuario::query()
+            ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'tbl_usuario.FK_COD_PERSONA')
+            ->join('tbl_correo as c', 'c.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+            ->where('c.CORREO', $request->email)
+            ->select('tbl_usuario.*')
+            ->first();
 
-        return $status == Password::RESET_LINK_SENT
-                    ? back()->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        // Respuesta genérica (para no revelar si existe o no el correo)
+        $generic = back()->with('status', __('passwords.sent'));
+
+        if (!$user) {
+            return $generic;
+        }
+
+        // 2) Crear token y enviar notificación (usa getEmailForPasswordReset del modelo)
+        $token = Password::broker()->createToken($user);
+        $user->notify(new ResetPassword($token));
+
+        return $generic;
     }
 }
