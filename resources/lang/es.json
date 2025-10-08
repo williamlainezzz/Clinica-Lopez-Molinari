@@ -1,0 +1,10 @@
+{
+  "Hello!": "Estimado(a),",
+  "Reset Password Notification": "Complejo Dental Lopez Molinari · Restablecimiento de contraseña",
+  "You are receiving this email because we received a password reset request for your account.": "Has recibido este mensaje porque se solicitó restablecer la contraseña de tu cuenta en Complejo Dental Lopez Molinari.",
+  "Reset Password": "Restablecer contraseña",
+  "This password reset link will expire in :count minutes.": "El enlace para restablecer tu contraseña vence en :count minutos.",
+  "If you did not request a password reset, no further action is required.": "Si no solicitaste este restablecimiento, puedes ignorar este mensaje.",
+  "Regards": "Atentamente",
+  "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Si tienes problemas para hacer clic en el botón \":actionText\", copia y pega la siguiente URL en tu navegador:"
+}

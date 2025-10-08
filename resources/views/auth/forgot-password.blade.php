@@ -5,7 +5,8 @@
     </div>
 
     {{-- Estado de sesión (ej. "Te enviamos el enlace...") --}}
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+    <x-auth-session-status :status="session('status') ? __(session('status')) : null" />
+
 
     <form method="POST" action="{{ route('password.email') }}">
         @csrf
