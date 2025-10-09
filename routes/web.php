@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 
+// Para 2FA email
+use App\Http\Controllers\Auth\TwoFactorEmailController;
 
 
 Route::get('/', function () {
@@ -107,3 +109,18 @@ Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('guest')
     ->name('password.store');
+
+
+// Rutas para 2FA email
+Route::middleware('guest')->group(function () {
+    Route::get('/two-factor-challenge', [TwoFactorEmailController::class, 'create'])
+        ->name('two-factor.challenge');
+
+    Route::post('/two-factor-challenge', [TwoFactorEmailController::class, 'store'])
+        ->name('two-factor.challenge.store');
+
+    // Reenviar código (limitado a 3 por minuto)
+    Route::post('/two-factor-resend', [TwoFactorEmailController::class, 'resend'])
+        ->middleware('throttle:3,1')
+        ->name('two-factor.challenge.resend');
+});
