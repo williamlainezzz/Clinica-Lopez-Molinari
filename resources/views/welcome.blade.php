@@ -141,7 +141,7 @@
         @endif
 
         {{-- FORM LOGIN (usuario o correo + password) --}}
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}"novalidate x-data="{ showPwd:false }">
           @csrf
 
           <!-- Usuario o correo -->
@@ -160,20 +160,35 @@
            
           </div>
 
-          <!-- Password -->
-          <div class="mt-4">
-            <x-input-label for="password" :value="__('Contraseña')" />
-            <x-text-input
-              id="password"
-              class="block mt-1 w-full"
-              type="password"
-              name="password"
-              required
-              autocomplete="current-password"
-            />
-            {{-- 👇 errores del BAG "login" --}}
-            <x-input-error :messages="$errors->login->get('password')" class="mt-2" />
-          </div>
+          <!-- Contraseña -->
+<div class="mt-4">
+  <x-input-label for="password" :value="__('Contraseña')" />
+
+  <div class="relative">
+    <x-text-input
+      id="password"
+      name="password"
+      x-bind:type="showPwd ? 'text' : 'password'"   {{-- alterna texto/oculto --}}
+      class="block mt-1 w-full pr-10"               {{-- pr-10 deja espacio al botón --}}
+      required
+      autocomplete="current-password"
+    />
+
+    <!-- Botón ojo -->
+    <button
+      type="button"
+      class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700"
+      @click="showPwd = !showPwd"
+      :aria-label="showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+    >
+      <!-- ojo abierto -->
+      <svg x-show="!showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <!-- ojo tachado -->
+      <svg x-show="showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
+    </button>
+  </div>
+</div>
+
 
           <!-- Remember -->
           <div class="block mt-4">
