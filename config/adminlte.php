@@ -348,6 +348,21 @@ return [
             ['text' => 'Permisos',          'route' => 'permisos.index',         'icon' => 'far fa-circle'],
            ['text' => 'Usuarios',           'route' => 'usuarios.index',         'icon' => 'far fa-circle'],
            
+           [
+                'text'  => 'Roles',
+                'route' => 'seguridad.roles.index',
+                'icon'  => 'far fa-circle',
+            ],
+            [
+                'text'  => 'Bitácora',
+                'route' => 'seguridad.bitacora.index',
+                'icon'  => 'far fa-circle',
+            ],
+            [
+                'text'  => 'Backups',
+                'route' => 'seguridad.backups.index',
+                'icon'  => 'far fa-circle',
+            ],
         ],
     ],
 

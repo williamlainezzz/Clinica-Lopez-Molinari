@@ -11,6 +11,11 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\TwoFactorEmailController;
 
 
+use App\Http\Controllers\Seguridad\RolController;
+use App\Http\Controllers\Seguridad\BitacoraController;
+use App\Http\Controllers\Seguridad\BackupController;
+
+
 Route::get('/', function () {
     return view('welcome');   // pantalla inicial de Laravel
 })->name('welcome');
@@ -124,3 +129,28 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:3,1')
         ->name('two-factor.challenge.resend');
 });
+
+
+Route::middleware(['auth'])->group(function () {
+
+    // 👇 Solo una vez el prefix y el name
+    Route::prefix('seguridad')->name('seguridad.')->group(function () {
+
+        // Backups
+        Route::get('/backups',  [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups', [BackupController::class, 'store'])->name('backups.store');
+        Route::get('/backups/{id}/descargar', [BackupController::class, 'download'])->name('backups.download');
+
+        // Roles
+        Route::get('/roles',           [RolController::class, 'index'])->name('roles.index');
+        Route::get('/roles/crear',     [RolController::class, 'create'])->name('roles.create');
+        Route::post('/roles',          [RolController::class, 'store'])->name('roles.store');
+        Route::get('/roles/{id}/edit', [RolController::class, 'edit'])->name('roles.edit');
+        Route::put('/roles/{id}',      [RolController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{id}',   [RolController::class, 'destroy'])->name('roles.destroy');
+
+        // Bitácora
+        Route::get('/bitacora', [BitacoraController::class, 'index'])->name('bitacora.index');
+    });
+});
+        
