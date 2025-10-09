@@ -226,6 +226,12 @@
     </div>
 
     <div class="p-5 max-h-[85vh] overflow-y-auto">
+
+    @php
+    use App\Models\PreguntaSeguridad;
+    $preguntasSeg = PreguntaSeguridad::where('ESTADO', 1)->orderBy('TEXTO_PREGUNTA')->get();
+@endphp
+
       {{-- FORM REGISTRO COMPLETO --}}
       <form method="POST" action="{{ route('register') }}" novalidate>
         @csrf
@@ -339,6 +345,73 @@
                         :value="old('CORREO')" placeholder="tucorreo@ejemplo.com" required />
           <x-input-error :messages="$errors->register->get('CORREO')" class="mt-2" />
         </div>
+
+{{-- ===== PREGUNTAS DE SEGURIDAD ===== --}}
+<h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Preguntas de seguridad</h3>
+<p class="text-xs text-slate-600 mb-3">
+  Elige dos preguntas y escribe tus respuestas. Se usarán para verificar tu identidad al restablecer la contraseña.
+</p>
+
+<div
+  x-data="{
+    q1: '{{ old('PREGUNTA_1') }}' || '',
+    q2: '{{ old('PREGUNTA_2') }}' || '',
+    same() { return this.q1 && this.q2 && this.q1 === this.q2; }
+  }"
+  class="grid gap-4 md:grid-cols-2"
+>
+  {{-- Pregunta 1 --}}
+  <div>
+    <x-input-label for="PREGUNTA_1" :value="__('Pregunta 1')" />
+    <select id="PREGUNTA_1" name="PREGUNTA_1"
+            class="mt-1 block w-full rounded-md border-slate-300"
+            x-model="q1" required>
+      <option value="" disabled {{ old('PREGUNTA_1') ? '' : 'selected' }}>Seleccione...</option>
+      @foreach ($preguntasSeg as $p)
+        <option value="{{ $p->COD_PREGUNTA }}" {{ old('PREGUNTA_1') == $p->COD_PREGUNTA ? 'selected' : '' }}>
+          {{ $p->TEXTO_PREGUNTA }}
+        </option>
+      @endforeach
+    </select>
+    <x-input-error :messages="$errors->register->get('PREGUNTA_1')" class="mt-2" />
+
+    <x-input-label for="RESPUESTA_1" :value="__('Respuesta a la pregunta 1')" class="mt-3" />
+    <x-text-input id="RESPUESTA_1" name="RESPUESTA_1" type="text"
+                  class="block mt-1 w-full" required
+                  :value="old('RESPUESTA_1')" />
+    <x-input-error :messages="$errors->register->get('RESPUESTA_1')" class="mt-2" />
+  </div>
+
+  {{-- Pregunta 2 --}}
+  <div>
+    <x-input-label for="PREGUNTA_2" :value="__('Pregunta 2')" />
+    <select id="PREGUNTA_2" name="PREGUNTA_2"
+            class="mt-1 block w-full rounded-md border-slate-300"
+            x-model="q2" required>
+      <option value="" disabled {{ old('PREGUNTA_2') ? '' : 'selected' }}>Seleccione...</option>
+      @foreach ($preguntasSeg as $p)
+        <option value="{{ $p->COD_PREGUNTA }}" {{ old('PREGUNTA_2') == $p->COD_PREGUNTA ? 'selected' : '' }}>
+          {{ $p->TEXTO_PREGUNTA }}
+        </option>
+      @endforeach
+    </select>
+    <x-input-error :messages="$errors->register->get('PREGUNTA_2')" class="mt-2" />
+
+    <x-input-label for="RESPUESTA_2" :value="__('Respuesta a la pregunta 2')" class="mt-3" />
+    <x-text-input id="RESPUESTA_2" name="RESPUESTA_2" type="text"
+                  class="block mt-1 w-full" required
+                  :value="old('RESPUESTA_2')" />
+    <x-input-error :messages="$errors->register->get('RESPUESTA_2')" class="mt-2" />
+  </div>
+
+  {{-- Aviso si eligieron la misma pregunta --}}
+  <div class="md:col-span-2" x-show="same()">
+    <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+      Las preguntas deben ser distintas.
+    </div>
+  </div>
+</div>
+
 
         {{-- ====== CREDENCIALES ====== --}}
         <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Usuario asignado</h3>

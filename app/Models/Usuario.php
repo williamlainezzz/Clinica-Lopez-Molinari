@@ -62,4 +62,25 @@ class Usuario extends Authenticatable
     {
         return $this->getEmailForPasswordReset();
     }
+
+        /** Relación directa a la tabla puente (con los hashes) */
+    public function usuarioPreguntas()
+    {
+        return $this->hasMany(UsuarioPregunta::class, 'FK_COD_USUARIO', 'COD_USUARIO');
+    }
+
+    /**
+     * Relación many-to-many a preguntas, con acceso al hash en el pivot.
+     * Útil si quieres traer las preguntas y además leer RESPUESTA_HASH desde ->pivot.
+     */
+    public function preguntasSeguridad()
+    {
+        return $this->belongsToMany(
+            PreguntaSeguridad::class,
+            'tbl_usuario_pregunta',
+            'FK_COD_USUARIO',   // clave local en pivot
+            'FK_COD_PREGUNTA'   // clave relacionada en pivot
+        )->withPivot('RESPUESTA_HASH');
+    }
+
 }

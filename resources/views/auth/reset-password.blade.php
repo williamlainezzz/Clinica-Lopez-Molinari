@@ -3,24 +3,54 @@
         @csrf
 
         {{-- Token de restablecimiento --}}
-        <input type="hidden" name="token" value="{{ $token }}">
+        <input type="hidden" name="token" value="{{ $request->route('token') }}">
 
-        {{-- Correo --}}
-        <div>
-            <x-input-label for="email" :value="__('Correo electrónico')" />
-            <x-text-input
-                id="email"
-                class="block mt-1 w-full"
-                type="email"
-                name="email"
-                :value="old('email', $email ?? request('email'))"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="{{ __('tucorreo@ejemplo.com') }}"
-            />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        
+        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+
+<!-- Correo -->
+<div>
+    <x-input-label for="email" :value="__('Correo electrónico')" />
+    <x-text-input
+        id="email"
+        class="block mt-1 w-full"
+        type="email"
+        name="email"
+        :value="old('email', $request->email)"
+        required
+        autofocus
+        autocomplete="username"
+        placeholder="{{ __('tucorreo@ejemplo.com') }}"
+    />
+    <x-input-error :messages="$errors->get('email')" class="mt-2" />
+</div>
+
+        {{-- PASO 5.1 — Pregunta de seguridad (si existe) --}}
+@if (!empty($secQuestion))
+    <div class="mt-4">
+        <x-input-label for="security_answer" :value="__('Pregunta de seguridad')" />
+
+        {{-- texto de la pregunta --}}
+        <div class="mt-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            {{ $secQuestion }}
         </div>
+
+        {{-- ID de la pregunta mostrada --}}
+        <input type="hidden" name="security_question_id" value="{{ $secQuestionId }}">
+
+        {{-- respuesta del usuario --}}
+        <x-text-input id="security_answer" class="block mt-2 w-full"
+                      type="text" name="security_answer" :value="old('security_answer')" required />
+        <x-input-error :messages="$errors->get('security_answer')" class="mt-2" />
+    </div>
+
+    {{-- Aviso de soporte --}}
+    <p class="mt-2 text-xs text-slate-600">
+        Si no recuerda su pregunta de seguridad, por favor contactarse a soporte:
+        <strong>{{ config('mail.from.address') }}</strong>
+    </p>
+@endif
+
 
         {{-- Nueva contraseña --}}
         <div class="mt-4">
