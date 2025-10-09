@@ -12,6 +12,10 @@ use Illuminate\Support\Str;
 
 class LoginRequest extends FormRequest
 {
+
+    // Hace que todos los errores de este FormRequest vayan a la bolsa "login"
+protected $errorBag = 'login';
+
     /**
      * Determine if the user is authorized to make this request.
      */

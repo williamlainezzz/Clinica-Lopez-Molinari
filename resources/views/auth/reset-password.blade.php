@@ -25,15 +25,21 @@
         {{-- Nueva contraseña --}}
         <div class="mt-4">
             <x-input-label for="password" :value="__('Nueva contraseña')" />
-            <x-text-input
-                id="password"
-                class="block mt-1 w-full"
-                type="password"
-                name="password"
-                required
-                autocomplete="new-password"
-            />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
+<x-text-input
+    id="password"
+    name="password"
+    type="password"
+    class="block mt-1 w-full"
+    required
+    autocomplete="new-password"
+    minlength="10"
+    pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{10,}"
+/>
+<small class="text-gray-600">
+  Mínimo 10 caracteres, con <strong>mayúsculas</strong>, <strong>minúsculas</strong>,
+  <strong>número</strong> y <strong>símbolo</strong>.
+</small>
+<x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         {{-- Confirmación --}}

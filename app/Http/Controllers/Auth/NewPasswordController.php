@@ -23,10 +23,10 @@ class NewPasswordController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+    'token'    => ['required'],
+    'email'    => ['required','email'],
+    'password' => ['required','confirmed', Rules\Password::defaults()],
+]);
 
         // 1) Reubicar el usuario por el correo (mismo join que arriba)
         $user = Usuario::query()

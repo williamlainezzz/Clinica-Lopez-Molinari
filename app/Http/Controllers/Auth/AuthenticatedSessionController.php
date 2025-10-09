@@ -28,12 +28,19 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
 {
-    // 1) Autentica credenciales (Breeze)
-    $request->authenticate();
+    try {
+        // 1) Autentica credenciales (Breeze) — puede lanzar ValidationException
+        $request->authenticate();
+    } catch (\Illuminate\Validation\ValidationException $e) {
+    return back()
+        ->withErrors(['login' => 'Usuario o contraseña incorrectos.'], 'login')
+        ->withInput()
+        ->with('modal', 'login');
+}
 
     // 2) Usuario autenticado provisionalmente
-    $user   = Auth::user();
-    $userId = $user->getAuthIdentifier();
+    $user     = Auth::user();
+    $userId   = $user->getAuthIdentifier();
     $remember = $request->boolean('remember');
 
     // 3) Generar OTP (6 dígitos) + TTL 5 min
@@ -62,7 +69,7 @@ class AuthenticatedSessionController extends Controller
     // No invalido toda la sesión para no perder las claves 2fa:*
     $request->session()->regenerateToken();
 
-    // 8) Redirigir a la pantalla de reto (la crearemos en el PASO 3)
+    // 8) Redirigir a la pantalla de reto (OTP)
     return redirect()
         ->route('two-factor.challenge')
         ->with('status', 'Te enviamos un código a tu correo. Ingrésalo para continuar.');

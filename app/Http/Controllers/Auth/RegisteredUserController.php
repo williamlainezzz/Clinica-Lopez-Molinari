@@ -10,8 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Validator; // <- NUEVO
 
 class RegisteredUserController extends Controller
 {
@@ -31,8 +32,8 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request)
     {
-        // Validación (ya NO pedimos USR_USUARIO: se genera automáticamente)
-        $validated = $request->validate([
+        // 1) Validación con BAG "register" para reabrir el modal si falla
+        $validator = Validator::make($request->all(), [
             // Persona (tbl_persona)
             'PRIMER_NOMBRE'    => ['required', 'string', 'max:100'],
             'SEGUNDO_NOMBRE'   => ['nullable', 'string', 'max:100'],
@@ -40,8 +41,8 @@ class RegisteredUserController extends Controller
             'SEGUNDO_APELLIDO' => ['nullable', 'string', 'max:100'],
             'TIPO_GENERO'      => ['required', 'integer'],
 
-            // Credenciales
-            'password'               => ['required', 'string', 'confirmed', 'min:8'],
+            // Credenciales (política global)
+            'password'               => ['required', 'confirmed', Rules\Password::defaults()],
 
             // Correo (tbl_correo)
             'CORREO'      => ['required', 'email', 'max:100'],
@@ -59,10 +60,20 @@ class RegisteredUserController extends Controller
             'REFERENCIA'   => ['nullable', 'string', 'max:255'],
         ]);
 
+        if ($validator->fails()) {
+            // ⬅️ Volver con errores en el BAG "register", conservar input y reabrir modal
+            return back()
+                ->withErrors($validator, 'register')
+                ->withInput()
+                ->with('modal', 'register');
+        }
+
+        $validated = $validator->validated();
+
         $usuario = null;
 
         DB::transaction(function () use ($validated, &$usuario) {
-            // 1) Crear PERSONA
+            // 2) Crear PERSONA
             $persona = Persona::create([
                 'PRIMER_NOMBRE'    => $validated['PRIMER_NOMBRE'],
                 'SEGUNDO_NOMBRE'   => $validated['SEGUNDO_NOMBRE'] ?? null,
@@ -71,10 +82,10 @@ class RegisteredUserController extends Controller
                 'TIPO_GENERO'      => $validated['TIPO_GENERO'],
             ]);
 
-            // 2) Generar username único (1ra letra del nombre + apellido, sin acentos, minúsculas)
+            // 3) Generar username único (1ra letra del nombre + apellido, sin acentos, minúsculas)
             $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
 
-            // 3) Crear USUARIO vinculado a la persona
+            // 4) Crear USUARIO vinculado a la persona
             $usuario = Usuario::create([
                 'USR_USUARIO'    => $usr,
                 'PWD_USUARIO'    => Hash::make($validated['password']),
@@ -83,14 +94,14 @@ class RegisteredUserController extends Controller
                 'ESTADO_USUARIO' => 1, // activo
             ]);
 
-            // 4) Insertar CORREO
+            // 5) Insertar CORREO
             DB::table('tbl_correo')->insert([
                 'FK_COD_PERSONA' => $persona->COD_PERSONA,
                 'CORREO'         => $validated['CORREO'],
                 'TIPO_CORREO'    => $validated['TIPO_CORREO'] ?? 'PERSONAL',
             ]);
 
-            // 5) Insertar TELÉFONO (si viene)
+            // 6) Insertar TELÉFONO (si viene)
             if (!empty($validated['NUM_TELEFONO'])) {
                 DB::table('tbl_telefono')->insert([
                     'FK_COD_PERSONA' => $persona->COD_PERSONA,
@@ -99,7 +110,7 @@ class RegisteredUserController extends Controller
                 ]);
             }
 
-            // 6) Insertar DIRECCIÓN (si viene algo)
+            // 7) Insertar DIRECCIÓN (si viene algo)
             if (!empty($validated['DEPARTAMENTO']) || !empty($validated['MUNICIPIO']) ||
                 !empty($validated['CIUDAD']) || !empty($validated['COLONIA']) || !empty($validated['REFERENCIA'])) {
                 DB::table('tbl_direccion')->insert([
@@ -142,3 +153,4 @@ class RegisteredUserController extends Controller
         return $user;
     }
 }
+
