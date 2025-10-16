@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
-use Illuminate\Support\Facades\Validator; // <- NUEVO
+use Illuminate\Support\Facades\Validator; 
 
+use Illuminate\Validation\Rule;
 class RegisteredUserController extends Controller
 {
     /**
@@ -31,79 +32,49 @@ class RegisteredUserController extends Controller
      * 3) Inserta correo, teléfono (opcional) y dirección (opcional)
      */
     public function store(Request $request)
-    {
-        // 1) Validación con BAG "register" para reabrir el modal si falla
-        // Validación (ya NO pedimos USR_USUARIO: se genera automáticamente)
-$validated = $request->validateWithBag('register', [
-    // Persona (tbl_persona)
-    'PRIMER_NOMBRE'    => ['required', 'string', 'max:100'],
-    'SEGUNDO_NOMBRE'   => ['nullable', 'string', 'max:100'],
-    'PRIMER_APELLIDO'  => ['required', 'string', 'max:100'],
-    'SEGUNDO_APELLIDO' => ['nullable', 'string', 'max:100'],
-    'TIPO_GENERO'      => ['required', 'integer'],
+{
+    // 0) Normaliza el correo del request que usa tu form (CLAVE EN MAYÚSCULAS)
+    $request->merge([
+        'CORREO' => mb_strtolower(trim((string) $request->input('CORREO'))),
+    ]);
 
-    // Credenciales (usa la política global)
-    'password'         => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+    // 1) Validación (UNA sola vez) con UNIQUE en tbl_correo.CORREO
+    $validated = $request->validateWithBag('register', [
+        // Persona (tbl_persona)
+        'PRIMER_NOMBRE'    => ['required', 'string', 'max:100'],
+        'SEGUNDO_NOMBRE'   => ['nullable', 'string', 'max:100'],
+        'PRIMER_APELLIDO'  => ['required', 'string', 'max:100'],
+        'SEGUNDO_APELLIDO' => ['nullable', 'string', 'max:100'],
+        'TIPO_GENERO'      => ['required', 'integer'],
 
-    // Correo (tbl_correo)
-    'CORREO'      => ['required', 'email', 'max:100'],
-    'TIPO_CORREO' => ['nullable', 'string', 'max:30'],
+        // Credenciales
+        'password'         => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
 
-    // Teléfono (tbl_telefono)
-    'NUM_TELEFONO'  => ['nullable', 'string', 'max:20'],
-    'TIPO_TELEFONO' => ['nullable', 'string', 'max:30'],
+        // Correo (tbl_correo)
+        'CORREO'      => ['required', 'email', 'max:100', \Illuminate\Validation\Rule::unique('tbl_correo','CORREO')],
+        'TIPO_CORREO' => ['nullable', 'string', 'max:30'],
 
-    // Dirección (tbl_direccion)
-    'DEPARTAMENTO' => ['nullable', 'string', 'max:30'],
-    'MUNICIPIO'    => ['nullable', 'string', 'max:30'],
-    'CIUDAD'       => ['nullable', 'string', 'max:30'],
-    'COLONIA'      => ['nullable', 'string', 'max:30'],
-    'REFERENCIA'   => ['nullable', 'string', 'max:255'],
+        // Teléfono (tbl_telefono)
+        'NUM_TELEFONO'  => ['nullable', 'string', 'max:20'],
+        'TIPO_TELEFONO' => ['nullable', 'string', 'max:30'],
 
-    //  Preguntas de seguridad
-    'PREGUNTA_1'   => ['required', 'integer', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
-    'RESPUESTA_1'  => ['required', 'string', 'max:255'],
-    'PREGUNTA_2'   => ['required', 'integer', 'different:PREGUNTA_1', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
-    'RESPUESTA_2'  => ['required', 'string', 'max:255'],
-]);
+        // Dirección (tbl_direccion)
+        'DEPARTAMENTO' => ['nullable', 'string', 'max:30'],
+        'MUNICIPIO'    => ['nullable', 'string', 'max:30'],
+        'CIUDAD'       => ['nullable', 'string', 'max:30'],
+        'COLONIA'      => ['nullable', 'string', 'max:30'],
+        'REFERENCIA'   => ['nullable', 'string', 'max:255'],
 
+        // Preguntas de seguridad
+        'PREGUNTA_1'   => ['required', 'integer', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
+        'RESPUESTA_1'  => ['required', 'string', 'max:255'],
+        'PREGUNTA_2'   => ['required', 'integer', 'different:PREGUNTA_1', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
+        'RESPUESTA_2'  => ['required', 'string', 'max:255'],
+    ]);
 
-        // ✅ Validación (errores irán al bag "register" y el modal se reabrirá)
-$validated = $request->validateWithBag('register', [
-    // Persona (tbl_persona)
-    'PRIMER_NOMBRE'    => ['required', 'string', 'max:100'],
-    'SEGUNDO_NOMBRE'   => ['nullable', 'string', 'max:100'],
-    'PRIMER_APELLIDO'  => ['required', 'string', 'max:100'],
-    'SEGUNDO_APELLIDO' => ['nullable', 'string', 'max:100'],
-    'TIPO_GENERO'      => ['required', 'integer'],
+    $usuario = null;
 
-    // Credenciales (política global)
-    'password'         => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
-
-    // Correo (tbl_correo)
-    'CORREO'      => ['required', 'email', 'max:100'],
-    'TIPO_CORREO' => ['nullable', 'string', 'max:30'],
-
-    // Teléfono (tbl_telefono)
-    'NUM_TELEFONO'  => ['nullable', 'string', 'max:20'],
-    'TIPO_TELEFONO' => ['nullable', 'string', 'max:30'],
-
-    // Dirección (tbl_direccion)
-    'DEPARTAMENTO' => ['nullable', 'string', 'max:30'],
-    'MUNICIPIO'    => ['nullable', 'string', 'max:30'],
-    'CIUDAD'       => ['nullable', 'string', 'max:30'],
-    'COLONIA'      => ['nullable', 'string', 'max:30'],
-    'REFERENCIA'   => ['nullable', 'string', 'max:255'],
-
-    // Preguntas de seguridad
-    'PREGUNTA_1'   => ['required', 'integer', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
-    'RESPUESTA_1'  => ['required', 'string', 'max:255'],
-    'PREGUNTA_2'   => ['required', 'integer', 'different:PREGUNTA_1', 'exists:tbl_pregunta_seguridad,COD_PREGUNTA'],
-    'RESPUESTA_2'  => ['required', 'string', 'max:255'],
-]);
-
-        $usuario = null;
-
+    try {
         DB::transaction(function () use ($validated, &$usuario) {
             // 2) Crear PERSONA
             $persona = Persona::create([
@@ -114,37 +85,42 @@ $validated = $request->validateWithBag('register', [
                 'TIPO_GENERO'      => $validated['TIPO_GENERO'],
             ]);
 
-            // 3) Generar username único (1ra letra del nombre + apellido, sin acentos, minúsculas)
+            // 3) Generar username único
             $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
 
-            // 4) Crear USUARIO vinculado a la persona
+            // 4) Crear USUARIO
             $usuario = Usuario::create([
                 'USR_USUARIO'    => $usr,
                 'PWD_USUARIO'    => Hash::make($validated['password']),
                 'FK_COD_PERSONA' => $persona->COD_PERSONA,
-                'FK_COD_ROL'     => 1, // usa el rol existente (ajusta si deseas otro)
-                'ESTADO_USUARIO' => 1, // activo
+                'FK_COD_ROL'     => 1,
+                'ESTADO_USUARIO' => 1,
             ]);
 
-            // 5) Insertar CORREO
+            // 5) Insertar CORREO (ya normalizado por el merge inicial)
             DB::table('tbl_correo')->insert([
                 'FK_COD_PERSONA' => $persona->COD_PERSONA,
                 'CORREO'         => $validated['CORREO'],
                 'TIPO_CORREO'    => $validated['TIPO_CORREO'] ?? 'PERSONAL',
             ]);
 
-            // 6) Insertar TELÉFONO (si viene)
+            // 6) TELÉFONO (si viene)
             if (!empty($validated['NUM_TELEFONO'])) {
                 DB::table('tbl_telefono')->insert([
                     'FK_COD_PERSONA' => $persona->COD_PERSONA,
-                    'NUM_TELEFONO'   => preg_replace('/\D+/', '', $validated['NUM_TELEFONO']), // solo dígitos
+                    'NUM_TELEFONO'   => preg_replace('/\D+/', '', $validated['NUM_TELEFONO']),
                     'TIPO_TELEFONO'  => $validated['TIPO_TELEFONO'] ?? 'MÓVIL',
                 ]);
             }
 
-            // 7) Insertar DIRECCIÓN (si viene algo)
-            if (!empty($validated['DEPARTAMENTO']) || !empty($validated['MUNICIPIO']) ||
-                !empty($validated['CIUDAD']) || !empty($validated['COLONIA']) || !empty($validated['REFERENCIA'])) {
+            // 7) DIRECCIÓN (si viene algo)
+            if (
+                !empty($validated['DEPARTAMENTO']) ||
+                !empty($validated['MUNICIPIO']) ||
+                !empty($validated['CIUDAD']) ||
+                !empty($validated['COLONIA']) ||
+                !empty($validated['REFERENCIA'])
+            ) {
                 DB::table('tbl_direccion')->insert([
                     'FK_COD_PERSONA' => $persona->COD_PERSONA,
                     'DEPARTAMENTO'   => $validated['DEPARTAMENTO'] ?? '',
@@ -155,34 +131,40 @@ $validated = $request->validateWithBag('register', [
                 ]);
             }
 
-            // 8) Guardar PREGUNTAS DE SEGURIDAD (hash de la respuesta normalizada)
-$ans1 = $this->normalizeAnswer($validated['RESPUESTA_1']);
-$ans2 = $this->normalizeAnswer($validated['RESPUESTA_2']);
+            // 8) PREGUNTAS DE SEGURIDAD (respuesta normalizada + hash)
+            $ans1 = $this->normalizeAnswer($validated['RESPUESTA_1']);
+            $ans2 = $this->normalizeAnswer($validated['RESPUESTA_2']);
 
-DB::table('tbl_usuario_pregunta')->insert([
-    [
-        'FK_COD_USUARIO' => $usuario->COD_USUARIO,
-        'FK_COD_PREGUNTA' => (int)$validated['PREGUNTA_1'],
-        'RESPUESTA_HASH' => \Illuminate\Support\Facades\Hash::make($ans1),
-        // CREATED_AT por defecto
-    ],
-    [
-        'FK_COD_USUARIO' => $usuario->COD_USUARIO,
-        'FK_COD_PREGUNTA' => (int)$validated['PREGUNTA_2'],
-        'RESPUESTA_HASH' => \Illuminate\Support\Facades\Hash::make($ans2),
-    ],
-]);
-
+            DB::table('tbl_usuario_pregunta')->insert([
+                [
+                    'FK_COD_USUARIO'  => $usuario->COD_USUARIO,
+                    'FK_COD_PREGUNTA' => (int) $validated['PREGUNTA_1'],
+                    'RESPUESTA_HASH'  => Hash::make($ans1),
+                ],
+                [
+                    'FK_COD_USUARIO'  => $usuario->COD_USUARIO,
+                    'FK_COD_PREGUNTA' => (int) $validated['PREGUNTA_2'],
+                    'RESPUESTA_HASH'  => Hash::make($ans2),
+                ],
+            ]);
         });
-
-        event(new Registered($usuario));
-        Auth::login($usuario);
-
-        // Mostrar el username generado en la UI después del registro
-        session()->flash('username_generado', $usuario->USR_USUARIO);
-
-        return redirect()->intended(route('dashboard', absolute: false));
+    } catch (\Illuminate\Database\QueryException $e) {
+        // Violación de UNIQUE (correo ya existe)
+        if ($e->getCode() === '23000') {
+            return back()
+                ->withErrors(['CORREO' => 'Este correo ya está registrado.'])
+                ->withInput();
+        }
+        throw $e;
     }
+
+    event(new Registered($usuario));
+    Auth::login($usuario);
+
+    session()->flash('username_generado', $usuario->USR_USUARIO);
+
+    return redirect()->intended(route('dashboard', absolute: false));
+}
 
     /**
      * Genera username único: 1ra letra del nombre + apellido, minúsculas, sin acentos.

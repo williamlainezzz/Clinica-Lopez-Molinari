@@ -339,12 +339,22 @@
         </div>
 
         {{-- Correo --}}
-        <div class="mt-6">
-          <x-input-label for="CORREO" :value="__('Correo electrónico')" />
-          <x-text-input id="CORREO" class="block mt-1 w-full" type="email" name="CORREO"
-                        :value="old('CORREO')" placeholder="tucorreo@ejemplo.com" required />
-          <x-input-error :messages="$errors->register->get('CORREO')" class="mt-2" />
-        </div>
+<div class="mt-6">
+  <x-input-label for="CORREO" :value="__('Correo electrónico')" />
+
+  <x-text-input
+      id="CORREO"
+      type="email"
+      name="CORREO"
+      :value="old('CORREO')"
+      placeholder="tucorreo@ejemplo.com"
+      required
+      class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}"
+  />
+
+  <x-input-error :messages="($errors->register ?? $errors)->get('CORREO')" class="mt-2" />
+</div>
+
 
 {{-- ===== PREGUNTAS DE SEGURIDAD ===== --}}
 <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Preguntas de seguridad</h3>

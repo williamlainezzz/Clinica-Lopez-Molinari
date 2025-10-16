@@ -10,4 +10,10 @@ return [
         'symbols' => 'La contraseña debe incluir al menos un símbolo.',
         'uncompromised' => 'Esta contraseña aparece en filtraciones de datos. Por favor elige una diferente.',
     ],
+'custom' => [
+  'CORREO' => [
+    'unique' => 'Este correo ya está registrado. Si olvidaste tu contraseña, usa “¿Olvidaste tu contraseña?”',
+  ],
+],
+  
 ];
