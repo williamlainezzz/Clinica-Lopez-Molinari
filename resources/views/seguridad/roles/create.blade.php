@@ -15,7 +15,14 @@
                     <input name="NOM_ROL" class="form-control" value="{{ old('NOM_ROL') }}" required>
                     @error('NOM_ROL') <small class="text-danger">{{ $message }}</small> @enderror
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <textarea name="DESCRIPCION" class="form-control" rows="3" required>{{ old('DESCRIPCION') }}</textarea>
+                    @error('DESCRIPCION') <small class="text-danger">{{ $message }}</small> @enderror
+                </div>
             </div>
+
             <div class="card-footer">
                 <a href="{{ route('seguridad.roles.index') }}" class="btn btn-secondary">Cancelar</a>
                 <button class="btn btn-primary">Guardar</button>

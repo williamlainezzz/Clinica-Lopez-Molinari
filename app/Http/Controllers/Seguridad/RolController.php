@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Seguridad/RolController.php
 
 namespace App\Http\Controllers\Seguridad;
 
@@ -33,41 +32,50 @@ class RolController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'NOM_ROL' => 'required|string|max:100|unique:tbl_rol,NOM_ROL',
+            'NOM_ROL'     => 'required|string|max:100|unique:tbl_rol,NOM_ROL',
+            'DESCRIPCION' => 'nullable|string|max:255',
         ]);
 
-        DB::table('tbl_rol')->insert([
-            'NOM_ROL' => trim($request->NOM_ROL),
+        // Inserta UNA sola vez
+        $id = DB::table('tbl_rol')->insertGetId([
+            'NOM_ROL'     => trim($request->NOM_ROL),
+            // Si tu tabla tuviera la columna DESCRIPCION:
+            // 'DESCRIPCION' => trim((string) $request->DESCRIPCION),
         ]);
 
-        // Inserta el rol
-$id = DB::table('tbl_rol')->insertGetId([
-    'NOM_ROL' => trim($request->NOM_ROL),
-]);
+        BitacoraService::log('ROLES', 'CREAR', 'Nuevo rol: ' . trim($request->NOM_ROL));
 
-// Bitácora
-BitacoraService::log('ROLES', 'CREAR', 'Nuevo rol: '.trim($request->NOM_ROL));
-
-
-        return redirect()->route('seguridad.roles.index')
-            ->with('success', 'Rol creado correctamente.');    
+        return redirect()
+            ->route('seguridad.roles.index')
+            ->with('success', 'Rol creado correctamente.');
     }
 
-
-    
     public function edit($id)
     {
         $rol = DB::table('tbl_rol')->where('COD_ROL', $id)->first();
         abort_if(!$rol, 404);
+
         return view('seguridad.roles.edit', compact('rol'));
     }
 
     public function update(\Illuminate\Http\Request $request, $id)
 {
+    // Normalizar por si viene con espacios o null
+    $request->merge([
+        'NOM_ROL' => trim((string) $request->input('NOM_ROL')),
+    ]);
+
+    // Mensajes legibles (evita ver "validation.required")
+    $messages = [
+        'NOM_ROL.required' => 'El nombre del rol es obligatorio.',
+        'NOM_ROL.string'   => 'El nombre del rol debe ser texto.',
+        'NOM_ROL.max'      => 'El nombre del rol no debe superar 100 caracteres.',
+    ];
+
     // Validación
     $request->validate([
         'NOM_ROL' => 'required|string|max:100',
-    ]);
+    ], $messages);
 
     // Trae el rol actual (para mostrar el cambio en la bitácora)
     $rolOld = DB::table('tbl_rol')->where('COD_ROL', $id)->first();
@@ -75,44 +83,41 @@ BitacoraService::log('ROLES', 'CREAR', 'Nuevo rol: '.trim($request->NOM_ROL));
 
     // Actualiza
     DB::table('tbl_rol')->where('COD_ROL', $id)->update([
-        'NOM_ROL' => trim($request->NOM_ROL),
+        'NOM_ROL' => $request->input('NOM_ROL'),
     ]);
 
     // Bitácora
-    BitacoraService::log(
+    \App\Services\BitacoraService::log(
         'ROLES',
         'EDITAR',
-        "Rol #{$id}: {$rolOld->NOM_ROL} -> ".trim($request->NOM_ROL)
+        "Rol #{$id}: {$rolOld->NOM_ROL} -> " . $request->input('NOM_ROL')
     );
 
-    return redirect()->route('seguridad.roles.index')->with('success', 'Rol actualizado.');
+    return redirect()
+        ->route('seguridad.roles.index')
+        ->with('success', 'Rol actualizado.');
 }
 
 
     public function destroy($id)
-{
-    // Opcional: verificar que no tenga usuarios/permisos asociados
-    $tieneUsuarios = DB::table('tbl_usuario')->where('FK_COD_ROL', $id)->exists();
-    if ($tieneUsuarios) {
-        return back()->with('error', 'No se puede eliminar: el rol tiene usuarios asociados.');
+    {
+        $tieneUsuarios = DB::table('tbl_usuario')->where('FK_COD_ROL', $id)->exists();
+        if ($tieneUsuarios) {
+            return back()->with('error', 'No se puede eliminar: el rol tiene usuarios asociados.');
+        }
+
+        $tienePermisos = DB::table('tbl_permiso')->where('FK_COD_ROL', $id)->exists();
+        if ($tienePermisos) {
+            return back()->with('error', 'No se puede eliminar: el rol tiene permisos asociados.');
+        }
+
+        $rol = DB::table('tbl_rol')->where('COD_ROL', $id)->first();
+        abort_if(!$rol, 404, 'Rol no encontrado');
+
+        DB::table('tbl_rol')->where('COD_ROL', $id)->delete();
+
+        BitacoraService::log('ROLES', 'ELIMINAR', "Rol #{$id}: {$rol->NOM_ROL}");
+
+        return back()->with('success', 'Rol eliminado.');
     }
-
-    $tienePermisos = DB::table('tbl_permiso')->where('FK_COD_ROL', $id)->exists();
-    if ($tienePermisos) {
-        return back()->with('error', 'No se puede eliminar: el rol tiene permisos asociados.');
-    }
-
-    // Trae el rol para la descripción
-    $rol = DB::table('tbl_rol')->where('COD_ROL', $id)->first();
-    abort_if(!$rol, 404, 'Rol no encontrado');
-
-    // Elimina
-    DB::table('tbl_rol')->where('COD_ROL', $id)->delete();
-
-    // Bitácora
-    BitacoraService::log('ROLES', 'ELIMINAR', "Rol #{$id}: {$rol->NOM_ROL}");
-
-    return back()->with('success', 'Rol eliminado.');
-}
-
 }

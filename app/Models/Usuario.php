@@ -12,7 +12,11 @@ class Usuario extends Authenticatable
 
     protected $table = 'tbl_usuario';
     protected $primaryKey = 'COD_USUARIO';
+
+    // ❗ Tu tabla NO tiene created_at/updated_at
     public $timestamps = false;
+    const CREATED_AT = null;
+    const UPDATED_AT = null;
 
     // La tabla no tiene remember_token
     protected $rememberTokenName = null;
@@ -27,60 +31,55 @@ class Usuario extends Authenticatable
 
     protected $hidden = ['PWD_USUARIO'];
 
-    /**
-     * Indica a Laravel dónde está la contraseña.
-     */
+    /** Password para Auth: está en PWD_USUARIO */
     public function getAuthPassword()
     {
         return $this->PWD_USUARIO;
     }
 
-    /**
-     * Nombre "amigable" por si alguna vista usa Auth::user()->name.
-     */
+    /** Alias por si alguna vista usa Auth::user()->name */
     public function getNameAttribute()
     {
         return $this->USR_USUARIO;
     }
 
-    /**
-     * Devuelve el correo asociado al usuario (desde tbl_correo por FK_COD_PERSONA).
-     * Laravel usará este valor para enviar el enlace de restablecimiento.
-     */
+    /** Email a usar para reset de contraseña (desde tbl_correo por persona) */
     public function getEmailForPasswordReset()
     {
         return DB::table('tbl_correo')
             ->where('FK_COD_PERSONA', $this->FK_COD_PERSONA)
-            ->orderByDesc('COD_CORREO') // si hay varios, toma el más reciente
+            ->orderByDesc('COD_CORREO')
             ->value('CORREO');
     }
 
-    /**
-     * Hace que las notificaciones por correo usen el email anterior.
-     */
+    /** Canal de notificaciones por mail -> usa el correo anterior */
     public function routeNotificationForMail($notification = null)
     {
         return $this->getEmailForPasswordReset();
     }
 
-        /** Relación directa a la tabla puente (con los hashes) */
     public function usuarioPreguntas()
     {
         return $this->hasMany(UsuarioPregunta::class, 'FK_COD_USUARIO', 'COD_USUARIO');
     }
 
-    /**
-     * Relación many-to-many a preguntas, con acceso al hash en el pivot.
-     * Útil si quieres traer las preguntas y además leer RESPUESTA_HASH desde ->pivot.
-     */
     public function preguntasSeguridad()
     {
         return $this->belongsToMany(
             PreguntaSeguridad::class,
             'tbl_usuario_pregunta',
-            'FK_COD_USUARIO',   // clave local en pivot
-            'FK_COD_PREGUNTA'   // clave relacionada en pivot
+            'FK_COD_USUARIO',
+            'FK_COD_PREGUNTA'
         )->withPivot('RESPUESTA_HASH');
     }
 
+    public function persona()
+    {
+        return $this->belongsTo(Persona::class, 'FK_COD_PERSONA', 'COD_PERSONA');
+    }
+
+    public function rol()
+    {
+        return $this->belongsTo(Rol::class, 'FK_COD_ROL', 'COD_ROL');
+    }
 }

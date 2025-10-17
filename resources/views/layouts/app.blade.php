@@ -29,8 +29,14 @@
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
-            </main>
+    @isset($slot)
+        {{-- Usado como componente: <x-app-layout> --}}
+        {{ $slot }}
+    @else
+        {{-- Usado como layout clásico: @extends('layouts.app') --}}
+        @yield('content')
+    @endisset
+</main>
         </div>
     </body>
 </html>
