@@ -30,25 +30,30 @@ class RolController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'NOM_ROL'     => 'required|string|max:100|unique:tbl_rol,NOM_ROL',
-            'DESCRIPCION' => 'nullable|string|max:255',
-        ]);
+{
+    // Validación
+    $request->validate([
+        'NOM_ROL'      => 'required|string|max:100|unique:tbl_rol,NOM_ROL',
+        'DESCRIPCION'  => 'nullable|string|max:255',
+    ]);
 
-        // Inserta UNA sola vez
-        $id = DB::table('tbl_rol')->insertGetId([
-            'NOM_ROL'     => trim($request->NOM_ROL),
-            // Si tu tabla tuviera la columna DESCRIPCION:
-            // 'DESCRIPCION' => trim((string) $request->DESCRIPCION),
-        ]);
+    // Asegurar que siempre mandamos algún valor a DESCRIPCION
+    $nom  = trim($request->input('NOM_ROL'));
+    $desc = (string) $request->input('DESCRIPCION', '');
 
-        BitacoraService::log('ROLES', 'CREAR', 'Nuevo rol: ' . trim($request->NOM_ROL));
+    // Insertar y obtener ID
+    $id = DB::table('tbl_rol')->insertGetId([
+        'NOM_ROL'     => $nom,
+        'DESCRIPCION' => $desc,   // 👈 ¡Se envía!
+    ]);
 
-        return redirect()
-            ->route('seguridad.roles.index')
-            ->with('success', 'Rol creado correctamente.');
-    }
+    \App\Services\BitacoraService::log('ROLES', 'CREAR', "Nuevo rol #{$id}: {$nom}");
+
+    return redirect()->route('seguridad.roles.index')
+        ->with('success', 'Rol creado correctamente.');
+}
+
+
 
     public function edit($id)
     {
@@ -58,46 +63,35 @@ class RolController extends Controller
         return view('seguridad.roles.edit', compact('rol'));
     }
 
-    public function update(\Illuminate\Http\Request $request, $id)
+    public function update(Request $request, $id)
 {
-    // Normalizar por si viene con espacios o null
-    $request->merge([
-        'NOM_ROL' => trim((string) $request->input('NOM_ROL')),
-    ]);
-
-    // Mensajes legibles (evita ver "validation.required")
-    $messages = [
-        'NOM_ROL.required' => 'El nombre del rol es obligatorio.',
-        'NOM_ROL.string'   => 'El nombre del rol debe ser texto.',
-        'NOM_ROL.max'      => 'El nombre del rol no debe superar 100 caracteres.',
-    ];
-
     // Validación
     $request->validate([
-        'NOM_ROL' => 'required|string|max:100',
-    ], $messages);
+        'NOM_ROL'      => 'required|string|max:100|unique:tbl_rol,NOM_ROL,' . $id . ',COD_ROL',
+        'DESCRIPCION'  => 'nullable|string|max:255',
+    ]);
 
-    // Trae el rol actual (para mostrar el cambio en la bitácora)
+    // Rol previo para bitácora
     $rolOld = DB::table('tbl_rol')->where('COD_ROL', $id)->first();
     abort_if(!$rolOld, 404, 'Rol no encontrado');
 
-    // Actualiza
+    $nom  = trim($request->input('NOM_ROL'));
+    $desc = (string) $request->input('DESCRIPCION', '');
+
+    // Actualizar
     DB::table('tbl_rol')->where('COD_ROL', $id)->update([
-        'NOM_ROL' => $request->input('NOM_ROL'),
+        'NOM_ROL'     => $nom,
+        'DESCRIPCION' => $desc,   // 👈 también aquí
     ]);
 
-    // Bitácora
     \App\Services\BitacoraService::log(
         'ROLES',
         'EDITAR',
-        "Rol #{$id}: {$rolOld->NOM_ROL} -> " . $request->input('NOM_ROL')
+        "Rol #{$id}: {$rolOld->NOM_ROL} -> {$nom}"
     );
 
-    return redirect()
-        ->route('seguridad.roles.index')
-        ->with('success', 'Rol actualizado.');
+    return redirect()->route('seguridad.roles.index')->with('success', 'Rol actualizado.');
 }
-
 
     public function destroy($id)
     {
