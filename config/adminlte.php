@@ -305,7 +305,7 @@ return [
 
     // Panel
     [
-        'text' => 'Panel',
+        'text' => 'Pagina de Inicio',
         'route' => 'dashboard',
         'icon'  => 'fas fa-tachometer-alt',
     ],
