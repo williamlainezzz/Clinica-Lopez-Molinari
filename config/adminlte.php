@@ -344,8 +344,18 @@ return [
         'text' => 'Seguridad',
         'icon' => 'fas fa-shield-alt',
         'submenu' => [
-            ['text' => 'Objetos',           'route' => 'objetos.index',          'icon' => 'far fa-circle'],
-            ['text' => 'Permisos',          'route' => 'permisos.index',         'icon' => 'far fa-circle'],
+             
+    [
+        'text'  => 'Objetos',
+        'route' => 'seguridad.objetos.index',
+        'icon'  => 'far fa-circle',
+    ],
+            
+    [
+        'text'  => 'Permisos',
+        'route' => 'seguridad.permisos.index',
+        'icon'  => 'far fa-circle',
+    ],
            ['text' => 'Usuarios',           'route' => 'usuarios.index',         'icon' => 'far fa-circle'],
            
            [

@@ -18,6 +18,9 @@ use App\Models\Usuario;
 
 use App\Http\Controllers\ProfileController;
 
+use App\Http\Controllers\ObjetoController;
+use App\Http\Controllers\PermisoController;
+
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
@@ -203,4 +206,17 @@ Route::get('/db-check', function () {
         'count' => $usuarios->count(),
         'data'  => $usuarios,
     ]);
+});
+
+
+Route::prefix('seguridad')->group(function () {
+    Route::get('/objetos', [ObjetoController::class,'index'])->name('seguridad.objetos.index');
+    Route::post('/objetos', [ObjetoController::class,'store'])->name('seguridad.objetos.store');
+    Route::delete('/objetos/{id}', [ObjetoController::class,'destroy'])->name('seguridad.objetos.destroy');
+});
+
+
+Route::prefix('seguridad')->group(function () {
+    Route::get('/permisos', [PermisoController::class,'index'])->name('seguridad.permisos.index');
+    Route::post('/permisos', [PermisoController::class,'update'])->name('seguridad.permisos.update');
 });
