@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Middleware;
+return abort(403, 'TEST: middleware activo');
 
 use Closure;
 use Illuminate\Http\Request;

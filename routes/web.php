@@ -214,23 +214,18 @@ Route::get('/db-check', function () {
 Route::prefix('seguridad')->group(function () {
     // Objetos
     Route::get('/objetos',  [ObjetoController::class,'index'])
-        ->middleware('permiso:VER')
-        ->name('seguridad.objetos.index');
+        ->middleware('permiso:VER')->name('seguridad.objetos.index');
 
     Route::post('/objetos', [ObjetoController::class,'store'])
-        ->middleware('permiso:EDITAR')
-        ->name('seguridad.objetos.store');
+        ->middleware('permiso:EDITAR')->name('seguridad.objetos.store');
 
     Route::delete('/objetos/{id}', [ObjetoController::class,'destroy'])
-        ->middleware('permiso:ELIMINAR')
-        ->name('seguridad.objetos.destroy');
+        ->middleware('permiso:ELIMINAR')->name('seguridad.objetos.destroy');
 
     // Permisos
     Route::get('/permisos',  [PermisoController::class,'index'])
-        ->middleware('permiso:VER')
-        ->name('seguridad.permisos.index');
+        ->middleware('permiso:VER')->name('seguridad.permisos.index');
 
     Route::post('/permisos', [PermisoController::class,'update'])
-        ->middleware('permiso:EDITAR')
-        ->name('seguridad.permisos.update');
+        ->middleware('permiso:EDITAR')->name('seguridad.permisos.update');
 });
