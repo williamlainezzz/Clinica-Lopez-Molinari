@@ -14,15 +14,6 @@
 @endsection
 
 @section('content')
-  {{-- Fallbacks para que nunca truene si el controlador no inyecta alguna variable --}}
-  @php
-      $roles           = $roles           ?? collect();
-      $objetos         = $objetos         ?? collect();
-      $permisos        = $permisos        ?? collect();
-      $selectedRoleId  = isset($selectedRoleId) ? (int)$selectedRoleId
-                          : (int) request('rol_id', optional($roles->first())->COD_ROL);
-  @endphp
-
   @if(session('ok'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
       <i class="fas fa-check-circle mr-1"></i> {{ session('ok') }}
@@ -36,16 +27,14 @@
         <label class="mr-2 mb-0">Rol:</label>
         <select name="rol_id" class="form-control mr-3" onchange="this.form.submit()">
           @foreach($roles as $r)
-            <option value="{{ $r->COD_ROL }}" {{ (int)$selectedRoleId === (int)$r->COD_ROL ? 'selected' : '' }}>
+            <option value="{{ $r->COD_ROL }}" {{ (int)request('rol_id', $rolId) === (int)$r->COD_ROL ? 'selected' : '' }}>
               {{ $r->NOM_ROL }}
             </option>
           @endforeach
         </select>
 
         <div class="input-group ml-auto" style="max-width:320px;">
-          <div class="input-group-prepend">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
-          </div>
+          <div class="input-group-prepend"><span class="input-group-text"><i class="fas fa-search"></i></span></div>
           <input id="filtro" class="form-control" placeholder="Filtrar objetos...">
         </div>
       </form>
@@ -53,7 +42,7 @@
 
     <form method="POST" action="{{ route('seguridad.permisos.update') }}">
       @csrf
-      <input type="hidden" name="rol_id" value="{{ $selectedRoleId }}">
+      <input type="hidden" name="rol_id" value="{{ (int)request('rol_id', $rolId) }}">
 
       <div class="table-responsive">
         <table class="table table-sm table-hover mb-0" id="tablaPermisos">
@@ -66,39 +55,34 @@
               <th class="text-center" style="width:10%">Eliminar</th>
             </tr>
           </thead>
-
           <tbody>
             @foreach($objetos as $o)
-              @php
-                // $permisos es un mapa: [rolId] => [objId] => registro con columnas VER/CREAR/EDITAR/ELIMINAR
-                $p = optional(optional($permisos->get((int)$selectedRoleId))->get($o->COD_OBJETO));
-              @endphp
-
+              @php $p = optional($permisosPorObjeto->get($o->COD_OBJETO)); @endphp
               <tr>
                 <td class="font-weight-600">{{ $o->NOM_OBJETO }}</td>
 
                 @foreach (['VER','CREAR','EDITAR','ELIMINAR'] as $flag)
                   @php
-                    $isOn   = $p && (int)($p->$flag ?? 0) === 1;
-                    $name   = "permisos[{$o->COD_OBJETO}][$flag]";
-                    $idSw   = "sw_{$o->COD_OBJETO}_{$flag}";
+                    $checked = $p && (int)($p->$flag ?? 0) === 1;
+                    $name = "permisos[{$o->COD_OBJETO}][{$flag}]";
                   @endphp
                   <td class="text-center">
-                    {{-- IMPORTANTE: el hidden manda "0" cuando el switch está apagado --}}
+                    {{-- Hidden = 0 garantiza que el campo SIEMPRE llegue aunque el switch esté apagado --}}
                     <input type="hidden" name="{{ $name }}" value="0">
-                    <div class="custom-control custom-switch">
+                    <div class="custom-control custom-switch d-inline-block">
                       <input
                         type="checkbox"
                         class="custom-control-input"
-                        id="{{ $idSw }}"
+                        id="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"
                         name="{{ $name }}"
                         value="1"
-                        {{ $isOn ? 'checked' : '' }}
+                        {{ $checked ? 'checked' : '' }}
                       >
-                      <label class="custom-control-label" for="{{ $idSw }}"></label>
+                      <label class="custom-control-label" for="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"></label>
                     </div>
                   </td>
                 @endforeach
+
               </tr>
             @endforeach
           </tbody>
@@ -117,16 +101,11 @@
 @push('js')
 <script>
   // Filtro de objetos en la tabla
-  (function () {
-    var input = document.getElementById('filtro');
-    if (!input) return;
-    input.addEventListener('input', function(){
-      var q = (this.value || '').toLowerCase();
-      document.querySelectorAll('#tablaPermisos tbody tr').forEach(function(tr){
-        var txt = tr.firstElementChild ? tr.firstElementChild.innerText.toLowerCase() : '';
-        tr.style.display = txt.indexOf(q) !== -1 ? '' : 'none';
-      });
+  document.getElementById('filtro').addEventListener('input', function(){
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#tablaPermisos tbody tr').forEach(tr=>{
+      tr.style.display = tr.firstElementChild.innerText.toLowerCase().includes(q) ? '' : 'none';
     });
-  })();
+  });
 </script>
 @endpush
