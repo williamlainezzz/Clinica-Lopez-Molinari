@@ -208,15 +208,29 @@ Route::get('/db-check', function () {
     ]);
 });
 
-
+// =========================
+//  Rutas de Seguridad: Objetos y Permisos
+// =========================
 Route::prefix('seguridad')->group(function () {
-    Route::get('/objetos', [ObjetoController::class,'index'])->name('seguridad.objetos.index');
-    Route::post('/objetos', [ObjetoController::class,'store'])->name('seguridad.objetos.store');
-    Route::delete('/objetos/{id}', [ObjetoController::class,'destroy'])->name('seguridad.objetos.destroy');
-});
+    // Objetos
+    Route::get('/objetos',  [ObjetoController::class,'index'])
+        ->middleware('permiso:VER')
+        ->name('seguridad.objetos.index');
 
+    Route::post('/objetos', [ObjetoController::class,'store'])
+        ->middleware('permiso:EDITAR')
+        ->name('seguridad.objetos.store');
 
-Route::prefix('seguridad')->group(function () {
-    Route::get('/permisos', [PermisoController::class,'index'])->name('seguridad.permisos.index');
-    Route::post('/permisos', [PermisoController::class,'update'])->name('seguridad.permisos.update');
+    Route::delete('/objetos/{id}', [ObjetoController::class,'destroy'])
+        ->middleware('permiso:ELIMINAR')
+        ->name('seguridad.objetos.destroy');
+
+    // Permisos
+    Route::get('/permisos',  [PermisoController::class,'index'])
+        ->middleware('permiso:VER')
+        ->name('seguridad.permisos.index');
+
+    Route::post('/permisos', [PermisoController::class,'update'])
+        ->middleware('permiso:EDITAR')
+        ->name('seguridad.permisos.update');
 });
