@@ -59,6 +59,15 @@ class CheckObjetoPermission
 
             // Si no hay objeto registrado para esta URL, o está inactivo -> deja pasar
             if (!$match || (int)$match->ESTADO_OBJETO === 0) {
+                logger()->info('permiso-debug-allow', [
+  'path'   => $request->path(),
+  'rolId'  => $rolId,
+  'obj'    => $match ? $match->NOM_OBJETO : null,
+  'urlObj' => $match ? $match->URL_OBJETO : null,
+  'accion' => $accion,
+  'ok'     => isset($ok) ? $ok : null,
+]);
+
                 return $next($request);
             }
 
@@ -71,9 +80,18 @@ class CheckObjetoPermission
             );
 
             $ok = $res && (int)$res->ok === 1;
-            if (!$ok) {
-                abort(403, 'No tienes permiso para acceder a esta pantalla.');
-            }
+           if (str_starts_with($path, '/seguridad') && (!$match || (int)$match->ESTADO_OBJETO === 0)) {
+    logger()->info('permiso-debug-deny', [
+        'path'   => $request->path(),
+        'rolId'  => $rolId,
+        'obj'    => $match ? $match->NOM_OBJETO : null,
+        'urlObj' => $match ? $match->URL_OBJETO : null,
+        'accion' => $accion,
+        'ok'     => null,
+        'reason' => 'no-objeto-o-inactivo',
+    ]);
+    abort(403, 'Objeto no registrado o inactivo');
+}
 
             return $next($request);
         } catch (Throwable $e) {
