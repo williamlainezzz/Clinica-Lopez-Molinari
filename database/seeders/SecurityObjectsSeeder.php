@@ -18,14 +18,24 @@ class SecurityObjectsSeeder extends Seeder
         ];
 
         foreach ($objetos as $obj) {
-            DB::table('tbl_objeto')->updateOrInsert(
-                ['NOM_OBJETO' => $obj['NOM_OBJETO']],
-                [
-                    'DESC_OBJETO'   => $obj['DESC_OBJETO'],
-                    'URL_OBJETO'    => $obj['URL_OBJETO'],
-                    'ESTADO_OBJETO' => $obj['ESTADO_OBJETO'],
-                ]
-            );
+            // Si existe por NOMBRE o por URL, actualiza esa fila; si no, inserta
+            $existente = DB::table('tbl_objeto')
+                ->where('NOM_OBJETO', $obj['NOM_OBJETO'])
+                ->orWhere('URL_OBJETO', $obj['URL_OBJETO'])
+                ->first();
+
+            if ($existente) {
+                DB::table('tbl_objeto')
+                    ->where('COD_OBJETO', $existente->COD_OBJETO)
+                    ->update([
+                        'NOM_OBJETO'    => $obj['NOM_OBJETO'],
+                        'DESC_OBJETO'   => $obj['DESC_OBJETO'],
+                        'URL_OBJETO'    => $obj['URL_OBJETO'],
+                        'ESTADO_OBJETO' => $obj['ESTADO_OBJETO'],
+                    ]);
+            } else {
+                DB::table('tbl_objeto')->insert($obj);
+            }
         }
     }
 }
