@@ -16,7 +16,7 @@ use App\Http\Controllers\Seguridad\UsuarioController;
 // Perfil
 use App\Http\Controllers\ProfileController;
 
-// Seguridad: Objetos / Permisos (están en App\Http\Controllers\*)
+// Seguridad: Objetos / Permisos
 use App\Http\Controllers\ObjetoController;
 use App\Http\Controllers\PermisoController;
 
@@ -29,7 +29,7 @@ use App\Models\Usuario;
 Route::get('/', fn() => view('welcome'))->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 /* =========================
 |  Export (demo CSV)
@@ -102,7 +102,7 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('guest')->name('password.store');
 
 /* =========================
-|  2FA por Email (solo invitado)
+|  2FA por Email (guest)
 ========================= */
 Route::middleware('guest')->group(function () {
     Route::get('/two-factor-challenge',  [TwoFactorEmailController::class, 'create'])->name('two-factor.challenge');
@@ -112,7 +112,7 @@ Route::middleware('guest')->group(function () {
 });
 
 /* =========================
-|  Perfil (autenticado)
+|  Perfil (auth)
 ========================= */
 Route::middleware('auth')->group(function () {
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
@@ -121,9 +121,8 @@ Route::middleware('auth')->group(function () {
 });
 
 /* =========================
-|  Seguridad (CONTROLADORES) bajo auth
-|  ⚠️ IMPORTANTE: NO hay vistas estáticas de /seguridad/objetos o /seguridad/permisos
-|  aquí. Todo va con controladores + middleware `permiso:ACCION`.
+|  Seguridad (CONTROLADORES) bajo auth + permiso
+|  ⚠️ No hay vistas estáticas tipo Route::view('/seguridad/…').
 ========================= */
 Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(function () {
 
@@ -153,13 +152,13 @@ Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(func
     Route::delete('/roles/{id}',   [RolController::class, 'destroy'])
         ->middleware('permiso:ELIMINAR')->name('roles.destroy');
 
-    /* ---- Usuarios (sin objeto de permisos específico; queda solo con auth) ---- */
-    Route::get('/usuarios',                [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::get('/usuarios/crear',         [UsuarioController::class, 'create'])->name('usuarios.create');
-    Route::post('/usuarios',              [UsuarioController::class, 'store'])->name('usuarios.store');
-    Route::get('/usuarios/{id}/editar',   [UsuarioController::class, 'edit'])->name('usuarios.edit');
-    Route::put('/usuarios/{id}',          [UsuarioController::class, 'update'])->name('usuarios.update');
-    Route::delete('/usuarios/{id}',       [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+    /* ---- Usuarios (queda solo con auth) ---- */
+    Route::get('/usuarios',              [UsuarioController::class, 'index'])->name('usuarios.index');
+    Route::get('/usuarios/crear',       [UsuarioController::class, 'create'])->name('usuarios.create');
+    Route::post('/usuarios',            [UsuarioController::class, 'store'])->name('usuarios.store');
+    Route::get('/usuarios/{id}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');
+    Route::put('/usuarios/{id}',        [UsuarioController::class, 'update'])->name('usuarios.update');
+    Route::delete('/usuarios/{id}',     [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
 
     /* ---- Objetos (objeto: SEGURIDAD_OBJETOS) ---- */
     Route::get('/objetos',  [ObjetoController::class,'index'])
@@ -177,18 +176,17 @@ Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(func
 });
 
 /* =========================
-|  Alias de compatibilidad (si alguien usa usuarios.index "viejo")
+|  Alias de compatibilidad
 ========================= */
 Route::middleware('auth')->get('/alias/usuarios', function () {
     return redirect()->route('seguridad.usuarios.index');
 })->name('usuarios.index');
 
 /* =========================
-|  Diagnóstico rápido (dejar público o mover a auth si gustas)
+|  Diagnóstico rápido
 ========================= */
 Route::get('/db-check', function () {
     $usuarios = Usuario::with(['persona', 'rol'])->limit(5)->get();
-
     return response()->json([
         'ok'    => true,
         'count' => $usuarios->count(),
