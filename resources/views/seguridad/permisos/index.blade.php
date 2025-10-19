@@ -61,27 +61,26 @@
     <tr>
       <td class="font-weight-600">{{ $o->NOM_OBJETO }}</td>
 
-      {{-- ✅ Reemplaza este foreach COMPLETO por el bloque con hidden+checkbox --}}
       @foreach (['VER','CREAR','EDITAR','ELIMINAR'] as $flag)
-        @php
-          $checked = $p && (int)($p->$flag ?? 0) === 1;
-          $name = "permisos[{$o->COD_OBJETO}][{$flag}]";
-        @endphp
-        <td class="text-center">
-          <input type="hidden" name="{{ $name }}" value="0">
-          <div class="custom-control custom-switch d-inline-block">
-            <input
-              type="checkbox"
-              class="custom-control-input"
-              id="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"
-              name="{{ $name }}"
-              value="1"
-              {{ $checked ? 'checked' : '' }}
-            >
-            <label class="custom-control-label" for="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"></label>
-          </div>
-        </td>
-      @endforeach
+  @php
+    $checked = $p && (int)($p->$flag ?? 0) === 1;
+    $name = "permisos[{$o->COD_OBJETO}][{$flag}]";
+  @endphp
+  <td class="text-center">
+    <input type="hidden" name="{{ $name }}" value="0">
+    <div class="custom-control custom-switch d-inline-block">
+      <input
+        type="checkbox"
+        class="custom-control-input"
+        id="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"
+        name="{{ $name }}"
+        value="1"
+        {{ $checked ? 'checked' : '' }}
+      >
+      <label class="custom-control-label" for="sw_{{ $o->COD_OBJETO }}_{{ $flag }}"></label>
+    </div>
+  </td>
+@endforeach
 
     </tr>
   @endforeach

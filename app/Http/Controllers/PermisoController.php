@@ -9,53 +9,54 @@ class PermisoController extends Controller
 {
     public function index(Request $request)
     {
-        // Traer roles para el <select> (ajusta NOMBRE/IDs a tu esquema)
+        // Catálogo de roles para el <select>
         $roles = DB::table('tbl_rol')
             ->select('COD_ROL','NOM_ROL')
             ->orderBy('NOM_ROL')
             ->get();
 
-        // Rol seleccionado (por defecto el primero)
-        $rolId = (int)($request->query('rol_id') ?? optional($roles->first())->COD_ROL ?? 1);
+        // Rol seleccionado (o el primero disponible)
+        $rolId = (int) ($request->query('rol_id') ?? ($roles->first()->COD_ROL ?? 1));
 
         // Objetos activos
         $objetos = DB::table('tbl_objeto')
             ->select('COD_OBJETO','NOM_OBJETO','URL_OBJETO','ESTADO_OBJETO')
-            ->whereRaw('IFNULL(ESTADO_OBJETO,1) <> 0')
+            ->where('ESTADO_OBJETO','<>',0)
             ->orderBy('NOM_OBJETO')
             ->get();
 
-        // Permisos existentes para el rol
+        // Permisos del rol seleccionado, indexados por objeto
         $rows = DB::table('tbl_permiso')
             ->where('FK_COD_ROL', $rolId)
             ->get();
 
-        // Mapear por objeto para lookup rápido en la vista
-        $permisosPorObjeto = $rows->keyBy('FK_COD_OBJETO');
+        // Estructura que consume el Blade: $permisos[rolId][cod_objeto] = fila permiso
+        $permisos = collect([$rolId => $rows->keyBy('FK_COD_OBJETO')]);
 
-        // IMPORTANTE: usa la ruta real de la vista
-        return view('seguridad.permisos.index', compact(
-            'roles','rolId','objetos','permisosPorObjeto'
-        ));
+        // 👇 Usa la ruta/nombre de vista correcto (carpeta seguridad/permisos)
+        return view('seguridad.permisos.index', compact('roles','rolId','objetos','permisos'));
     }
 
     public function update(Request $request)
     {
         $data = $request->validate([
-            'rol_id'   => 'required|integer',
-            'permisos' => 'array',
+            'rol_id'              => 'required|integer',
+            'permisos'            => 'array',
+            'permisos.*.VER'      => 'nullable|in:0,1',
+            'permisos.*.CREAR'    => 'nullable|in:0,1',
+            'permisos.*.EDITAR'   => 'nullable|in:0,1',
+            'permisos.*.ELIMINAR' => 'nullable|in:0,1',
         ]);
 
         $rolId    = (int) $data['rol_id'];
         $permisos = $data['permisos'] ?? [];
 
         DB::transaction(function () use ($rolId, $permisos) {
-            // 1) Actualiza exactamente lo que llegó (gracias a los hidden=0, siempre llega algo)
-            foreach ($permisos as $codObjeto => $flags) {
-                $ver      = isset($flags['VER'])      ? (int)$flags['VER']      : 0;
-                $crear    = isset($flags['CREAR'])    ? (int)$flags['CREAR']    : 0;
-                $editar   = isset($flags['EDITAR'])   ? (int)$flags['EDITAR']   : 0;
-                $eliminar = isset($flags['ELIMINAR']) ? (int)$flags['ELIMINAR'] : 0;
+            foreach ($permisos as $codObjeto => $valores) {
+                $ver      = (int)($valores['VER'] ?? 0);
+                $crear    = (int)($valores['CREAR'] ?? 0);
+                $editar   = (int)($valores['EDITAR'] ?? 0);
+                $eliminar = (int)($valores['ELIMINAR'] ?? 0);
 
                 DB::table('tbl_permiso')->updateOrInsert(
                     ['FK_COD_ROL' => $rolId, 'FK_COD_OBJETO' => (int)$codObjeto],
@@ -69,8 +70,7 @@ class PermisoController extends Controller
                 );
             }
 
-            // 2) (OPCIONAL) poner en 0 todo objeto que no vino en el form.
-            //    Úsalo si decides NO enviar hidden inputs. Si mantienes los hidden, no hace falta.
+            // Si quieres que lo NO enviado quede en 0, descomenta este bloque:
             // $idsEnForm = array_map('intval', array_keys($permisos));
             // DB::table('tbl_permiso')
             //     ->where('FK_COD_ROL', $rolId)
@@ -78,6 +78,6 @@ class PermisoController extends Controller
             //     ->update(['VER'=>0,'CREAR'=>0,'EDITAR'=>0,'ELIMINAR'=>0]);
         });
 
-        return back()->with('ok', 'Permisos actualizados');
+        return back()->with('ok','Permisos actualizados');
     }
 }
