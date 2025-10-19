@@ -9,8 +9,6 @@ class SecurityObjectsSeeder extends Seeder
 {
     public function run(): void
     {
-        $now = now();
-
         $objetos = [
             ['NOM_OBJETO' => 'SEGURIDAD_ROLES',     'DESC_OBJETO' => 'Gestión de roles',        'URL_OBJETO' => '/seguridad/roles',     'ESTADO_OBJETO' => 1],
             ['NOM_OBJETO' => 'SEGURIDAD_PERMISOS',  'DESC_OBJETO' => 'Matriz de permisos',      'URL_OBJETO' => '/seguridad/permisos',  'ESTADO_OBJETO' => 1],
@@ -23,10 +21,9 @@ class SecurityObjectsSeeder extends Seeder
             DB::table('tbl_objeto')->updateOrInsert(
                 ['NOM_OBJETO' => $obj['NOM_OBJETO']],
                 [
-                    'DESC_OBJETO'  => $obj['DESC_OBJETO'],
-                    'URL_OBJETO'   => $obj['URL_OBJETO'],
-                    'ESTADO_OBJETO'=> $obj['ESTADO_OBJETO'],
-                    'UPDATED_AT'   => $now,
+                    'DESC_OBJETO'   => $obj['DESC_OBJETO'],
+                    'URL_OBJETO'    => $obj['URL_OBJETO'],
+                    'ESTADO_OBJETO' => $obj['ESTADO_OBJETO'],
                 ]
             );
         }
