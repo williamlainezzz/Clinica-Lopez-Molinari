@@ -6,12 +6,6 @@ return [
     |--------------------------------------------------------------------------
     | Title
     |--------------------------------------------------------------------------
-    |
-    | Here you can change the default title of your admin panel.
-    |
-    | For detailed instructions you can look the title section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'title' => 'Complejo Dental Lopez Molinari',
@@ -22,12 +16,6 @@ return [
     |--------------------------------------------------------------------------
     | Favicon
     |--------------------------------------------------------------------------
-    |
-    | Here you can activate the favicon.
-    |
-    | For detailed instructions you can look the favicon section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'use_ico_only' => false,
@@ -37,14 +25,6 @@ return [
     |--------------------------------------------------------------------------
     | Google Fonts
     |--------------------------------------------------------------------------
-    |
-    | Here you can allow or not the use of external google fonts. Disabling the
-    | google fonts may be useful if your admin panel internet access is
-    | restricted somehow.
-    |
-    | For detailed instructions you can look the google fonts section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'google_fonts' => [
@@ -55,20 +35,14 @@ return [
     |--------------------------------------------------------------------------
     | Admin Panel Logo
     |--------------------------------------------------------------------------
-    |
-    | Here you can change the logo of your admin panel.
-    |
-    | For detailed instructions you can look the logo section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
-   'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block">
+    'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block">
   <b>Complejo Dental</b><br>López Molinari
 </span>',
 
     'logo_img' => 'images/logo_clinica.avif',
-   'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
     'logo_img_alt' => 'Clínica Dental',
@@ -77,13 +51,6 @@ return [
     |--------------------------------------------------------------------------
     | Authentication Logo
     |--------------------------------------------------------------------------
-    |
-    | Here you can setup an alternative logo to use on your login and register
-    | screens. When disabled, the admin panel logo will be used instead.
-    |
-    | For detailed instructions you can look the auth logo section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'auth_logo' => [
@@ -101,15 +68,6 @@ return [
     |--------------------------------------------------------------------------
     | Preloader Animation
     |--------------------------------------------------------------------------
-    |
-    | Here you can change the preloader animation configuration. Currently, two
-    | modes are supported: 'fullscreen' for a fullscreen preloader animation
-    | and 'cwrapper' to attach the preloader animation into the content-wrapper
-    | element and avoid overlapping it with the sidebars and the top navbar.
-    |
-    | For detailed instructions you can look the preloader section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'preloader' => [
@@ -128,12 +86,6 @@ return [
     |--------------------------------------------------------------------------
     | User Menu
     |--------------------------------------------------------------------------
-    |
-    | Here you can activate and change the user menu.
-    |
-    | For detailed instructions you can look the user menu section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'usermenu_enabled' => true,
@@ -147,12 +99,6 @@ return [
     |--------------------------------------------------------------------------
     | Layout
     |--------------------------------------------------------------------------
-    |
-    | Here we change the layout of your admin panel.
-    |
-    | For detailed instructions you can look the layout section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
-    |
     */
 
     'layout_topnav' => null,
@@ -166,12 +112,6 @@ return [
     |--------------------------------------------------------------------------
     | Authentication Views Classes
     |--------------------------------------------------------------------------
-    |
-    | Here you can change the look and behavior of the authentication views.
-    |
-    | For detailed instructions you can look the auth classes section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
-    |
     */
 
     'classes_auth_card' => 'card-outline card-primary',
@@ -185,12 +125,6 @@ return [
     |--------------------------------------------------------------------------
     | Admin Panel Classes
     |--------------------------------------------------------------------------
-    |
-    | Here you can change the look and behavior of the admin panel.
-    |
-    | For detailed instructions you can look the admin panel classes here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
-    |
     */
 
     'classes_body' => '',
@@ -209,12 +143,6 @@ return [
     |--------------------------------------------------------------------------
     | Sidebar
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the sidebar of the admin panel.
-    |
-    | For detailed instructions you can look the sidebar section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
-    |
     */
 
     'sidebar_mini' => 'lg',
@@ -231,12 +159,6 @@ return [
     |--------------------------------------------------------------------------
     | Control Sidebar (Right Sidebar)
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the right sidebar aka control sidebar of the admin panel.
-    |
-    | For detailed instructions you can look the right sidebar section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Layout-and-Styling-Configuration
-    |
     */
 
     'right_sidebar' => false,
@@ -251,12 +173,6 @@ return [
     |--------------------------------------------------------------------------
     | URLs
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the url settings of the admin panel.
-    |
-    | For detailed instructions you can look the urls section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Basic-Configuration
-    |
     */
 
     'use_route_url' => false,
@@ -273,16 +189,6 @@ return [
     |--------------------------------------------------------------------------
     | Laravel Asset Bundling
     |--------------------------------------------------------------------------
-    |
-    | Here we can enable the Laravel Asset Bundling option for the admin panel.
-    | Currently, the next modes are supported: 'mix', 'vite' and 'vite_js_only'.
-    | When using 'vite_js_only', it's expected that your CSS is imported using
-    | JavaScript. Typically, in your application's 'resources/js/app.js' file.
-    | If you are not using any of these, leave it as 'false'.
-    |
-    | For detailed instructions you can look the asset bundling section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Other-Configuration
-    |
     */
 
     'laravel_asset_bundling' => false,
@@ -293,133 +199,127 @@ return [
     |--------------------------------------------------------------------------
     | Menu Items
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the sidebar/top navigation of the admin panel.
-    |
-    | For detailed instructions you can look here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
-    |
     */
 
     'menu' => [
 
-    // Panel
-    [
-        'text' => 'Welcome',
-        'route' => 'dashboard',
-        'icon'  => 'fas fa-tachometer-alt',
-    ],
-
-    // AGENDA
-    ['header' => ''],
-    [
-        'text' => 'Agenda',
-        'icon' => 'far fa-calendar-check',
-        'submenu' => [
-            ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
-            ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
-          //  ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
-        ],
-    ],
-
-    // PERSONAS & USUARIOS
-    [
-    'header' => '',
-],
-[
-    'text' => 'Personas & Usuarios',
-    'icon' => 'fas fa-users',
-    'submenu' => [
-        ['text' => 'Doctores',        'route' => 'doctores.index',        'icon' => 'far fa-circle'],
-        ['text' => 'Pacientes',       'route' => 'pacientes.index',       'icon' => 'far fa-circle'],
-        ['text' => 'Recepcionistas',  'route' => 'recepcionistas.index',  'icon' => 'far fa-circle'],
-        ['text' => 'Administradores', 'route' => 'administradores.index', 'icon' => 'far fa-circle'],
-    ],
-],
-
-
-    // SEGURIDAD
-    ['header' => ''], //Aqui se agrega el nombre entre los titulos en todos los header
-    [
-        'text' => 'Seguridad',
-        'icon' => 'fas fa-shield-alt',
-        'submenu' => [
-             
-    [
-        'text'  => 'Objetos',
-        'route' => 'seguridad.objetos.index',
-        'icon'  => 'far fa-circle',
-    ],
-            
-    [
-        'text'  => 'Permisos',
-        'route' => 'seguridad.permisos.index',
-        'icon'  => 'far fa-circle',
-    ],
-           ['text' => 'Usuarios',           'route' => 'usuarios.index',         'icon' => 'far fa-circle'],
-           
-           [
-                'text'  => 'Roles',
-                'route' => 'seguridad.roles.index',
-                'icon'  => 'far fa-circle',
-            ],
-            [
-                'text'  => 'Bitácora',
-                'route' => 'seguridad.bitacora.index',
-                'icon'  => 'far fa-circle',
-            ],
-            [
-                'text'  => 'Backups',
-                'route' => 'seguridad.backups.index',
-                'icon'  => 'far fa-circle',
-            ],
-        ],
-    ],
-
-    // REPORTES
-     ['header' => ''],
-    [
-    'text'  => 'Reportes',
-    'icon'  => 'fas fa-chart-bar',
-    'submenu' => [
-
-        // Subbotón 1: contiene las 6 opciones
+        // Panel
         [
-            'text'  => 'Tipos de reporte',
-            'icon'  => 'far fa-folder-open',
+            'text' => 'Welcome',
+            'route' => 'dashboard',
+            'icon'  => 'fas fa-tachometer-alt',
+        ],
+
+        // AGENDA
+        ['header' => ''],
+        [
+            'text' => 'Agenda',
+            'icon' => 'far fa-calendar-check',
             'submenu' => [
-                ['text' => 'Citas por rango de fechas',  'route' => 'reportes.citas_rango',       'icon' => 'far fa-dot-circle'],
-                ['text' => 'Citas por estado',           'route' => 'reportes.citas_estado',      'icon' => 'far fa-dot-circle'],
-                ['text' => 'Agenda por doctor',          'route' => 'reportes.agenda_doctor',     'icon' => 'far fa-dot-circle'],
-                ['text' => 'Pacientes activos/inactivos','route' => 'reportes.pacientes_estado',  'icon' => 'far fa-dot-circle'],
-                ['text' => 'Usuarios por rol',           'route' => 'reportes.usuarios_rol',      'icon' => 'far fa-dot-circle'],
-                ['text' => 'Citas no atendidas/ausencia','route' => 'reportes.citas_no_atendidas','icon' => 'far fa-dot-circle'],
+                ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
+                ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
+                // ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
             ],
         ],
 
-        // Subbotón 2: Procesos (aparte, sin submenu)
+        // PERSONAS & USUARIOS
         [
-            'text'  => 'Procesos',
-            'route' => 'reportes.procesos',
-            'icon'  => 'far fa-circle',
+            'header' => '',
         ],
+        [
+            'text' => 'Personas & Usuarios',
+            'icon' => 'fas fa-users',
+            'submenu' => [
+                ['text' => 'Doctores',        'route' => 'doctores.index',        'icon' => 'far fa-circle'],
+                ['text' => 'Pacientes',       'route' => 'pacientes.index',       'icon' => 'far fa-circle'],
+                ['text' => 'Recepcionistas',  'route' => 'recepcionistas.index',  'icon' => 'far fa-circle'],
+                ['text' => 'Administradores', 'route' => 'administradores.index', 'icon' => 'far fa-circle'],
+            ],
+        ],
+
+        // SEGURIDAD
+        ['header' => ''],
+        [
+            'text'    => 'Seguridad',
+            'icon'    => 'fas fa-shield-alt',
+            'can'     => 'seguridad.menu', // ← controla visibilidad del grupo completo
+            'submenu' => [
+
+                [
+                    'text'  => 'Objetos',
+                    'route' => 'seguridad.objetos.index',
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.objetos.ver',
+                ],
+                [
+                    'text'  => 'Permisos',
+                    'route' => 'seguridad.permisos.index',
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.permisos.ver',
+                ],
+                [
+                    'text'  => 'Usuarios',
+                    'route' => 'usuarios.index', // alias a seguridad.usuarios.index
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.usuarios.ver', // si decides controlar Usuarios también
+                ],
+                [
+                    'text'  => 'Roles',
+                    'route' => 'seguridad.roles.index',
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.roles.ver',
+                ],
+                [
+                    'text'  => 'Bitácora',
+                    'route' => 'seguridad.bitacora.index',
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.bitacora.ver',
+                ],
+                [
+                    'text'  => 'Backups',
+                    'route' => 'seguridad.backups.index',
+                    'icon'  => 'far fa-circle',
+                    'can'   => 'seguridad.backups.ver',
+                ],
+            ],
+        ],
+
+        // REPORTES
+        ['header' => ''],
+        [
+            'text'  => 'Reportes',
+            'icon'  => 'fas fa-chart-bar',
+            'submenu' => [
+
+                // Subbotón 1: contiene las 6 opciones
+                [
+                    'text'  => 'Tipos de reporte',
+                    'icon'  => 'far fa-folder-open',
+                    'submenu' => [
+                        ['text' => 'Citas por rango de fechas',  'route' => 'reportes.citas_rango',       'icon' => 'far fa-dot-circle'],
+                        ['text' => 'Citas por estado',           'route' => 'reportes.citas_estado',      'icon' => 'far fa-dot-circle'],
+                        ['text' => 'Agenda por doctor',          'route' => 'reportes.agenda_doctor',     'icon' => 'far fa-dot-circle'],
+                        ['text' => 'Pacientes activos/inactivos','route' => 'reportes.pacientes_estado',  'icon' => 'far fa-dot-circle'],
+                        ['text' => 'Usuarios por rol',           'route' => 'reportes.usuarios_rol',      'icon' => 'far fa-dot-circle'],
+                        ['text' => 'Citas no atendidas/ausencia','route' => 'reportes.citas_no_atendidas','icon' => 'far fa-dot-circle'],
+                    ],
+                ],
+
+                // Subbotón 2: Procesos (aparte, sin submenu)
+                [
+                    'text'  => 'Procesos',
+                    'route' => 'reportes.procesos',
+                    'icon'  => 'far fa-circle',
+                ],
+            ],
+        ],
+
     ],
-],
-
-
-],
-
 
     /*
     |--------------------------------------------------------------------------
     | Menu Filters
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the menu filters of the admin panel.
-    |
-    | For detailed instructions you can look the menu filters section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
-    |
     */
 
     'filters' => [
@@ -436,12 +336,6 @@ return [
     |--------------------------------------------------------------------------
     | Plugins Initialization
     |--------------------------------------------------------------------------
-    |
-    | Here we can modify the plugins used inside the admin panel.
-    |
-    | For detailed instructions you can look the plugins section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Plugins-Configuration
-    |
     */
 
     'plugins' => [
@@ -521,13 +415,6 @@ return [
     |--------------------------------------------------------------------------
     | IFrame
     |--------------------------------------------------------------------------
-    |
-    | Here we change the IFrame mode configuration. Note these changes will
-    | only apply to the view that extends and enable the IFrame mode.
-    |
-    | For detailed instructions you can look the iframe mode section here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/IFrame-Mode-Configuration
-    |
     */
 
     'iframe' => [
@@ -554,16 +441,7 @@ return [
     |--------------------------------------------------------------------------
     | Livewire
     |--------------------------------------------------------------------------
-    |
-    | Here we can enable the Livewire support.
-    |
-    | For detailed instructions you can look the livewire here:
-    | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Other-Configuration
-    |
     */
 
     'livewire' => false,
 ];
-
-
-
