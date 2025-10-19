@@ -10,46 +10,73 @@ use Illuminate\Support\Facades\DB;
 
 class PermisoController extends Controller
 {
-    public function index(Request $req)
-    {
-        $roles   = Rol::orderBy('NOM_ROL')->get();
-        $objetos = Objeto::orderBy('NOM_OBJETO')->get();
+   public function index(Request $request)
+{
+    $rolId = (int)($request->query('rol_id') ?? 1); // o el que selecciones
+    $objetos = \DB::table('tbl_objeto')
+        ->where('ESTADO_OBJETO', '<>', 0)->get();
 
-        // permisos existentes como [rol][obj] => flags
-        $permisos = Permiso::get()->groupBy('FK_COD_ROL')->map(function($g){
-            return $g->keyBy('FK_COD_OBJETO');
-        });
+    $rows = \DB::table('tbl_permiso')
+        ->where('FK_COD_ROL', $rolId)
+        ->get();
 
-        return view('seguridad.permisos.index', compact('roles','objetos','permisos'));
-    }
+    $permisosPorObjeto = $rows->keyBy('FK_COD_OBJETO');
 
-    public function update(Request $req)
-    {
-        $data = $req->validate([
-            'rol_id' => 'required|integer',
-            'permisos' => 'array' // permisos[obj_id] = [VER,CREAR,EDITAR,ELIMINAR]
-        ]);
+    return view('permisos.index', compact('objetos','permisosPorObjeto','rolId'));
+}
 
-        DB::transaction(function() use ($data){
-            $rol = (int)$data['rol_id'];
-            foreach (($data['permisos'] ?? []) as $objId => $flags) {
-                $ver  = isset($flags['VER']) ? 1 : 0;
-                $cre  = isset($flags['CREAR']) ? 1 : 0;
-                $edi  = isset($flags['EDITAR']) ? 1 : 0;
-                $eli  = isset($flags['ELIMINAR']) ? 1 : 0;
+    public function update(Request $request)
+{
+    $data = $request->validate([
+        'rol_id'                 => 'required|integer',
+        'permisos'               => 'array',
+        'permisos.*.VER'         => 'nullable|in:0,1',
+        'permisos.*.CREAR'       => 'nullable|in:0,1',
+        'permisos.*.EDITAR'      => 'nullable|in:0,1',
+        'permisos.*.ELIMINAR'    => 'nullable|in:0,1',
+    ]);
 
-                Permiso::updateOrInsert(
-                    ['FK_COD_ROL'=>$rol, 'FK_COD_OBJETO'=>$objId],
-                    [
-                        'ESTADO_PERMISO'=>1,
-                        'VER'=>$ver,'CREAR'=>$cre,'EDITAR'=>$edi,'ELIMINAR'=>$eli,
-                        // mantener sincronizadas las columnas legadas
-                        'PER_SELECT'=>$ver,'PER_INSERTAR'=>$cre,'PER_UPDATE'=>$edi,
-                    ]
-                );
-            }
-        });
+    $rolId    = (int)$data['rol_id'];
+    $permisos = $data['permisos'] ?? [];
 
-        return back()->with('ok','Permisos actualizados');
-    }
+    DB::transaction(function () use ($rolId, $permisos) {
+
+        // 1) Garantiza que *exista* un registro por cada objeto que llegó,
+        //    y setea exactamente lo que vino (0 o 1).
+        foreach ($permisos as $codObjeto => $valores) {
+            $ver      = isset($valores['VER']) ? (int)$valores['VER'] : 0;
+            $crear    = isset($valores['CREAR']) ? (int)$valores['CREAR'] : 0;
+            $editar   = isset($valores['EDITAR']) ? (int)$valores['EDITAR'] : 0;
+            $eliminar = isset($valores['ELIMINAR']) ? (int)$valores['ELIMINAR'] : 0;
+
+            DB::table('tbl_permiso')->updateOrInsert(
+                [
+                    'FK_COD_ROL'   => $rolId,
+                    'FK_COD_OBJETO'=> (int)$codObjeto,
+                ],
+                [
+                    'ESTADO_PERMISO' => 1,
+                    'VER'            => $ver,
+                    'CREAR'          => $crear,
+                    'EDITAR'         => $editar,
+                    'ELIMINAR'       => $eliminar,
+                ]
+            );
+        }
+
+        // 2) Opcional: para objetos que NO llegaron en el form,
+        //    puedes poner todo en 0. Si quieres esto, descomenta:
+        /*
+        $idsEnForm = array_map('intval', array_keys($permisos));
+        DB::table('tbl_permiso')
+            ->where('FK_COD_ROL', $rolId)
+            ->whereNotIn('FK_COD_OBJETO', $idsEnForm)
+            ->update([
+                'VER' => 0, 'CREAR' => 0, 'EDITAR' => 0, 'ELIMINAR' => 0
+            ]);
+        */
+    });
+
+    return back()->with('ok', 'Permisos actualizados');
+}
 }
