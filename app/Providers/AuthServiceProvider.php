@@ -18,8 +18,8 @@ class AuthServiceProvider extends ServiceProvider
     ];
 
     /**
-     * ID del rol que consideramos súper-administrador.
-     * Ajusta si tu ADMIN no es 1.
+     * ID del rol que consideramos súper-administrador por defecto.
+     * (se mantiene 1 por compatibilidad, pero ya no dependemos sólo de él)
      */
     private int $ADMIN_ROLE_ID = 1;
 
@@ -32,18 +32,26 @@ class AuthServiceProvider extends ServiceProvider
 
         // ------- Helpers locales -------
         $isAdmin = function ($user): bool {
-            $rol = (int)($user->FK_COD_ROL ?? 0);
-            return $rol === $this->ADMIN_ROLE_ID;
+            $rolId = (int)($user->FK_COD_ROL ?? 0);
+
+            // 1) Por ID
+            if ($rolId === $this->ADMIN_ROLE_ID) {
+                return true;
+            }
+
+            // 2) Por nombre de rol (tolerante a mayúsculas/minúsculas)
+            $nom = DB::table('tbl_rol')->where('COD_ROL', $rolId)->value('NOM_ROL');
+            return $nom && strtoupper(trim($nom)) === 'ADMIN';
         };
 
         $has = function ($user, string $objeto, string $accion = 'VER'): bool {
-            // Usa helper puede() si está disponible.
+            // Usa helper puede() si está cargado
             if (function_exists('puede')) {
                 return puede($objeto, $accion);
             }
 
-            // Fallback directo a la BD si no está el helper.
-            $rolId = (int)($user->FK_COD_ROL ?? 0);
+            // Fallback directo a la BD si no está el helper
+            $rolId  = (int)($user->FK_COD_ROL ?? 0);
             $accion = strtoupper($accion);
             $row = DB::selectOne(
                 "SELECT fn_tiene_permiso(?, ?, ?) AS ok",
@@ -67,7 +75,7 @@ class AuthServiceProvider extends ServiceProvider
                 'SEGURIDAD_ROLES',
                 'SEGURIDAD_BITACORA',
                 'SEGURIDAD_BACKUPS',
-                'SEGURIDAD_USUARIOS', // opcional si lo manejas como objeto
+                'SEGURIDAD_USUARIOS',
             ];
 
             foreach ($objetos as $obj) {
@@ -79,13 +87,13 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         // ==========================================================
-        // Gates por pantalla (útiles si quieres @can() en las vistas)
+        // Gates por pantalla
         // ==========================================================
-        Gate::define('seguridad.permisos.ver',   fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
-        Gate::define('seguridad.objetos.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
-        Gate::define('seguridad.roles.ver',      fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
-        Gate::define('seguridad.bitacora.ver',   fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BITACORA', 'VER'));
-        Gate::define('seguridad.backups.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BACKUPS',  'VER'));
-        Gate::define('seguridad.usuarios.ver',   fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
+        Gate::define('seguridad.permisos.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
+        Gate::define('seguridad.objetos.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
+        Gate::define('seguridad.roles.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
+        Gate::define('seguridad.bitacora.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BITACORA', 'VER'));
+        Gate::define('seguridad.backups.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BACKUPS',  'VER'));
+        Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
     }
 }
