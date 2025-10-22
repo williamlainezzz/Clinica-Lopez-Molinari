@@ -210,17 +210,12 @@ return [
             'icon'  => 'fas fa-tachometer-alt',
         ],
 
-        // AGENDA
-        ['header' => ''],
-        [
-            'text' => 'Agenda',
-            'icon' => 'far fa-calendar-check',
-            'submenu' => [
+       
                 ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
                 ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
                 // ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
-            ],
-        ],
+           
+      
 
         // PERSONAS & USUARIOS
         [
