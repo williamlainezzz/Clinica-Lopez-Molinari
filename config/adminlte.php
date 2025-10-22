@@ -214,8 +214,8 @@ return [
         [
             'header' => '',
         ],
-                ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
-                ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
+                ['text' => 'Citas',           'route' => 'Modulo_Citas.citas.index',          'icon' => 'far fa-circle'],
+                ['text' => 'Disponibilidad',  'route' => 'Modulo_Citas.disponibilidad.index', 'icon' => 'far fa-circle'],
                 // ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
            
       
