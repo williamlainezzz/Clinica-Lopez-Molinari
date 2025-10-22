@@ -210,7 +210,9 @@ return [
             'icon'  => 'fas fa-tachometer-alt',
         ],
 
-       
+        [
+            'header' => '',
+        ],
                 ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
                 ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
                 // ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
