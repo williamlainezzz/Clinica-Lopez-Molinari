@@ -209,7 +209,8 @@ return [
             'route' => 'dashboard',
             'icon'  => 'fas fa-tachometer-alt',
         ],
-
+        
+        //Modulo de citas botones
         [
             'header' => '',
         ],
