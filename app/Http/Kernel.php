@@ -21,13 +21,11 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 
-// Api group
+// Api / otros
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use App\Http\Middleware\Authenticate;               // si tu proyecto lo usa
 
-// Auth (si tu proyecto la tiene)
-use App\Http\Middleware\Authenticate;
-
-// 🔒 Nuestro middleware de permisos
+// Tu middleware de permisos
 use App\Http\Middleware\CheckObjetoPermission;
 
 class Kernel extends HttpKernel
@@ -52,43 +50,41 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
-            // Si usas sesiones de auth persistentes:
-            AuthenticateSession::class,
+            AuthenticateSession::class,            // si no usas sesiones persistentes, puedes quitarlo
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
         ],
 
         'api' => [
-            ThrottleRequests::class.':api',
+            ThrottleRequests::class . ':api',
             SubstituteBindings::class,
         ],
     ];
 
     /**
-     * Route middleware aliases (Laravel 10+).
-     * Mantener también $routeMiddleware para compatibilidad.
+     * Aliases (Laravel 10+). Mantén también $routeMiddleware por compatibilidad si lo prefieres.
      */
     protected $middlewareAliases = [
-        'auth'      => Authenticate::class,                 // si tu proyecto la tiene
-        'bindings'  => SubstituteBindings::class,
-        'throttle'  => ThrottleRequests::class,
-        'verified'  => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'auth'     => Authenticate::class,               // si tu proyecto lo usa
+        'bindings' => SubstituteBindings::class,
+        'throttle' => ThrottleRequests::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // 👇 Alias que necesitamos
-        'permiso'   => CheckObjetoPermission::class,
+        // Alias propio para permisos
+        'permiso'  => CheckObjetoPermission::class,
     ];
 
     /**
-     * Route middleware (compatibilidad con versiones anteriores).
+     * Compat con versiones anteriores (opcional, si tu app ya lo tenía).
      */
     protected $routeMiddleware = [
-        'auth'      => Authenticate::class,                 // si tu proyecto la tiene
-        'bindings'  => SubstituteBindings::class,
-        'throttle'  => ThrottleRequests::class,
-        'verified'  => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'auth'     => Authenticate::class,               // si tu proyecto lo usa
+        'bindings' => SubstituteBindings::class,
+        'throttle' => ThrottleRequests::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
 
-        // 👇 Alias que necesitamos
-        'permiso'   => CheckObjetoPermission::class,
+        // Alias propio para permisos
+        'permiso'  => CheckObjetoPermission::class,
     ];
 }
