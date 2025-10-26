@@ -21,9 +21,9 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 
-// Api / otros
+// API / otros
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use App\Http\Middleware\Authenticate;               // si tu proyecto lo usa
+use App\Http\Middleware\Authenticate;
 
 // Tu middleware de permisos
 use App\Http\Middleware\CheckObjetoPermission;
@@ -50,7 +50,7 @@ class Kernel extends HttpKernel
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
-            AuthenticateSession::class,            // si no usas sesiones persistentes, puedes quitarlo
+            AuthenticateSession::class, // si no usas sesiones persistentes, puedes quitarlo
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
@@ -66,7 +66,7 @@ class Kernel extends HttpKernel
      * Aliases (Laravel 10+). Mantén también $routeMiddleware por compatibilidad si lo prefieres.
      */
     protected $middlewareAliases = [
-        'auth'     => Authenticate::class,               // si tu proyecto lo usa
+        'auth'     => Authenticate::class,
         'bindings' => SubstituteBindings::class,
         'throttle' => ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
@@ -76,10 +76,10 @@ class Kernel extends HttpKernel
     ];
 
     /**
-     * Compat con versiones anteriores (opcional, si tu app ya lo tenía).
+     * Compatibilidad con versiones anteriores (opcional).
      */
     protected $routeMiddleware = [
-        'auth'     => Authenticate::class,               // si tu proyecto lo usa
+        'auth'     => Authenticate::class,
         'bindings' => SubstituteBindings::class,
         'throttle' => ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
@@ -88,3 +88,4 @@ class Kernel extends HttpKernel
         'permiso'  => CheckObjetoPermission::class,
     ];
 }
+
