@@ -1,0 +1,61 @@
+--- routes/web.php (old)
++++ routes/web.php (new)
+@@ -193,3 +193,13 @@
+         'data'  => $usuarios,
+     ]);
+ });
++
++
++// === Pacientes -> reutiliza el formulario de registro con lógica de guardado real ===
++Route::middleware('auth')->group(function () {
++    Route::get('/pacientes/nuevo', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'create'])
++        ->name('pacientes.create');
++    Route::post('/pacientes', [\App\Http\Controllers\Auth\RegisteredUserController::class, 'store'])
++        ->name('pacientes.store');
++});
++
+
+--- app/Http/Controllers/Auth/RegisteredUserController.php (old)
++++ app/Http/Controllers/Auth/RegisteredUserController.php (new)
+@@ -20,10 +20,14 @@
+     /**
+      * Muestra la vista de registro (Breeze)
+      */
+-    public function create()
++    public 
++function create()
+     {
+-        return view('auth.register');
++        // Si llegamos desde pacientes.create (usuario autenticado), el POST debe ir a pacientes.store
++        $storeRoute = request()->routeIs('pacientes.create') ? route('pacientes.store') : route('register');
++        return view('auth.register', compact('storeRoute'));
+     }
++
+ 
+     /**
+      * Registra un nuevo usuario en la BD real:
+
+--- resources/views/auth/register.blade.php (old)
++++ resources/views/auth/register.blade.php (new)
+@@ -2,7 +2,7 @@
+   <div class="min-h-screen flex flex-col items-center">
+     <div class="w-full max-w-4xl md:max-w-5xl mx-auto mt-8 mb-12">
+       <div class="bg-white shadow-sm ring-1 ring-slate-200 rounded-xl">
+-        <form method="POST" action="{{ route('register') }}" class="p-6 md:p-8">
++        <form method="POST" action="{{ isset($storeRoute) ? $storeRoute : route('register') }}" class="p-6 md:p-8">
+           @csrf
+ 
+           {{-- Header: título (sin la pastilla aquí) --}}
+
+--- resources/views/pacientes/index.blade.php (old)
++++ resources/views/pacientes/index.blade.php (new)
+@@ -3,7 +3,7 @@
+ @section('content_header')
+   <div class="d-flex justify-content-between align-items-center">
+     <h1 class="m-0">Pacientes</h1>
+-    <button class="btn btn-primary" onclick="openNuevoPacienteModal()"><i class="fas fa-user-injured"></i> Nuevo paciente</button>
++    <a href="{{ route(\'pacientes.create\') }}" class="btn btn-primary"><i class="fas fa-user-injured"></i> Nuevo paciente</a>
+   </div>
+ @endsection
+ @section('content')
+

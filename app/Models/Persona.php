@@ -22,7 +22,8 @@ class Persona extends Model
         'PRIMER_APELLIDO',
         'SEGUNDO_APELLIDO',
         'TIPO_GENERO',
-        // agrega aquí cualquier otro campo real de tbl_persona…
+        // NOTA: campos de dirección (DEPARTAMENTO, MUNICIPIO, CIUDAD, COLONIA, REFERENCIA)
+        // se guardan en tbl_direccion, no en tbl_persona.
     ];
 
     // Para exponer "nombre_completo" al serializar

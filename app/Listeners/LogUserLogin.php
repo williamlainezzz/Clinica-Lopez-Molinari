@@ -14,6 +14,12 @@ class LogUserLogin
         $uid = $u->COD_USUARIO ?? $u->id ?? null;
         if (!$uid) return;
 
+        // --- Guardar sólo el código del rol en sesión ---
+        $rolId = $u->FK_COD_ROL ?? null;
+        if ($rolId) {
+            session(['FK_COD_ROL' => (int) $rolId]);
+        }
+
         DB::table('tbl_bitacora')->insert([
             'FK_COD_USUARIO' => $uid,
             'OBJETO'         => 'AUTH',

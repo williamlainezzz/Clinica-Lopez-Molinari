@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Title
@@ -227,12 +226,13 @@ return [
         [
             'text' => 'Personas & Usuarios',
             'icon' => 'fas fa-users',
+            'can'  => 'personas.menu', // ← visibilidad controlada por Gate
             'submenu' => [
-                ['text' => 'Doctores',        'route' => 'doctores.index',        'icon' => 'far fa-circle'],
-                ['text' => 'Pacientes',       'route' => 'pacientes.index',       'icon' => 'far fa-circle'],
-                ['text' => 'Recepcionistas',  'route' => 'recepcionistas.index',  'icon' => 'far fa-circle'],
-                ['text' => 'Administradores', 'route' => 'administradores.index', 'icon' => 'far fa-circle'],
-            ],
+                ['text' => 'Doctores',        'route' => 'doctores.index',        'icon' => 'far fa-circle', 'can' => 'personas.doctores'],
+                ['text' => 'Pacientes',       'route' => 'pacientes.index',       'icon' => 'far fa-circle', 'can' => 'personas.pacientes'],
+                ['text' => 'Recepcionistas',  'route' => 'recepcionistas.index',  'icon' => 'far fa-circle', 'can' => 'personas.recepcionistas'],
+                ['text' => 'Administradores', 'route' => 'administradores.index', 'icon' => 'far fa-circle', 'can' => 'personas.administradores'],
+             ],
         ],
 
         // SEGURIDAD
