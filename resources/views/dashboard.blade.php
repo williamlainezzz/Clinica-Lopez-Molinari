@@ -14,35 +14,41 @@
         <h3>24</h3><p>Citas de hoy</p>
       </div>
       <div class="icon"><i class="fas fa-calendar-check"></i></div>
-      <a href="{{ route('citas.index') }}" class="small-box-footer">Ver citas <i class="fas fa-arrow-circle-right"></i></a>
+      {{-- antes: route('citas.index') --}}
+      <a href="{{ route('agenda.citas') }}" class="small-box-footer">Ver citas <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
+
   <div class="col-lg-3 col-6">
     <div class="small-box bg-success">
       <div class="inner">
         <h3>8</h3><p>Doctores disponibles</p>
       </div>
       <div class="icon"><i class="fas fa-user-md"></i></div>
-      <a href="{{ route('disponibilidad.index') }}" class="small-box-footer">Ver disponibilidad <i class="fas fa-arrow-circle-right"></i></a>
+      {{-- antes: route('disponibilidad.index') --}}
+      <a href="{{ route('agenda.calendario') }}" class="small-box-footer">Ver disponibilidad <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
+
   <div class="col-lg-3 col-6">
     <div class="small-box bg-warning">
       <div class="inner">
         <h3>152</h3><p>Pacientes activos</p>
       </div>
       <div class="icon"><i class="fas fa-user-injured"></i></div>
+      {{-- este ya es correcto --}}
       <a href="{{ route('pacientes.index') }}" class="small-box-footer">Ver pacientes <i class="fas fa-arrow-circle-right"></i></a>
-
     </div>
   </div>
+
   <div class="col-lg-3 col-6">
     <div class="small-box bg-danger">
       <div class="inner">
         <h3>5</h3><p>Citas pendientes</p>
       </div>
       <div class="icon"><i class="fas fa-exclamation-circle"></i></div>
-      <a href="{{ route('estado-cita.index') }}" class="small-box-footer">Ver estados <i class="fas fa-arrow-circle-right"></i></a>
+      {{-- antes: route('estado-cita.index') --}}
+      <a href="{{ route('agenda.reportes') }}" class="small-box-footer">Ver estados <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
 </div>
