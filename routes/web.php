@@ -193,3 +193,40 @@ Route::get('/db-check', function () {
         'data'  => $usuarios,
     ]);
 });
+
+
+
+// --- AGENDA: Citas / Calendario / Reportes ---
+// Estas rutas solo muestran vistas (stub). La lógica/queries las añadimos después.
+Route::middleware(['auth'])->prefix('agenda')->group(function () {
+
+    Route::get('/citas', function () {
+        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? ''); // ajusta si tu campo es otro
+        switch ($rol) {
+            case 'DOCTOR':        return view('modulo-citas.doctor.citas.index');
+            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.citas.index');
+            case 'PACIENTE':      return view('modulo-citas.paciente.citas.index');
+            default:              return view('modulo-citas.recepcionista.citas.index'); // Admin usa la global
+        }
+    })->name('agenda.citas');
+
+    Route::get('/calendario', function () {
+        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+        switch ($rol) {
+            case 'DOCTOR':        return view('modulo-citas.doctor.calendario.index');
+            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.calendario.index');
+            case 'PACIENTE':      return view('modulo-citas.paciente.calendario.index');
+            default:              return view('modulo-citas.recepcionista.calendario.index'); // Admin
+        }
+    })->name('agenda.calendario');
+
+    Route::get('/reportes', function () {
+        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+        switch ($rol) {
+            case 'DOCTOR':        return view('modulo-citas.doctor.reportes.index');
+            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.reportes.index');
+            case 'PACIENTE':      return view('modulo-citas.paciente.reportes.index');
+            default:              return view('modulo-citas.admin.reportes.index'); // Admin global
+        }
+    })->name('agenda.reportes');
+});

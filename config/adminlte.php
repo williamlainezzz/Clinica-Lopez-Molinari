@@ -210,13 +210,41 @@ return [
             'icon'  => 'fas fa-tachometer-alt',
         ],
         
-        //Modulo de citas botones
+       // Modulo de citas (menú)
+[
+    'text'  => 'Agenda',
+    'icon'  => 'fas fa-calendar-check',
+    'submenu' => [
+
+        // Citas
         [
-            'header' => '',
+            'text'   => 'Citas',
+            'route'  => 'agenda.citas',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/citas*'],
+            // 'can' => 'ver-agenda-citas', // opcional: lo activamos cuando mapeemos Gate
         ],
-                ['text' => 'Citas',           'route' => 'citas.index',          'icon' => 'far fa-circle'],
-                ['text' => 'Disponibilidad',  'route' => 'disponibilidad.index', 'icon' => 'far fa-circle'],
-                // ['text' => 'Estados de cita', 'route' => 'estado-cita.index',    'icon' => 'far fa-circle'],
+
+        // Calendario
+        [
+            'text'   => 'Calendario',
+            'route'  => 'agenda.calendario',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/calendario*'],
+            // 'can' => 'ver-agenda-calendario',
+        ],
+
+        // Reportes
+        [
+            'text'   => 'Reportes',
+            'route'  => 'agenda.reportes',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/reportes*'],
+            // 'can' => 'ver-agenda-reportes',
+        ],
+    ],
+],
+
            
       
 
