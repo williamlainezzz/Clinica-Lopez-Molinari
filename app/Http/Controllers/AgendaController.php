@@ -6,40 +6,60 @@ use Illuminate\Http\Request;
 
 class AgendaController extends Controller
 {
-    public function citas(Request $request)      { return $this->render('Citas', $request); }
-    public function calendario(Request $request)  { return $this->render('Calendario', $request); }
-    public function reportes(Request $request)    { return $this->render('Reportes', $request); }
+    public function citas(Request $request)      { return $this->render('citas', $request); }
+    public function calendario(Request $request)  { return $this->render('calendario', $request); }
+    public function reportes(Request $request)    { return $this->render('reportes', $request); }
 
-    private function render(string $section, Request $request)
+    /**
+     * Renderiza la vista compartida con título dinámico por rol/sección y filtros GET.
+     */
+    private function render(string $seccion, Request $request)
     {
         $user = auth()->user();
         $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');
 
-        // Etiqueta legible por rol para títulos
-        $labels = [
-            'ADMIN'         => 'Admin',
-            'DOCTOR'        => 'Doctor',
-            'RECEPCIONISTA' => 'Recepción',
-            'PACIENTE'      => 'Paciente',
+        // Mapa de títulos por ROL y SECCIÓN
+        $map = [
+            'ADMIN' => [
+                'citas'      => 'Citas · Admin',
+                'calendario' => 'Calendario · Admin',
+                'reportes'   => 'Reportes · Admin',
+            ],
+            'DOCTOR' => [
+                'citas'      => 'Citas · Doctor',
+                'calendario' => 'Calendario · Doctor',
+                'reportes'   => 'Reportes · Doctor',
+            ],
+            'RECEPCIONISTA' => [
+                'citas'      => 'Citas Recepción',
+                'calendario' => 'Calendario Recepción',
+                'reportes'   => 'Reportes Recepción',
+            ],
+            'PACIENTE' => [
+                'citas'      => 'Citas Paciente',
+                'calendario' => 'Calendario Paciente',
+                'reportes'   => 'Historial Paciente',
+            ],
         ];
-        $rolLabel = $labels[$rol] ?? 'Admin';
 
-        // Nombre de ruta actual (para que el filtro haga GET sobre sí mismo)
-        $routeName = match ($section) {
-            'Citas', 'CITAS', 'citas'                    => 'agenda.citas',
-            'Calendario', 'CALENDARIO', 'calendario'     => 'agenda.calendario',
-            default                                      => 'agenda.reportes',
+        $titulo = $map[$rol][$seccion] ?? 'Agenda';
+
+        // Nombre de ruta actual: para que el form GET envíe a sí mismo
+        $routeName = match (strtolower($seccion)) {
+            'citas'      => 'agenda.citas',
+            'calendario' => 'agenda.calendario',
+            default      => 'agenda.reportes',
         };
 
-        // Lee filtros desde la query (?desde=...&hasta=...&estado=...&doctor=...)
+        // Filtros desde la query
         $filters = [
             'desde'  => $request->query('desde'),
             'hasta'  => $request->query('hasta'),
-            'estado' => $request->query('estado'),   // Confirmada | Pendiente | Cancelada | null
-            'doctor' => $request->query('doctor'),   // Dr. López | Dra. Molina | null
+            'estado' => $request->query('estado'), // Confirmada | Pendiente | Cancelada | null
+            'doctor' => $request->query('doctor'), // Dr. López | Dra. Molina | null
         ];
 
-        // --- Dataset DEMO (luego lo reemplazamos por consultas reales) ---
+        // --- DATASET DEMO (reemplazar luego por consultas reales) ---
         $rows = collect([
             ['fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',    'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
             ['fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez',  'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
@@ -55,12 +75,12 @@ class AgendaController extends Controller
         ->values()
         ->all();
 
-        // Títulos para la vista
-        $pageTitle = "{$section} · {$rolLabel}";
-        $heading   = "{$section} {$rolLabel}";
-
-        return view('modulo-citas.shared.lista', compact(
-            'pageTitle', 'heading', 'rows', 'filters', 'routeName'
-        ));
+        return view('modulo-citas.shared.lista', [
+            'titulo'    => $titulo,
+            'seccion'   => strtolower($seccion),
+            'routeName' => $routeName,
+            'filters'   => $filters,
+            'rows'      => $rows,
+        ]);
     }
 }

@@ -9,37 +9,43 @@
 @section('content')
     <div class="card">
         <div class="card-header">
-            <div class="row">
-                <div class="col-md-3">
-                    <label>Desde</label>
-                    <input type="date" class="form-control">
+            <form method="GET" action="{{ route($routeName ?? 'agenda.citas') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Desde</label>
+                        <input type="date" name="desde" class="form-control"
+                               value="{{ $filters['desde'] ?? '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Hasta</label>
+                        <input type="date" name="hasta" class="form-control"
+                               value="{{ $filters['hasta'] ?? '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Estado</label>
+                        <select name="estado" class="form-control">
+                            @php $est = $filters['estado'] ?? ''; @endphp
+                            <option value="" {{ $est==='' ? 'selected' : '' }}>Todos</option>
+                            <option value="Confirmada" {{ $est==='Confirmada' ? 'selected' : '' }}>Confirmada</option>
+                            <option value="Pendiente"  {{ $est==='Pendiente'  ? 'selected' : '' }}>Pendiente</option>
+                            <option value="Cancelada"  {{ $est==='Cancelada'  ? 'selected' : '' }}>Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Doctor</label>
+                        <select name="doctor" class="form-control">
+                            @php $doc = $filters['doctor'] ?? ''; @endphp
+                            <option value="" {{ $doc==='' ? 'selected' : '' }}>Todos</option>
+                            <option value="Dr. López"   {{ $doc==='Dr. López'   ? 'selected' : '' }}>Dr. López</option>
+                            <option value="Dra. Molina" {{ $doc==='Dra. Molina' ? 'selected' : '' }}>Dra. Molina</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label>Hasta</label>
-                    <input type="date" class="form-control">
+                <div class="mt-3">
+                    <button class="btn btn-primary"><i class="fas fa-search"></i> Filtrar</button>
+                    <a href="{{ route($routeName ?? 'agenda.citas') }}" class="btn btn-secondary">Limpiar</a>
                 </div>
-                <div class="col-md-3">
-                    <label>Estado</label>
-                    <select class="form-control">
-                        <option>Todos</option>
-                        <option>Confirmada</option>
-                        <option>Pendiente</option>
-                        <option>Cancelada</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label>Doctor</label>
-                    <select class="form-control">
-                        <option>Todos</option>
-                        <option>Dr. López</option>
-                        <option>Dra. Molina</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-3">
-                <button class="btn btn-primary"><i class="fas fa-search"></i> Filtrar</button>
-                <button class="btn btn-secondary">Limpiar</button>
-            </div>
+            </form>
         </div>
 
         <div class="card-body p-0">
@@ -57,45 +63,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>08:30</td>
-                            <td>Ana Rivera</td>
-                            <td>Dr. López</td>
-                            <td><span class="badge badge-success">Confirmada</span></td>
-                            <td>Limpieza</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>09:00</td>
-                            <td>Carlos Pérez</td>
-                            <td>Dra. Molina</td>
-                            <td><span class="badge badge-warning">Pendiente</span></td>
-                            <td>Dolor de muela</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>10:15</td>
-                            <td>María Gómez</td>
-                            <td>Dr. López</td>
-                            <td><span class="badge badge-danger">Cancelada</span></td>
-                            <td>Control</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
+                        @forelse ($rows as $r)
+                            @php
+                                $badge = match ($r['estado']) {
+                                    'Confirmada' => 'success',
+                                    'Pendiente'  => 'warning',
+                                    'Cancelada'  => 'danger',
+                                    default      => 'secondary',
+                                };
+                            @endphp
+                            <tr>
+                                <td>{{ $r['fecha'] }}</td>
+                                <td>{{ $r['hora'] }}</td>
+                                <td>{{ $r['paciente'] }}</td>
+                                <td>{{ $r['doctor'] }}</td>
+                                <td><span class="badge badge-{{ $badge }}">{{ $r['estado'] }}</span></td>
+                                <td>{{ $r['motivo'] }}</td>
+                                <td class="text-nowrap">
+                                    <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+                                    <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
+                                    <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" class="text-center text-muted">Sin resultados</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
