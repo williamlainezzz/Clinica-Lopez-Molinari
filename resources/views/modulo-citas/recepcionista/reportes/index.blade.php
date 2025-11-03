@@ -1,7 +1,13 @@
 ﻿@extends('adminlte::page')
-@section('title', 'Reportes  Recepción')
-@section('content_header') <h1>Reportes  Recepción</h1> @endsection
+
+@section('title', 'Agenda')
+
+@section('content_header')
+    <h1>Reportes  Recepción</h1>
+@endsection
+
 @section('content')
-  @include('modulo-citas.shared._filters')
-  @include('modulo-citas.shared._table_citas')
+    @include('modulo-citas.shared._filters')
+    @include('modulo-citas.shared._table_citas')
+    @include('modulo-citas.shared._modal_detalle')
 @endsection

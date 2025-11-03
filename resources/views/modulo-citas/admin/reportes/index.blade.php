@@ -1,13 +1,13 @@
 ﻿@extends('adminlte::page')
 
-@section('title', 'Reportes · Admin')
+@section('title', 'Agenda')
 
 @section('content_header')
-    <h1>Reportes · Admin</h1>
-@stop
+    <h1>Reportes  Admin</h1>
+@endsection
 
 @section('content')
-    {{-- Parciales vacíos por ahora (no rompen) --}}
     @include('modulo-citas.shared._filters')
     @include('modulo-citas.shared._table_citas')
-@stop
+    @include('modulo-citas.shared._modal_detalle')
+@endsection

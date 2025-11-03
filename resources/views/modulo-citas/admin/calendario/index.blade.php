@@ -1,6 +1,13 @@
 ﻿@extends('adminlte::page')
-@section('title','Calendario  Admin')
-@section('content_header')<h1>Calendario  Admin</h1>@endsection
+
+@section('title', 'Agenda')
+
+@section('content_header')
+    <h1>Calendario  Admin</h1>
+@endsection
+
 @section('content')
-  <p>Calendario global (ADMIN).</p>
+    @include('modulo-citas.shared._filters')
+    @include('modulo-citas.shared._table_citas')
+    @include('modulo-citas.shared._modal_detalle')
 @endsection
