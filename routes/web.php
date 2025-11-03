@@ -191,37 +191,11 @@ Route::get('/db-check', function () {
 |  AGENDA: Citas / Calendario / Reportes (por ROL)
 |  Estas rutas muestran vistas (stubs). La lógica real va luego.
 ======================================================= */
-Route::middleware(['auth'])->prefix('agenda')->group(function () {
+Route::middleware(['auth'])->prefix('agenda')
+    ->controller(AgendaController::class)
+    ->group(function () {
 
-   // --- AGENDA: Citas / Calendario / Reportes ---
-Route::middleware(['auth'])->prefix('agenda')->group(function () {
-    Route::get('/citas',      [AgendaController::class, 'citas'])->name('agenda.citas');
-    Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
-    Route::get('/reportes',   [AgendaController::class, 'reportes'])->name('agenda.reportes');
-});
-
-
-    // /agenda/calendario
-    Route::get('/calendario', function () {
-        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-        return match ($rol) {
-            'ADMIN'         => view('modulo-citas.admin.calendario.index'),
-            'DOCTOR'        => view('modulo-citas.doctor.calendario.index'),
-            'RECEPCIONISTA' => view('modulo-citas.recepcionista.calendario.index'),
-            'PACIENTE'      => view('modulo-citas.paciente.calendario.index'),
-            default         => view('modulo-citas.admin.calendario.index'),
-        };
-    })->name('agenda.calendario');
-
-    // /agenda/reportes
-    Route::get('/reportes', function () {
-        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-        switch ($rol) {
-            case 'DOCTOR':        return view('modulo-citas.doctor.reportes.index');
-            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.reportes.index');
-            case 'PACIENTE':      return view('modulo-citas.paciente.reportes.index');
-            case 'ADMIN':
-            default:              return view('modulo-citas.admin.reportes.index'); // Admin global
-        }
-    })->name('agenda.reportes');
-});
+        Route::get('/citas', 'citas')->name('agenda.citas');
+        Route::get('/calendario', 'calendario')->name('agenda.calendario');
+        Route::get('/reportes', 'reportes')->name('agenda.reportes');
+    });
