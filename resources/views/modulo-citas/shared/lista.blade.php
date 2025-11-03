@@ -37,11 +37,18 @@
                     </select>
                 </div>
 
-                <div class="col-12 mt-2">
+                <div class="col-12 mt-2 d-flex gap-2">
                     <button class="btn btn-primary">
                         <i class="fas fa-search"></i> Filtrar
                     </button>
                     <a href="{{ route($routeName) }}" class="btn btn-secondary">Limpiar</a>
+
+                    {{-- Botón de Nueva Cita solo si el rol puede agendar y si la sección es Citas --}}
+                    @if(($perms['schedule'] ?? false) && $seccion === 'citas')
+                        <a class="btn btn-success">
+                            <i class="fas fa-plus"></i> Nueva cita
+                        </a>
+                    @endif
                 </div>
             </form>
         </div>
@@ -55,34 +62,35 @@
                 <table class="table table-striped mb-0">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Hora</th>
-                            <th>Paciente</th>
-                            <th>Doctor</th>
-                            <th>Estado</th>
-                            <th>Motivo</th>
+                            @foreach($columns as $c)
+                                <th>{{ $c['label'] }}</th>
+                            @endforeach
                             @if($showActions)
-                                <th style="width: 160px;">Acciones</th>
+                                <th style="width: 180px;">Acciones</th>
                             @endif
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($rows as $r)
-                            @php
-                                $badge = match ($r['estado']) {
-                                    'Confirmada' => 'success',
-                                    'Pendiente'  => 'warning',
-                                    'Cancelada'  => 'danger',
-                                    default      => 'secondary',
-                                };
-                            @endphp
                             <tr>
-                                <td>{{ $r['fecha'] }}</td>
-                                <td>{{ $r['hora'] }}</td>
-                                <td>{{ $r['paciente'] }}</td>
-                                <td>{{ $r['doctor'] }}</td>
-                                <td><span class="badge badge-{{ $badge }}">{{ $r['estado'] }}</span></td>
-                                <td>{{ $r['motivo'] }}</td>
+                                @foreach($columns as $c)
+                                    @php $key = $c['key']; @endphp
+
+                                    @if($key === 'estado')
+                                        @php
+                                            $badge = match ($r['estado']) {
+                                                'Confirmada' => 'success',
+                                                'Pendiente'  => 'warning',
+                                                'Cancelada'  => 'danger',
+                                                default      => 'secondary',
+                                            };
+                                        @endphp
+                                        <td><span class="badge badge-{{ $badge }}">{{ $r['estado'] }}</span></td>
+
+                                    @else
+                                        <td>{{ $r[$key] }}</td>
+                                    @endif
+                                @endforeach
 
                                 @if($showActions)
                                     <td class="text-nowrap">
@@ -92,7 +100,7 @@
                                         @if($perms['edit'] ?? false)
                                             <a class="btn btn-xs btn-primary" title="Editar"><i class="fas fa-edit"></i></a>
                                         @endif
-                                        @if($perms['schedule'] ?? false)
+                                        @if(($perms['schedule'] ?? false) && $seccion === 'citas')
                                             <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-calendar-alt"></i></a>
                                         @endif
                                         @if($perms['delete'] ?? false)
@@ -103,7 +111,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $showActions ? 7 : 6 }}" class="text-center text-muted">
+                                <td colspan="{{ count($columns) + ($showActions ? 1 : 0) }}" class="text-center text-muted">
                                     Sin resultados
                                 </td>
                             </tr>
