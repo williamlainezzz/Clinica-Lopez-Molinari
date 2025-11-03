@@ -26,6 +26,9 @@ use App\Models\Usuario;
 // --- AGENDA: Citas / Calendario / Reportes ---
 use App\Http\Controllers\AgendaController;
 
+// Acciones sobre Citas
+use App\Http\Controllers\CitasAccionesController;
+
 /* =========================
 |  Público / Dashboard
 ========================= */
@@ -196,3 +199,22 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
     Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
     Route::get('/reportes', [AgendaController::class, 'reportes'])->name('agenda.reportes');
 });
+
+// =========================
+//  AGENDA: Acciones sobre Citas (por ROL)
+//  Estas rutas son stubs para futuras acciones sobre citas.
+// =========================
+Route::middleware(['auth'])
+    ->prefix('agenda/citas')
+    ->name('citas.')
+    ->group(function () {
+        // Ver detalle (stub)
+        Route::get('/{id}', [CitasAccionesController::class, 'show'])->name('show');
+
+        // Reprogramar (form + submit) (stub)
+        Route::get('/{id}/reprogramar',  [CitasAccionesController::class, 'edit'])->name('reprogramar.form');
+        Route::put('/{id}/reprogramar',  [CitasAccionesController::class, 'update'])->name('reprogramar.update');
+
+        // Cancelar (stub)
+        Route::delete('/{id}', [CitasAccionesController::class, 'cancel'])->name('cancelar');
+    });
