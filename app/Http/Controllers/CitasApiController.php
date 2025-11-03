@@ -3,88 +3,123 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 class CitasApiController extends Controller
 {
     /**
      * GET /api/agenda/citas
-     * Lista de citas (mock). Acepta filtros opcionales por ?estado= y ?doctor=
+     * Filtros: estado, doctor (id), desde (Y-m-d), hasta (Y-m-d)
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
-        // NO asumimos usuario logueado en la API pública
-        $estado = $request->query('estado');
-        $doctor = $request->query('doctor');
+        // Mapear estados "humanos" a lo que guarda la BD si difiere
+        // Si en tu BD EST_CITA ya guarda textos ('Confirmada', etc.), dejamos directo.
+        $estado = $request->query('estado');    // 'Confirmada'|'Pendiente'|'Cancelada'|null
+        $doctor = $request->query('doctor');    // id numérico del doctor
+        $desde  = $request->query('desde');     // 'YYYY-MM-DD'
+        $hasta  = $request->query('hasta');     // 'YYYY-MM-DD'
 
-        // Dataset de ejemplo (evita errores mientras no usemos BD aquí)
-        $rows = collect([
-            ['id' => 1, 'fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
-            ['id' => 2, 'fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
-            ['id' => 3, 'fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control'],
-        ]);
+        // Armamos SELECT con JOINs a paciente->persona y doctor->persona.
+        // OJO: Si tu tabla usa otros nombres de columna, cambia SOLO estos alias:
+        $q = DB::table('tbl_cita as c')
+            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
+            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
+            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
+            ->select([
+                'c.COD_CITA as id',
+                'c.FEC_CITA as fecha',
+                'c.HOR_CITA as hora',
+                DB::raw("TRIM(CONCAT(COALESCE(pper.PRIMER_NOMBRE,''),' ',COALESCE(pper.SEGUNDO_NOMBRE,''),' ',COALESCE(pper.PRIMER_APELLIDO,''),' ',COALESCE(pper.SEGUNDO_APELLIDO,''))) as paciente"),
+                DB::raw("TRIM(CONCAT(COALESCE(dper.PRIMER_NOMBRE,''),' ',COALESCE(dper.SEGUNDO_NOMBRE,''),' ',COALESCE(dper.PRIMER_APELLIDO,''),' ',COALESCE(dper.SEGUNDO_APELLIDO,''))) as doctor"),
+                'c.EST_CITA as estado',
+                'c.DES_MOTIVO as motivo',
+            ]);
 
-        if ($estado) {
-            $rows = $rows->where('estado', $estado);
+        if (!empty($estado)) {
+            $q->where('c.EST_CITA', $estado);
         }
-        if ($doctor) {
-            $rows = $rows->where('doctor', $doctor);
+        if (!empty($doctor)) {
+            $q->where('c.FK_COD_DOCTOR', $doctor);
         }
+        if (!empty($desde)) {
+            $q->whereDate('c.FEC_CITA', '>=', $desde);
+        }
+        if (!empty($hasta)) {
+            $q->whereDate('c.FEC_CITA', '<=', $hasta);
+        }
+
+        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get();
 
         return response()->json([
             'ok'    => true,
             'total' => $rows->count(),
-            'data'  => $rows->values()->all(),
+            'data'  => $rows,
         ]);
     }
 
     /**
      * GET /api/agenda/citas/{id}
-     * Detalle de una cita (mock).
      */
-    public function show(int $id): JsonResponse
+    public function show($id)
     {
-        $rows = [
-            1 => ['id' => 1, 'fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza',       'observaciones' => '—'],
-            2 => ['id' => 2, 'fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela', 'observaciones' => 'Trae Rx.'],
-            3 => ['id' => 3, 'fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control',        'observaciones' => 'Canceló por viaje'],
-        ];
+        $row = DB::table('tbl_cita as c')
+            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
+            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
+            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
+            ->select([
+                'c.COD_CITA as id',
+                'c.FEC_CITA as fecha',
+                'c.HOR_CITA as hora',
+                DB::raw("TRIM(CONCAT(COALESCE(pper.PRIMER_NOMBRE,''),' ',COALESCE(pper.SEGUNDO_NOMBRE,''),' ',COALESCE(pper.PRIMER_APELLIDO,''),' ',COALESCE(pper.SEGUNDO_APELLIDO,''))) as paciente"),
+                DB::raw("TRIM(CONCAT(COALESCE(dper.PRIMER_NOMBRE,''),' ',COALESCE(dper.SEGUNDO_NOMBRE,''),' ',COALESCE(dper.PRIMER_APELLIDO,''),' ',COALESCE(dper.SEGUNDO_APELLIDO,''))) as doctor"),
+                'c.EST_CITA as estado',
+                'c.DES_MOTIVO as motivo',
+                'c.DES_OBSERVACIONES as observaciones',
+            ])
+            ->where('c.COD_CITA', $id)
+            ->first();
 
-        if (! isset($rows[$id])) {
-            return response()->json(['ok' => false, 'message' => 'Cita no encontrada'], 404);
+        if (!$row) {
+            return response()->json(['ok' => false, 'message' => 'No encontrado'], 404);
         }
 
-        return response()->json(['ok' => true, 'data' => $rows[$id]]);
+        return response()->json(['ok' => true, 'data' => $row]);
     }
 
     /**
      * GET /api/agenda/doctores
-     * Lista de doctores (mock).
+     * Devuelve catálogo (id, nombre) leyendo doctor->persona
      */
-    public function doctores(): JsonResponse
+    public function doctores()
     {
-        return response()->json([
-            'ok'   => true,
-            'data' => [
-                ['id' => 1, 'nombre' => 'Dr. López'],
-                ['id' => 2, 'nombre' => 'Dra. Molina'],
-            ],
-        ]);
+        $doctores = DB::table('tbl_doctor as d')
+            ->leftJoin('tbl_persona as p', 'p.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
+            ->select([
+                'd.COD_DOCTOR as id',
+                DB::raw("TRIM(CONCAT(COALESCE(p.PRIMER_NOMBRE,''),' ',COALESCE(p.SEGUNDO_NOMBRE,''),' ',COALESCE(p.PRIMER_APELLIDO,''),' ',COALESCE(p.SEGUNDO_APELLIDO,''))) as nombre"),
+            ])
+            ->orderBy('nombre')
+            ->get();
+
+        return response()->json(['ok' => true, 'data' => $doctores]);
     }
 
     /**
      * GET /api/agenda/estados
-     * Estados de cita (mock).
+     * Si en tu BD tienes otra tabla para estados, reemplaza por SELECT a esa tabla.
      */
-    public function estados(): JsonResponse
+    public function estados()
     {
-        return response()->json([
-            'ok'   => true,
-            'data' => [
-                ['id' => 'Confirmada', 'nombre' => 'Confirmada'],
-                ['id' => 'Pendiente',  'nombre' => 'Pendiente'],
-                ['id' => 'Cancelada',  'nombre' => 'Cancelada'],
-            ],
-        ]);
+        // Si manejas catálogo real, cambia este array por SELECT a tu tabla de estados
+        $data = [
+            ['id' => 'Confirmada', 'nombre' => 'Confirmada'],
+            ['id' => 'Pendiente',  'nombre' => 'Pendiente'],
+            ['id' => 'Cancelada',  'nombre' => 'Cancelada'],
+        ];
+
+        return response()->json(['ok' => true, 'data' => $data]);
     }
 }

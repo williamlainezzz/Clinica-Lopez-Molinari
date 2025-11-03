@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AgendaController extends Controller
 {
@@ -13,9 +14,9 @@ class AgendaController extends Controller
     private function render(string $section, Request $request)
     {
         $user = auth()->user();
-        $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');   // ADMIN | DOCTOR | RECEPCIONISTA | PACIENTE
+        $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');
 
-        // Mapeos legibles
+        // Etiquetas para títulos
         $labels = [
             'ADMIN'         => 'Admin',
             'DOCTOR'        => 'Doctor',
@@ -25,87 +26,105 @@ class AgendaController extends Controller
         $rolLabel = $labels[$rol] ?? 'Admin';
 
         // Nombre de ruta actual
-        $routeName = match (strtoupper($section)) {
-            'CITAS'       => 'agenda.citas',
-            'CALENDARIO'  => 'agenda.calendario',
+        $routeName = match (strtolower($section)) {
+            'citas'       => 'agenda.citas',
+            'calendario'  => 'agenda.calendario',
             default       => 'agenda.reportes',
         };
 
-        // Keys para ubicar parciales
-        $sectionKey = match (strtoupper($section)) {
-            'CITAS'       => 'citas',
-            'CALENDARIO'  => 'calendario',
-            default       => 'reportes',
-        };
-        $rolKey = strtolower($rol ?: 'admin'); // admin|doctor|recepcionista|paciente
-
-        // Nombres de parciales banner/toolbar (se incluyen con @includeIf)
-        $bannerPartial  = "modulo-citas.{$sectionKey}.banner-{$rolKey}";
-        $toolbarPartial = "modulo-citas.{$sectionKey}.toolbar-{$rolKey}";
-
-        // Filtros GET
+        // Filtros desde la query
         $filters = [
             'desde'  => $request->query('desde'),
             'hasta'  => $request->query('hasta'),
-            'estado' => $request->query('estado'),   // Confirmada | Pendiente | Cancelada
-            'doctor' => $request->query('doctor'),   // Dr. López | Dra. Molina
+            'estado' => $request->query('estado'),  // Confirmada | Pendiente | Cancelada | null
+            'doctor' => $request->query('doctor'),  // id numérico de doctor
         ];
 
-        // Catálogos de filtro DEMO (luego vendrán de la BD)
-        $catalogoEstados = ['Confirmada','Pendiente','Cancelada'];
-        $catalogoDoctores = ['Dr. López', 'Dra. Molina'];
+        // === Consulta REAL a BD (ajusta nombres de columnas/tablas si difieren) ===
+        $q = DB::table('tbl_cita as c')
+            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
+            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
+            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
+            ->selectRaw("
+                c.COD_CITA as id,
+                c.FEC_CITA as fecha,
+                c.HOR_CITA as hora,
+                TRIM(CONCAT(
+                    COALESCE(pper.PRIMER_NOMBRE,''),' ',
+                    COALESCE(pper.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(pper.PRIMER_APELLIDO,''),' ',
+                    COALESCE(pper.SEGUNDO_APELLIDO,'')
+                )) as paciente,
+                TRIM(CONCAT(
+                    COALESCE(dper.PRIMER_NOMBRE,''),' ',
+                    COALESCE(dper.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(dper.PRIMER_APELLIDO,''),' ',
+                    COALESCE(dper.SEGUNDO_APELLIDO,'')
+                )) as doctor,
+                c.EST_CITA as estado,
+                c.DES_MOTIVO as motivo
+            ");
 
-        // Dataset DEMO (luego se reemplaza por consultas reales acordes a tu esquema)
-        $rows = collect([
-            ['fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
-            ['fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
-            ['fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control'],
-        ]);
-
-        // Reglas visuales por rol
-        $isAdmin  = ($rol === 'ADMIN');
-        $isDoc    = ($rol === 'DOCTOR');
-        $isRecep  = ($rol === 'RECEPCIONISTA');
-        $isPac    = ($rol === 'PACIENTE');
-
-        // Qué columnas/acciones mostrar
-        $showDoctorColumn = $isAdmin || $isRecep;               // Admin/Recep ven columna "Doctor"
-        $showActions      = $isAdmin || $isRecep || $isDoc;     // Paciente sin acciones
-        $readOnly         = $isPac;
-
-        // En DOCTOR filtramos DEMO para que vea "sus" citas (aquí simulamos Dr. López)
-        if ($isDoc) {
-            $rows = $rows->where('doctor', 'Dr. López');
+        if (!empty($filters['estado'])) {
+            $q->where('c.EST_CITA', $filters['estado']);
+        }
+        if (!empty($filters['doctor'])) {
+            $q->where('c.FK_COD_DOCTOR', $filters['doctor']); // doctor = id numérico
+        }
+        if (!empty($filters['desde'])) {
+            $q->whereDate('c.FEC_CITA', '>=', $filters['desde']);
+        }
+        if (!empty($filters['hasta'])) {
+            $q->whereDate('c.FEC_CITA', '<=', $filters['hasta']);
         }
 
-        // Aplicar filtros GET
-        $rows = $rows->filter(function ($row) use ($filters) {
-            if ($filters['estado'] && strcasecmp($row['estado'], $filters['estado']) !== 0) return false;
-            if ($filters['doctor'] && strcasecmp($row['doctor'], $filters['doctor']) !== 0) return false;
-            if ($filters['desde'] && $row['fecha'] < $filters['desde']) return false;
-            if ($filters['hasta'] && $row['fecha'] > $filters['hasta']) return false;
-            return true;
-        })->values()->all();
+        // Si quisieras filtrar por rol (ej. Doctor solo ve lo suyo), aquí:
+        if ($rol === 'DOCTOR') {
+            // $q->where('c.FK_COD_DOCTOR', $user->doctor->COD_DOCTOR ?? 0);
+            // Ajusta si tu User tiene relación con Doctor
+        }
+        if ($rol === 'PACIENTE') {
+            // $q->where('c.FK_COD_PACIENTE', $user->paciente->COD_PACIENTE ?? 0);
+            // Ajusta si tu User tiene relación con Paciente
+        }
 
-        // Títulos de página
+        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get()
+            ->map(function ($r) {
+                return [
+                    'fecha'    => $r->fecha,
+                    'hora'     => $r->hora,
+                    'paciente' => $r->paciente,
+                    'doctor'   => $r->doctor,
+                    'estado'   => $r->estado,
+                    'motivo'   => $r->motivo,
+                    // puedes pasar id si vas a usar acciones con ese ID real
+                    'id'       => $r->id,
+                ];
+            })->toArray();
+
+        // Catálogos para selects (el JS los sobreescribe con la API, pero dejamos fallback)
+        $catalogoEstados  = ['Confirmada', 'Pendiente', 'Cancelada'];
+        $catalogoDoctores = []; // dejamos vacío; el JS lo llena desde /api/agenda/doctores
+
+        // Mostrar columnas/acciones según rol
+        $showDoctorColumn = in_array($rol, ['ADMIN','RECEPCIONISTA','PACIENTE']); // el Doctor puede ocultar su propia columna si prefieres
+        $showActions      = in_array($rol, ['ADMIN','RECEPCIONISTA','DOCTOR']);
+
+        // Títulos
         $pageTitle = "{$section} · {$rolLabel}";
         $heading   = "{$section} {$rolLabel}";
 
-        return view('modulo-citas.shared.lista', [
-            'pageTitle'        => $pageTitle,
-            'heading'          => $heading,
-            'routeName'        => $routeName,
-            'filters'          => $filters,
-            'rows'             => $rows,
-            'catalogoEstados'  => $catalogoEstados,
-            'catalogoDoctores' => $catalogoDoctores,
-            'bannerPartial'    => $bannerPartial,
-            'toolbarPartial'   => $toolbarPartial,
-            'rol'              => $rol,                 // para decidir acciones/etiquetas en Blade
-            'showDoctorColumn' => $showDoctorColumn,
-            'showActions'      => $showActions,
-            'readOnly'         => $readOnly,
-            'sectionKey'       => $sectionKey,          // por si lo necesitas en Blade
-        ]);
+        // Partials (si no existen, includeIf no truena)
+        $bannerPartial  = "modulo-citas.shared.partials.banner.{$rol}.{$section}";
+        $toolbarPartial = "modulo-citas.shared.partials.toolbar.{$rol}.{$section}";
+
+        return view('modulo-citas.shared.lista', compact(
+            'pageTitle', 'heading', 'rows', 'filters', 'routeName',
+            'catalogoEstados', 'catalogoDoctores',
+            'showDoctorColumn', 'showActions',
+            'bannerPartial', 'toolbarPartial',
+            'rol'
+        ));
     }
 }
