@@ -1,58 +1,69 @@
 @extends('adminlte::page')
 
-@section('title', $titulo ?? 'Agenda')
+@section('title', $pageTitle ?? 'Agenda')
 
 @section('content_header')
-    <h1>{{ $titulo ?? 'Agenda' }}</h1>
+    <h1>{{ $heading ?? 'Agenda' }}</h1>
 @endsection
 
 @section('content')
 
-    {{-- Banner/avisos específicos por rol+sección (opcional) --}}
-    @isset($seccion)
-        @isset($rol)
-            @includeIf("modulo-citas.$seccion.banner-$rol")
-        @endisset
-    @endisset
+    {{-- Banner por rol/section --}}
+    @includeIf($bannerPartial)
 
     <div class="card">
         <div class="card-header">
-            <div class="row">
-                <div class="col-md-3">
-                    <label>Desde</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <label>Hasta</label>
-                    <input type="date" class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <label>Estado</label>
-                    <select class="form-control">
-                        <option>Todos</option>
-                        <option>Confirmada</option>
-                        <option>Pendiente</option>
-                        <option>Cancelada</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label>Doctor</label>
-                    <select class="form-control">
-                        <option>Todos</option>
-                        <option>Dr. López</option>
-                        <option>Dra. Molina</option>
-                    </select>
-                </div>
+            {{-- Toolbar por rol/section --}}
+            <div class="mb-3">
+                @includeIf($toolbarPartial)
             </div>
 
-            {{-- Toolbar específica por rol+sección (opcional) --}}
-            <div class="mt-3">
-                @isset($seccion)
-                    @isset($rol)
-                        @includeIf("modulo-citas.$seccion.toolbar-$rol")
-                    @endisset
-                @endisset
-            </div>
+            {{-- Filtros (GET) --}}
+            <form method="GET" action="{{ route($routeName) }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="mb-1">Desde</label>
+                        <input type="date" class="form-control"
+                               name="desde" value="{{ $filters['desde'] }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1">Hasta</label>
+                        <input type="date" class="form-control"
+                               name="hasta" value="{{ $filters['hasta'] }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1">Estado</label>
+                        <select class="form-control" name="estado">
+                            <option value="">Todos</option>
+                            @foreach(($catalogoEstados ?? []) as $est)
+                                <option value="{{ $est }}" {{ (isset($filters['estado']) && $filters['estado']===$est) ? 'selected' : '' }}>
+                                    {{ $est }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="mb-1">Doctor</label>
+                        <select class="form-control" name="doctor">
+                            <option value="">Todos</option>
+                            @foreach(($catalogoDoctores ?? []) as $doc)
+                                <option value="{{ $doc }}" {{ (isset($filters['doctor']) && $filters['doctor']===$doc) ? 'selected' : '' }}>
+                                    {{ $doc }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                    <a href="{{ route($routeName) }}" class="btn btn-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </form>
         </div>
 
         <div class="card-body p-0">
@@ -63,56 +74,76 @@
                             <th>Fecha</th>
                             <th>Hora</th>
                             <th>Paciente</th>
-                            <th>Doctor</th>
+                            @if($showDoctorColumn)
+                                <th>Doctor</th>
+                            @endif
                             <th>Estado</th>
                             <th>Motivo</th>
-                            <th style="width: 120px;">Acciones</th>
+                            @if($showActions)
+                                <th style="width: 160px;">Acciones</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Datos demo estáticos (puedes reemplazar por @foreach($rows as $r) cuando quieras) --}}
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>08:30</td>
-                            <td>Ana Rivera</td>
-                            <td>Dr. López</td>
-                            <td><span class="badge badge-success">Confirmada</span></td>
-                            <td>Limpieza</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>09:00</td>
-                            <td>Carlos Pérez</td>
-                            <td>Dra. Molina</td>
-                            <td><span class="badge badge-warning">Pendiente</span></td>
-                            <td>Dolor de muela</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>2025-11-12</td>
-                            <td>10:15</td>
-                            <td>María Gómez</td>
-                            <td>Dr. López</td>
-                            <td><span class="badge badge-danger">Cancelada</span></td>
-                            <td>Control</td>
-                            <td class="text-nowrap">
-                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
-                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
-                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
-                            </td>
-                        </tr>
+                        @forelse($rows as $row)
+                            @php
+                                $estado = $row['estado'];
+                                $badge = match ($estado) {
+                                    'Confirmada' => 'success',
+                                    'Pendiente'  => 'warning',
+                                    'Cancelada'  => 'danger',
+                                    default      => 'secondary',
+                                };
+                            @endphp
+                            <tr>
+                                <td>{{ $row['fecha'] }}</td>
+                                <td>{{ $row['hora'] }}</td>
+                                <td>{{ $row['paciente'] }}</td>
+
+                                @if($showDoctorColumn)
+                                    <td>{{ $row['doctor'] }}</td>
+                                @endif
+
+                                <td><span class="badge badge-{{ $badge }}">{{ $estado }}</span></td>
+                                <td>{{ $row['motivo'] }}</td>
+
+                                @if($showActions)
+                                    <td class="text-nowrap">
+                                        {{-- Acciones por rol (aún sin conectar) --}}
+                                        @switch($rol)
+                                            @case('ADMIN')
+                                            @case('RECEPCIONISTA')
+                                                <a class="btn btn-xs btn-info"    title="Ver"><i class="fas fa-eye"></i></a>
+                                                <a class="btn btn-xs btn-primary" title="Editar"><i class="fas fa-edit"></i></a>
+                                                <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-sync"></i></a>
+                                                <a class="btn btn-xs btn-danger"  title="Cancelar"><i class="fas fa-times"></i></a>
+                                                @break
+
+                                            @case('DOCTOR')
+                                                <a class="btn btn-xs btn-info"    title="Ver"><i class="fas fa-eye"></i></a>
+                                                <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-sync"></i></a>
+                                                <a class="btn btn-xs btn-danger"  title="Cancelar"><i class="fas fa-times"></i></a>
+                                                @break
+                                        @endswitch
+                                    </td>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ 6 + ($showDoctorColumn?1:0) + ($showActions?1:0) }}" class="text-center text-muted">
+                                    Sin resultados con los filtros actuales.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="card-footer">
+            <small class="text-muted">
+                (Demo) Estos datos son de prueba. Conectaremos a la BD en el siguiente bloque.
+            </small>
         </div>
     </div>
 @endsection
