@@ -7,115 +7,109 @@
 @endsection
 
 @section('content')
+
+    {{-- Banner/avisos específicos por rol+sección (opcional) --}}
+    @isset($seccion)
+        @isset($rol)
+            @includeIf("modulo-citas.$seccion.banner-$rol")
+        @endisset
+    @endisset
+
     <div class="card">
         <div class="card-header">
-            <form method="GET" action="{{ route($routeName) }}" class="row g-3 align-items-end" id="filtersForm">
+            <div class="row">
                 <div class="col-md-3">
-                    <label class="form-label">Desde</label>
-                    <input type="date" name="desde" value="{{ $filters['desde'] }}" class="form-control">
+                    <label>Desde</label>
+                    <input type="date" class="form-control">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Hasta</label>
-                    <input type="date" name="hasta" value="{{ $filters['hasta'] }}" class="form-control">
+                    <label>Hasta</label>
+                    <input type="date" class="form-control">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Estado</label>
-                    <select name="estado" class="form-control">
-                        <option value="">Todos</option>
-                        @foreach (['Confirmada','Pendiente','Cancelada'] as $e)
-                            <option value="{{ $e }}" @selected($filters['estado'] === $e)>{{ $e }}</option>
-                        @endforeach
+                    <label>Estado</label>
+                    <select class="form-control">
+                        <option>Todos</option>
+                        <option>Confirmada</option>
+                        <option>Pendiente</option>
+                        <option>Cancelada</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Doctor</label>
-                    <select name="doctor" class="form-control">
-                        <option value="">Todos</option>
-                        @foreach (['Dr. López','Dra. Molina'] as $d)
-                            <option value="{{ $d }}" @selected($filters['doctor'] === $d)>{{ $d }}</option>
-                        @endforeach
+                    <label>Doctor</label>
+                    <select class="form-control">
+                        <option>Todos</option>
+                        <option>Dr. López</option>
+                        <option>Dra. Molina</option>
                     </select>
                 </div>
+            </div>
 
-                <div class="col-12 mt-2 d-flex gap-2">
-                    <button class="btn btn-primary">
-                        <i class="fas fa-search"></i> Filtrar
-                    </button>
-                    <a href="{{ route($routeName) }}" class="btn btn-secondary">Limpiar</a>
-
-                    {{-- Botón de Nueva Cita solo si el rol puede agendar y si la sección es Citas --}}
-                    @if(($perms['schedule'] ?? false) && $seccion === 'citas')
-                        <a class="btn btn-success">
-                            <i class="fas fa-plus"></i> Nueva cita
-                        </a>
-                    @endif
-                </div>
-            </form>
+            {{-- Toolbar específica por rol+sección (opcional) --}}
+            <div class="mt-3">
+                @isset($seccion)
+                    @isset($rol)
+                        @includeIf("modulo-citas.$seccion.toolbar-$rol")
+                    @endisset
+                @endisset
+            </div>
         </div>
-
-        @php
-            $showActions = ($perms['view'] ?? false) || ($perms['edit'] ?? false) || ($perms['delete'] ?? false) || ($perms['schedule'] ?? false);
-        @endphp
 
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped mb-0">
                     <thead>
                         <tr>
-                            @foreach($columns as $c)
-                                <th>{{ $c['label'] }}</th>
-                            @endforeach
-                            @if($showActions)
-                                <th style="width: 180px;">Acciones</th>
-                            @endif
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Paciente</th>
+                            <th>Doctor</th>
+                            <th>Estado</th>
+                            <th>Motivo</th>
+                            <th style="width: 120px;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($rows as $r)
-                            <tr>
-                                @foreach($columns as $c)
-                                    @php $key = $c['key']; @endphp
-
-                                    @if($key === 'estado')
-                                        @php
-                                            $badge = match ($r['estado']) {
-                                                'Confirmada' => 'success',
-                                                'Pendiente'  => 'warning',
-                                                'Cancelada'  => 'danger',
-                                                default      => 'secondary',
-                                            };
-                                        @endphp
-                                        <td><span class="badge badge-{{ $badge }}">{{ $r['estado'] }}</span></td>
-
-                                    @else
-                                        <td>{{ $r[$key] }}</td>
-                                    @endif
-                                @endforeach
-
-                                @if($showActions)
-                                    <td class="text-nowrap">
-                                        @if($perms['view'] ?? false)
-                                            <a class="btn btn-xs btn-info" title="Ver"><i class="fas fa-eye"></i></a>
-                                        @endif
-                                        @if($perms['edit'] ?? false)
-                                            <a class="btn btn-xs btn-primary" title="Editar"><i class="fas fa-edit"></i></a>
-                                        @endif
-                                        @if(($perms['schedule'] ?? false) && $seccion === 'citas')
-                                            <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-calendar-alt"></i></a>
-                                        @endif
-                                        @if($perms['delete'] ?? false)
-                                            <a class="btn btn-xs btn-danger" title="Eliminar"><i class="fas fa-trash"></i></a>
-                                        @endif
-                                    </td>
-                                @endif
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="{{ count($columns) + ($showActions ? 1 : 0) }}" class="text-center text-muted">
-                                    Sin resultados
-                                </td>
-                            </tr>
-                        @endforelse
+                        {{-- Datos demo estáticos (puedes reemplazar por @foreach($rows as $r) cuando quieras) --}}
+                        <tr>
+                            <td>2025-11-12</td>
+                            <td>08:30</td>
+                            <td>Ana Rivera</td>
+                            <td>Dr. López</td>
+                            <td><span class="badge badge-success">Confirmada</span></td>
+                            <td>Limpieza</td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
+                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2025-11-12</td>
+                            <td>09:00</td>
+                            <td>Carlos Pérez</td>
+                            <td>Dra. Molina</td>
+                            <td><span class="badge badge-warning">Pendiente</span></td>
+                            <td>Dolor de muela</td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
+                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2025-11-12</td>
+                            <td>10:15</td>
+                            <td>María Gómez</td>
+                            <td>Dr. López</td>
+                            <td><span class="badge badge-danger">Cancelada</span></td>
+                            <td>Control</td>
+                            <td class="text-nowrap">
+                                <a class="btn btn-xs btn-info"><i class="fas fa-eye"></i></a>
+                                <a class="btn btn-xs btn-primary"><i class="fas fa-edit"></i></a>
+                                <a class="btn btn-xs btn-danger"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
