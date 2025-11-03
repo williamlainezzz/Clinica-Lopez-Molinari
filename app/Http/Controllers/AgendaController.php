@@ -14,7 +14,9 @@ class AgendaController extends Controller
     private function render(string $section, Request $request)
     {
         $user = auth()->user();
-        $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');
+// data_get evita acceder propiedades en null; default 'ADMIN' para invitado
+$rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
+
 
         // Etiquetas para títulos
         $labels = [
