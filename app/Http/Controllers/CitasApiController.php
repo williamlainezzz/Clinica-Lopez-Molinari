@@ -3,86 +3,88 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Cita;
+use Illuminate\Http\JsonResponse;
 
 class CitasApiController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * GET /api/agenda/citas
+     * Lista de citas (mock). Acepta filtros opcionales por ?estado= y ?doctor=
+     */
+    public function index(Request $request): JsonResponse
     {
-        $user = auth()->user();
-        $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');
-
-        $desde  = $request->query('desde');
-        $hasta  = $request->query('hasta');
+        // NO asumimos usuario logueado en la API pública
         $estado = $request->query('estado');
-        $doctor = $request->query('doctor'); // nombre completo; si prefieres ID, lo ajustamos
+        $doctor = $request->query('doctor');
 
-        $q = Cita::with(['paciente','doctor','estado'])
-                 ->entreFechas($desde, $hasta)
-                 ->porEstado($estado)
-                 ->porDoctorNombre($doctor);
+        // Dataset de ejemplo (evita errores mientras no usemos BD aquí)
+        $rows = collect([
+            ['id' => 1, 'fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
+            ['id' => 2, 'fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
+            ['id' => 3, 'fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control'],
+        ]);
 
-        // Restricciones por ROL
-        switch ($rol) {
-            case 'PACIENTE':
-                // asumiendo user->persona_id existe; si es otro campo me dices
-                $personaId = optional($user->persona)->ID_PERSONA ?? null;
-                if ($personaId) $q->where('ID_PACIENTE', $personaId);
-                break;
-
-            case 'DOCTOR':
-                $personaId = optional($user->persona)->ID_PERSONA ?? null;
-                if ($personaId) $q->where('ID_DOCTOR', $personaId);
-                break;
-
-            case 'RECEPCIONISTA':
-                // ve todo (o por clínica/sucursal si tienes ese campo)
-                break;
-
-            case 'ADMIN':
-            default:
-                // ve todo
-                break;
+        if ($estado) {
+            $rows = $rows->where('estado', $estado);
+        }
+        if ($doctor) {
+            $rows = $rows->where('doctor', $doctor);
         }
 
-        $rows = $q->orderBy('FECHA')->orderBy('HORA')->get()
-            ->map(function ($c) {
-                return [
-                    'id'       => $c->ID_CITA,
-                    'fecha'    => $c->FECHA,
-                    'hora'     => substr((string)$c->HORA, 0, 5),
-                    'paciente' => optional($c->paciente)->nombre_completo ?? '—',
-                    'doctor'   => optional($c->doctor)->nombre_completo ?? '—',
-                    'estado'   => optional($c->estado)->NOMBRE ?? '—',
-                    'motivo'   => $c->MOTIVO ?? '—',
-                ];
-            });
-
         return response()->json([
-            'ok'     => true,
-            'count'  => $rows->count(),
-            'items'  => $rows,
+            'ok'    => true,
+            'total' => $rows->count(),
+            'data'  => $rows->values()->all(),
         ]);
     }
 
-    public function show($id)
+    /**
+     * GET /api/agenda/citas/{id}
+     * Detalle de una cita (mock).
+     */
+    public function show(int $id): JsonResponse
     {
-        $c = Cita::with(['paciente','doctor','estado'])->find($id);
-        if (!$c) {
-            return response()->json(['ok'=>false,'msg'=>'No encontrada'], 404);
+        $rows = [
+            1 => ['id' => 1, 'fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza',       'observaciones' => '—'],
+            2 => ['id' => 2, 'fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela', 'observaciones' => 'Trae Rx.'],
+            3 => ['id' => 3, 'fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control',        'observaciones' => 'Canceló por viaje'],
+        ];
+
+        if (! isset($rows[$id])) {
+            return response()->json(['ok' => false, 'message' => 'Cita no encontrada'], 404);
         }
+
+        return response()->json(['ok' => true, 'data' => $rows[$id]]);
+    }
+
+    /**
+     * GET /api/agenda/doctores
+     * Lista de doctores (mock).
+     */
+    public function doctores(): JsonResponse
+    {
         return response()->json([
             'ok'   => true,
-            'item' => [
-                'id'       => $c->ID_CITA,
-                'fecha'    => $c->FECHA,
-                'hora'     => substr((string)$c->HORA,0,5),
-                'paciente' => optional($c->paciente)->nombre_completo ?? '—',
-                'doctor'   => optional($c->doctor)->nombre_completo ?? '—',
-                'estado'   => optional($c->estado)->NOMBRE ?? '—',
-                'motivo'   => $c->MOTIVO ?? '—',
+            'data' => [
+                ['id' => 1, 'nombre' => 'Dr. López'],
+                ['id' => 2, 'nombre' => 'Dra. Molina'],
+            ],
+        ]);
+    }
+
+    /**
+     * GET /api/agenda/estados
+     * Estados de cita (mock).
+     */
+    public function estados(): JsonResponse
+    {
+        return response()->json([
+            'ok'   => true,
+            'data' => [
+                ['id' => 'Confirmada', 'nombre' => 'Confirmada'],
+                ['id' => 'Pendiente',  'nombre' => 'Pendiente'],
+                ['id' => 'Cancelada',  'nombre' => 'Cancelada'],
             ],
         ]);
     }
 }
-
