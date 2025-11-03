@@ -23,6 +23,9 @@ use App\Http\Controllers\PermisoController;
 // Model para /db-check
 use App\Models\Usuario;
 
+// --- AGENDA: Citas / Calendario / Reportes ---
+use App\Http\Controllers\AgendaController;
+
 /* =========================
 |  Público / Dashboard
 ========================= */
@@ -190,17 +193,13 @@ Route::get('/db-check', function () {
 ======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
 
-    // /agenda/citas
-    Route::get('/citas', function () {
-        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-        return match ($rol) {
-            'ADMIN'         => view('modulo-citas.admin.citas.index'),
-            'DOCTOR'        => view('modulo-citas.doctor.citas.index'),
-            'RECEPCIONISTA' => view('modulo-citas.recepcionista.citas.index'),
-            'PACIENTE'      => view('modulo-citas.paciente.citas.index'),
-            default         => view('modulo-citas.admin.citas.index'),
-        };
-    })->name('agenda.citas');
+   // --- AGENDA: Citas / Calendario / Reportes ---
+Route::middleware(['auth'])->prefix('agenda')->group(function () {
+    Route::get('/citas',      [AgendaController::class, 'citas'])->name('agenda.citas');
+    Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
+    Route::get('/reportes',   [AgendaController::class, 'reportes'])->name('agenda.reportes');
+});
+
 
     // /agenda/calendario
     Route::get('/calendario', function () {
