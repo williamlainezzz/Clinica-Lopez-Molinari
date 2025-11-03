@@ -50,8 +50,6 @@ Route::get('/export/citas.csv', function () {
     ]);
 })->name('export.citas.csv');
 
-
-
 /* =========================
 |  Personas (vistas)
 ========================= */
@@ -115,7 +113,6 @@ Route::middleware('auth')->group(function () {
 
 /* =========================
 |  Seguridad (CONTROLADORES) bajo auth + permiso
-|  ⚠️ No hay vistas estáticas tipo Route::view('/seguridad/…').
 ========================= */
 Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(function () {
 
@@ -187,42 +184,44 @@ Route::get('/db-check', function () {
     ]);
 });
 
-
-
-// --- AGENDA: Citas / Calendario / Reportes ---
-// Estas rutas solo muestran vistas (stub). La lógica/queries las añadimos después.
+/* =======================================================
+|  AGENDA: Citas / Calendario / Reportes (por ROL)
+|  Estas rutas muestran vistas (stubs). La lógica real va luego.
+======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
 
     // /agenda/citas
-Route::get('/citas', function () {
-    $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-    return match ($rol) {
-        'ADMIN'         => view('modulo-citas.admin.citas.index'),
-        'DOCTOR'        => view('modulo-citas.doctor.citas.index'),
-        'RECEPCIONISTA' => view('modulo-citas.recepcionista.citas.index'),
-        'PACIENTE'      => view('modulo-citas.paciente.citas.index'),
-        default         => view('modulo-citas.admin.citas.index'),
-    };
-})->name('agenda.citas');
+    Route::get('/citas', function () {
+        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+        return match ($rol) {
+            'ADMIN'         => view('modulo-citas.admin.citas.index'),
+            'DOCTOR'        => view('modulo-citas.doctor.citas.index'),
+            'RECEPCIONISTA' => view('modulo-citas.recepcionista.citas.index'),
+            'PACIENTE'      => view('modulo-citas.paciente.citas.index'),
+            default         => view('modulo-citas.admin.citas.index'),
+        };
+    })->name('agenda.citas');
 
-// /agenda/calendario
-Route::get('/calendario', function () {
-    $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-    return match ($rol) {
-        'ADMIN'         => view('modulo-citas.admin.calendario.index'),
-        'DOCTOR'        => view('modulo-citas.doctor.calendario.index'),
-        'RECEPCIONISTA' => view('modulo-citas.recepcionista.calendario.index'),
-        'PACIENTE'      => view('modulo-citas.paciente.calendario.index'),
-        default         => view('modulo-citas.admin.calendario.index'),
-    };
-})->name('agenda.calendario');
+    // /agenda/calendario
+    Route::get('/calendario', function () {
+        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+        return match ($rol) {
+            'ADMIN'         => view('modulo-citas.admin.calendario.index'),
+            'DOCTOR'        => view('modulo-citas.doctor.calendario.index'),
+            'RECEPCIONISTA' => view('modulo-citas.recepcionista.calendario.index'),
+            'PACIENTE'      => view('modulo-citas.paciente.calendario.index'),
+            default         => view('modulo-citas.admin.calendario.index'),
+        };
+    })->name('agenda.calendario');
 
+    // /agenda/reportes
     Route::get('/reportes', function () {
         $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
         switch ($rol) {
             case 'DOCTOR':        return view('modulo-citas.doctor.reportes.index');
             case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.reportes.index');
             case 'PACIENTE':      return view('modulo-citas.paciente.reportes.index');
+            case 'ADMIN':
             default:              return view('modulo-citas.admin.reportes.index'); // Admin global
         }
     })->name('agenda.reportes');
