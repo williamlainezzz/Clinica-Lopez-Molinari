@@ -14,9 +14,8 @@ class AgendaController extends Controller
     private function render(string $section, Request $request)
     {
         $user = auth()->user();
-// data_get evita acceder propiedades en null; default 'ADMIN' para invitado
-$rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
-
+        // Rol seguro aunque no haya sesión
+        $rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
 
         // Etiquetas para títulos
         $labels = [
@@ -34,20 +33,23 @@ $rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
             default       => 'agenda.reportes',
         };
 
-        // Filtros desde la query
+        // Filtros desde la URL
         $filters = [
             'desde'  => $request->query('desde'),
             'hasta'  => $request->query('hasta'),
-            'estado' => $request->query('estado'),  // Confirmada | Pendiente | Cancelada | null
-            'doctor' => $request->query('doctor'),  // id numérico de doctor
+            'estado' => $request->query('estado'), // 'Confirmada'|'Pendiente'|'Cancelada'
+            'doctor' => $request->query('doctor'), // id numérico de persona (doctor)
         ];
 
-        // === Consulta REAL a BD (ajusta nombres de columnas/tablas si difieren) ===
+        // Mapeo numérico<->texto para ESTADO_CITA
+        $estadoMap = ['Confirmada' => 1, 'Pendiente' => 2, 'Cancelada' => 3];
+
+        // Consulta REAL: cita -> persona (paciente) / persona (doctor)
         $q = DB::table('tbl_cita as c')
-            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
-            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
-            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
-            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
+            // paciente (FK_COD_PACIENTE -> tbl_persona)
+            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
+            // doctor  (FK_COD_DOCTOR   -> tbl_persona)
+            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
             ->selectRaw("
                 c.COD_CITA as id,
                 c.FEC_CITA as fecha,
@@ -64,15 +66,22 @@ $rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
                     COALESCE(dper.PRIMER_APELLIDO,''),' ',
                     COALESCE(dper.SEGUNDO_APELLIDO,'')
                 )) as doctor,
-                c.EST_CITA as estado,
-                c.DES_MOTIVO as motivo
+                CASE c.ESTADO_CITA
+                    WHEN 1 THEN 'Confirmada'
+                    WHEN 2 THEN 'Pendiente'
+                    WHEN 3 THEN 'Cancelada'
+                    ELSE 'Desconocido'
+                END as estado,
+                c.MOT_CITA as motivo
             ");
 
-        if (!empty($filters['estado'])) {
-            $q->where('c.EST_CITA', $filters['estado']);
+        // Filtros
+        if (!empty($filters['estado']) && isset($estadoMap[$filters['estado']])) {
+            $q->where('c.ESTADO_CITA', $estadoMap[$filters['estado']]);
         }
         if (!empty($filters['doctor'])) {
-            $q->where('c.FK_COD_DOCTOR', $filters['doctor']); // doctor = id numérico
+            // OJO: en tu esquema doctor es COD_PERSONA
+            $q->where('c.FK_COD_DOCTOR', $filters['doctor']);
         }
         if (!empty($filters['desde'])) {
             $q->whereDate('c.FEC_CITA', '>=', $filters['desde']);
@@ -81,43 +90,37 @@ $rol  = strtoupper((string) data_get($user, 'rol.NOM_ROL', 'ADMIN'));
             $q->whereDate('c.FEC_CITA', '<=', $filters['hasta']);
         }
 
-        // Si quisieras filtrar por rol (ej. Doctor solo ve lo suyo), aquí:
-        if ($rol === 'DOCTOR') {
-            // $q->where('c.FK_COD_DOCTOR', $user->doctor->COD_DOCTOR ?? 0);
-            // Ajusta si tu User tiene relación con Doctor
+        // Reglas por rol (si más adelante conectas usuarios/doctores/pacientes)
+        if ($rol === 'DOCTOR' && $user) {
+            // $q->where('c.FK_COD_DOCTOR', data_get($user, 'persona.COD_PERSONA', 0));
         }
-        if ($rol === 'PACIENTE') {
-            // $q->where('c.FK_COD_PACIENTE', $user->paciente->COD_PACIENTE ?? 0);
-            // Ajusta si tu User tiene relación con Paciente
+        if ($rol === 'PACIENTE' && $user) {
+            // $q->where('c.FK_COD_PACIENTE', data_get($user, 'persona.COD_PERSONA', 0));
         }
 
-        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get()
-            ->map(function ($r) {
-                return [
-                    'fecha'    => $r->fecha,
-                    'hora'     => $r->hora,
-                    'paciente' => $r->paciente,
-                    'doctor'   => $r->doctor,
-                    'estado'   => $r->estado,
-                    'motivo'   => $r->motivo,
-                    // puedes pasar id si vas a usar acciones con ese ID real
-                    'id'       => $r->id,
-                ];
-            })->toArray();
+        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get()->map(function ($r) {
+            return [
+                'id'       => $r->id,
+                'fecha'    => $r->fecha,
+                'hora'     => $r->hora,
+                'paciente' => $r->paciente,
+                'doctor'   => $r->doctor,
+                'estado'   => $r->estado,
+                'motivo'   => $r->motivo,
+            ];
+        })->toArray();
 
-        // Catálogos para selects (el JS los sobreescribe con la API, pero dejamos fallback)
+        // Catálogos fallback (la vista los sobreescribe con la API)
         $catalogoEstados  = ['Confirmada', 'Pendiente', 'Cancelada'];
-        $catalogoDoctores = []; // dejamos vacío; el JS lo llena desde /api/agenda/doctores
+        $catalogoDoctores = [];
 
         // Mostrar columnas/acciones según rol
-        $showDoctorColumn = in_array($rol, ['ADMIN','RECEPCIONISTA','PACIENTE']); // el Doctor puede ocultar su propia columna si prefieres
+        $showDoctorColumn = in_array($rol, ['ADMIN','RECEPCIONISTA','PACIENTE']);
         $showActions      = in_array($rol, ['ADMIN','RECEPCIONISTA','DOCTOR']);
 
-        // Títulos
+        // Títulos y partials
         $pageTitle = "{$section} · {$rolLabel}";
         $heading   = "{$section} {$rolLabel}";
-
-        // Partials (si no existen, includeIf no truena)
         $bannerPartial  = "modulo-citas.shared.partials.banner.{$rol}.{$section}";
         $toolbarPartial = "modulo-citas.shared.partials.toolbar.{$rol}.{$section}";
 

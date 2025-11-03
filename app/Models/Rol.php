@@ -7,5 +7,7 @@ class Rol extends Model
     protected $table = 'tbl_rol';
     protected $primaryKey = 'COD_ROL';
     public $timestamps = false;
-    protected $fillable = ['NOM_ROL','DES_ROL','ESTADO_ROL'];
+
+    // columnas reales
+    protected $fillable = ['NOM_ROL', 'DESCRIPCION'];
 }

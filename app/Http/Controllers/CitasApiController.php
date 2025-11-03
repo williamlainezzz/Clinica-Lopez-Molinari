@@ -7,50 +7,84 @@ use Illuminate\Support\Facades\DB;
 
 class CitasApiController extends Controller
 {
+    /** Catálogo local de estados (ajusta ids si difieren en tu BD) */
+    private const ESTADOS = [
+        1 => 'Confirmada',
+        2 => 'Pendiente',
+        3 => 'Cancelada',
+    ];
+
+    /** name/id → id (o null si no coincide) */
+    private function estadoToId(?string $valor): ?int
+    {
+        if (!$valor) return null;
+        $valor = trim($valor);
+        // si vino “2”
+        if (ctype_digit($valor)) return (int) $valor;
+        // si vino “Pendiente”
+        foreach (self::ESTADOS as $id => $nom) {
+            if (strcasecmp($nom, $valor) === 0) return (int) $id;
+        }
+        return null;
+    }
+
     /**
      * GET /api/agenda/citas
-     * Filtros: estado, doctor (id), desde (Y-m-d), hasta (Y-m-d)
+     * Filtros: estado (id o nombre), doctor (COD_PERSONA), desde (Y-m-d), hasta (Y-m-d)
      */
     public function index(Request $request)
     {
-        // Mapear estados "humanos" a lo que guarda la BD si difiere
-        // Si en tu BD EST_CITA ya guarda textos ('Confirmada', etc.), dejamos directo.
-        $estado = $request->query('estado');    // 'Confirmada'|'Pendiente'|'Cancelada'|null
-        $doctor = $request->query('doctor');    // id numérico del doctor
-        $desde  = $request->query('desde');     // 'YYYY-MM-DD'
-        $hasta  = $request->query('hasta');     // 'YYYY-MM-DD'
+        $estado = $request->query('estado');     // 'Confirmada' | '2' | null
+        $doctor = $request->query('doctor');     // COD_PERSONA del doctor
+        $desde  = $request->query('desde');      // 'YYYY-MM-DD'
+        $hasta  = $request->query('hasta');      // 'YYYY-MM-DD'
 
-        // Armamos SELECT con JOINs a paciente->persona y doctor->persona.
-        // OJO: Si tu tabla usa otros nombres de columna, cambia SOLO estos alias:
         $q = DB::table('tbl_cita as c')
-            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
-            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
-            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
-            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
-            ->select([
-                'c.COD_CITA as id',
-                'c.FEC_CITA as fecha',
-                'c.HOR_CITA as hora',
-                DB::raw("TRIM(CONCAT(COALESCE(pper.PRIMER_NOMBRE,''),' ',COALESCE(pper.SEGUNDO_NOMBRE,''),' ',COALESCE(pper.PRIMER_APELLIDO,''),' ',COALESCE(pper.SEGUNDO_APELLIDO,''))) as paciente"),
-                DB::raw("TRIM(CONCAT(COALESCE(dper.PRIMER_NOMBRE,''),' ',COALESCE(dper.SEGUNDO_NOMBRE,''),' ',COALESCE(dper.PRIMER_APELLIDO,''),' ',COALESCE(dper.SEGUNDO_APELLIDO,''))) as doctor"),
-                'c.EST_CITA as estado',
-                'c.DES_MOTIVO as motivo',
-            ]);
+            ->leftJoin('tbl_persona as pcte', 'pcte.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_persona as pdoc', 'pdoc.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
+            ->selectRaw("
+                c.COD_CITA                                        as id,
+                c.FEC_CITA                                        as fecha,
+                c.HOR_CITA                                        as hora,
+                TRIM(CONCAT(
+                    COALESCE(pcte.PRIMER_NOMBRE,''),' ',
+                    COALESCE(pcte.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(pcte.PRIMER_APELLIDO,''),' ',
+                    COALESCE(pcte.SEGUNDO_APELLIDO,'')
+                ))                                                as paciente,
+                TRIM(CONCAT(
+                    COALESCE(pdoc.PRIMER_NOMBRE,''),' ',
+                    COALESCE(pdoc.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(pdoc.PRIMER_APELLIDO,''),' ',
+                    COALESCE(pdoc.SEGUNDO_APELLIDO,'')
+                ))                                                as doctor,
+                c.ESTADO_CITA                                     as estado_id,
+                c.MOT_CITA                                        as motivo
+            ");
 
-        if (!empty($estado)) {
-            $q->where('c.EST_CITA', $estado);
-        }
-        if (!empty($doctor)) {
-            $q->where('c.FK_COD_DOCTOR', $doctor);
-        }
-        if (!empty($desde)) {
-            $q->whereDate('c.FEC_CITA', '>=', $desde);
-        }
-        if (!empty($hasta)) {
-            $q->whereDate('c.FEC_CITA', '<=', $hasta);
+        if ($desde)  $q->whereDate('c.FEC_CITA', '>=', $desde);
+        if ($hasta)  $q->whereDate('c.FEC_CITA', '<=', $hasta);
+        if ($doctor) $q->where('c.FK_COD_DOCTOR', $doctor);
+
+        if ($estado) {
+            $estadoId = $this->estadoToId($estado);
+            if ($estadoId !== null) {
+                $q->where('c.ESTADO_CITA', $estadoId);
+            }
         }
 
-        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get();
+        $rows = $q->orderBy('c.FEC_CITA')->orderBy('c.HOR_CITA')->get()
+            ->map(function ($r) {
+                return [
+                    'id'       => (int)$r->id,
+                    'fecha'    => (string)$r->fecha,
+                    'hora'     => (string)$r->hora,
+                    'paciente' => $r->paciente,
+                    'doctor'   => $r->doctor,
+                    'estado'   => self::ESTADOS[(int)$r->estado_id] ?? '—',
+                    'motivo'   => (string)$r->motivo,
+                ];
+            });
 
         return response()->json([
             'ok'    => true,
@@ -64,62 +98,85 @@ class CitasApiController extends Controller
      */
     public function show($id)
     {
-        $row = DB::table('tbl_cita as c')
-            ->leftJoin('tbl_paciente as pa', 'pa.COD_PACIENTE', '=', 'c.FK_COD_PACIENTE')
-            ->leftJoin('tbl_persona as pper', 'pper.COD_PERSONA', '=', 'pa.FK_COD_PERSONA')
-            ->leftJoin('tbl_doctor as d', 'd.COD_DOCTOR', '=', 'c.FK_COD_DOCTOR')
-            ->leftJoin('tbl_persona as dper', 'dper.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
-            ->select([
-                'c.COD_CITA as id',
-                'c.FEC_CITA as fecha',
-                'c.HOR_CITA as hora',
-                DB::raw("TRIM(CONCAT(COALESCE(pper.PRIMER_NOMBRE,''),' ',COALESCE(pper.SEGUNDO_NOMBRE,''),' ',COALESCE(pper.PRIMER_APELLIDO,''),' ',COALESCE(pper.SEGUNDO_APELLIDO,''))) as paciente"),
-                DB::raw("TRIM(CONCAT(COALESCE(dper.PRIMER_NOMBRE,''),' ',COALESCE(dper.SEGUNDO_NOMBRE,''),' ',COALESCE(dper.PRIMER_APELLIDO,''),' ',COALESCE(dper.SEGUNDO_APELLIDO,''))) as doctor"),
-                'c.EST_CITA as estado',
-                'c.DES_MOTIVO as motivo',
-                'c.DES_OBSERVACIONES as observaciones',
-            ])
+        $r = DB::table('tbl_cita as c')
+            ->leftJoin('tbl_persona as pcte', 'pcte.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_persona as pdoc', 'pdoc.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
+            ->selectRaw("
+                c.COD_CITA                                        as id,
+                c.FEC_CITA                                        as fecha,
+                c.HOR_CITA                                        as hora,
+                TRIM(CONCAT(
+                    COALESCE(pcte.PRIMER_NOMBRE,''),' ',
+                    COALESCE(pcte.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(pcte.PRIMER_APELLIDO,''),' ',
+                    COALESCE(pcte.SEGUNDO_APELLIDO,'')
+                ))                                                as paciente,
+                TRIM(CONCAT(
+                    COALESCE(pdoc.PRIMER_NOMBRE,''),' ',
+                    COALESCE(pdoc.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(pdoc.PRIMER_APELLIDO,''),' ',
+                    COALESCE(pdoc.SEGUNDO_APELLIDO,'')
+                ))                                                as doctor,
+                c.ESTADO_CITA                                     as estado_id,
+                c.MOT_CITA                                        as motivo
+            ")
             ->where('c.COD_CITA', $id)
             ->first();
 
-        if (!$row) {
+        if (!$r) {
             return response()->json(['ok' => false, 'message' => 'No encontrado'], 404);
         }
 
-        return response()->json(['ok' => true, 'data' => $row]);
+        return response()->json([
+            'ok'   => true,
+            'data' => [
+                'id'            => (int)$r->id,
+                'fecha'         => (string)$r->fecha,
+                'hora'          => (string)$r->hora,
+                'paciente'      => $r->paciente,
+                'doctor'        => $r->doctor,
+                'estado'        => self::ESTADOS[(int)$r->estado_id] ?? '—',
+                'motivo'        => (string)$r->motivo,
+                'observaciones' => null, // no existe columna en tu schema (devolver null)
+            ],
+        ]);
     }
 
     /**
      * GET /api/agenda/doctores
-     * Devuelve catálogo (id, nombre) leyendo doctor->persona
+     * Lista personas con rol = 'DOCTOR'
      */
     public function doctores()
     {
-        $doctores = DB::table('tbl_doctor as d')
-            ->leftJoin('tbl_persona as p', 'p.COD_PERSONA', '=', 'd.FK_COD_PERSONA')
-            ->select([
-                'd.COD_DOCTOR as id',
-                DB::raw("TRIM(CONCAT(COALESCE(p.PRIMER_NOMBRE,''),' ',COALESCE(p.SEGUNDO_NOMBRE,''),' ',COALESCE(p.PRIMER_APELLIDO,''),' ',COALESCE(p.SEGUNDO_APELLIDO,''))) as nombre"),
-            ])
+        $rows = DB::table('tbl_usuario as u')
+            ->join('tbl_rol as r', 'r.COD_ROL', '=', 'u.FK_COD_ROL')
+            ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'u.FK_COD_PERSONA')
+            ->whereRaw('UPPER(r.NOM_ROL) = ?', ['DOCTOR'])
+            ->selectRaw("
+                p.COD_PERSONA as id,
+                TRIM(CONCAT(
+                    COALESCE(p.PRIMER_NOMBRE,''),' ',
+                    COALESCE(p.SEGUNDO_NOMBRE,''),' ',
+                    COALESCE(p.PRIMER_APELLIDO,''),' ',
+                    COALESCE(p.SEGUNDO_APELLIDO,'')
+                )) as nombre
+            ")
             ->orderBy('nombre')
+            ->distinct()
             ->get();
 
-        return response()->json(['ok' => true, 'data' => $doctores]);
+        return response()->json(['ok' => true, 'data' => $rows]);
     }
 
     /**
      * GET /api/agenda/estados
-     * Si en tu BD tienes otra tabla para estados, reemplaza por SELECT a esa tabla.
      */
     public function estados()
     {
-        // Si manejas catálogo real, cambia este array por SELECT a tu tabla de estados
-        $data = [
-            ['id' => 'Confirmada', 'nombre' => 'Confirmada'],
-            ['id' => 'Pendiente',  'nombre' => 'Pendiente'],
-            ['id' => 'Cancelada',  'nombre' => 'Cancelada'],
-        ];
-
+        $data = [];
+        foreach (self::ESTADOS as $id => $nombre) {
+            $data[] = ['id' => $id, 'nombre' => $nombre];
+        }
         return response()->json(['ok' => true, 'data' => $data]);
     }
 }

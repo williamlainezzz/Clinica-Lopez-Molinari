@@ -6,60 +6,62 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cita extends Model
 {
-    // AJUSTA a tu tabla real
-    protected $table = 'TBL_CITA';
-    protected $primaryKey = 'ID_CITA';
+    protected $table = 'tbl_cita';
+    protected $primaryKey = 'COD_CITA';
     public $timestamps = false;
 
     protected $fillable = [
-        // ajusta a tus columnas reales
-        'ID_CITA',
-        'ID_PACIENTE',
-        'ID_DOCTOR',
-        'ID_ESTADO',
-        'FECHA',      // YYYY-MM-DD
-        'HORA',       // HH:MM
-        'MOTIVO',
+        'FK_COD_PACIENTE',
+        'FK_COD_DOCTOR',
+        'FEC_CITA',
+        'HOR_CITA',
+        'MOT_CITA',
+        'ESTADO_CITA',
     ];
 
-    // Relaciones (ajusta FKs a tus nombres)
+    // relaciones reales
     public function paciente()
     {
-        return $this->belongsTo(Persona::class, 'ID_PACIENTE', 'ID_PERSONA');
+        return $this->belongsTo(Persona::class, 'FK_COD_PACIENTE', 'COD_PERSONA');
     }
 
     public function doctor()
     {
-        return $this->belongsTo(Persona::class, 'ID_DOCTOR', 'ID_PERSONA');
+        return $this->belongsTo(Persona::class, 'FK_COD_DOCTOR', 'COD_PERSONA');
     }
 
-    public function estado()
+    // si tus estados son numéricos en la misma tbl_cita:
+    public const ESTADOS = [
+        1 => 'Confirmada',
+        2 => 'Pendiente',
+        3 => 'Cancelada',
+    ];
+
+    public function getEstadoNombreAttribute(): string
     {
-        return $this->belongsTo(EstadoCita::class, 'ID_ESTADO', 'ID_ESTADO');
+        return self::ESTADOS[$this->ESTADO_CITA] ?? '—';
     }
 
-    /* Scopes de filtrado */
+    /* Scopes usando columnas reales */
     public function scopeEntreFechas($q, $desde = null, $hasta = null)
     {
-        if ($desde) $q->where('FECHA', '>=', $desde);
-        if ($hasta) $q->where('FECHA', '<=', $hasta);
+        if ($desde) $q->where('FEC_CITA', '>=', $desde);
+        if ($hasta) $q->where('FEC_CITA', '<=', $hasta);
         return $q;
     }
 
     public function scopePorEstado($q, $estadoNombre = null)
     {
         if (!$estadoNombre) return $q;
-        // si tienes tabla catálogo: join o subquery; aquí un ejemplo simple
-        return $q->whereHas('estado', function($qq) use ($estadoNombre) {
-            $qq->where('NOMBRE', $estadoNombre); // ajusta columna real (ej.: NOM_ESTADO)
-        });
+        $id = array_search($estadoNombre, self::ESTADOS, true);
+        if ($id !== false) $q->where('ESTADO_CITA', $id);
+        return $q;
     }
 
-    public function scopePorDoctorNombre($q, $doctorNombre = null)
+    // si filtras por DOCTOR (por id de persona):
+    public function scopePorDoctorId($q, $doctorId = null)
     {
-        if (!$doctorNombre) return $q;
-        return $q->whereHas('doctor', function($qq) use ($doctorNombre) {
-            $qq->whereRaw('CONCAT(NOMBRE," ",APELLIDO) = ?', [$doctorNombre]); // ajusta a tus columnas
-        });
+        if ($doctorId) $q->where('FK_COD_DOCTOR', $doctorId);
+        return $q;
     }
 }
