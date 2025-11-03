@@ -50,14 +50,7 @@ Route::get('/export/citas.csv', function () {
     ]);
 })->name('export.citas.csv');
 
-/* =========================
-|  Agenda (vistas)
-========================= */
-Route::prefix('agenda')->group(function () {
-    Route::view('/citas',           'citas.index')->name('citas.index');
-    Route::view('/disponibilidad',  'disponibilidad.index')->name('disponibilidad.index');
-    Route::view('/estado-cita',     'estado-cita.index')->name('estado-cita.index');
-});
+
 
 /* =========================
 |  Personas (vistas)
