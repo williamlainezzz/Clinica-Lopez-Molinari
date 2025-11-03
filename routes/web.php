@@ -29,6 +29,9 @@ use App\Http\Controllers\AgendaController;
 // Acciones sobre Citas
 use App\Http\Controllers\CitasAccionesController;
 
+// API para Citas
+use App\Http\Controllers\CitasApiController;
+
 /* =========================
 |  Público / Dashboard
 ========================= */
@@ -217,4 +220,18 @@ Route::middleware(['auth'])
 
         // Cancelar (stub)
         Route::delete('/{id}', [CitasAccionesController::class, 'cancel'])->name('cancelar');
+    });
+
+// =========================
+//  AGENDA: API para Citas (filtrado)
+//  Estas rutas devuelven JSON para consumo AJAX.
+// =========================
+
+Route::middleware(['auth'])
+    ->prefix('agenda/api')
+    ->name('agenda.api.')
+    ->group(function () {
+        Route::get('/citas', [CitasApiController::class, 'index'])->name('citas.index');
+        // Si necesitas detalle:
+        Route::get('/citas/{id}', [CitasApiController::class, 'show'])->name('citas.show');
     });
