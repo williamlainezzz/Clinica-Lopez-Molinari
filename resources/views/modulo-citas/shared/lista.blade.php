@@ -19,7 +19,7 @@
             </div>
 
             {{-- Filtros (GET) --}}
-            <form method="GET" action="{{ route($routeName) }}">
+            <form id="filtrosForm" method="GET" action="{{ route($routeName) }}">
                 <div class="row">
                     <div class="col-md-3">
                         <label class="mb-1">Desde</label>
@@ -84,7 +84,7 @@
                             @endif
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="citasTbody">
                         @forelse($rows as $row)
                             @php
                                 $id = $loop->index + 1; // ID temporal (stub)
@@ -296,6 +296,192 @@ document.addEventListener('DOMContentLoaded', function () {
         $('#cancel-cita-id').text('#' + id);
         const action = btn.data('action') || '{{ url('/agenda/citas') }}/' + id;
         $('#formCancelar').attr('action', action);
+    });
+});
+</script>
+@endpush
+
+@push('js')
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const selEstado = document.querySelector('select[name="estado"]');
+    const selDoctor = document.querySelector('select[name="doctor"]');
+
+    if (!selEstado || !selDoctor) return; // por si cambian el markup
+
+    // Leer selección actual desde la URL (para mantener el filtro después del refresh)
+    const params = new URLSearchParams(location.search);
+    const estadoSel = params.get('estado') || '';
+    const doctorSel = params.get('doctor') || '';
+
+    // Helper para limpiar y poner "Todos"
+    const resetSelect = (el, labelTodos) => {
+        el.dataset.prev = el.value || '';
+        el.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = labelTodos || 'Todos';
+        el.appendChild(opt);
+    };
+
+    // Helper para añadir <option>
+    const addOption = (el, value, text) => {
+        const o = document.createElement('option');
+        o.value = value;
+        o.textContent = text;
+        el.appendChild(o);
+    };
+
+    // Cargar ESTADOS
+    try {
+        resetSelect(selEstado, 'Todos');
+        const r = await fetch('/api/agenda/estados', { headers: { 'Accept': 'application/json' } });
+        const j = await r.json();
+        if (j.ok && Array.isArray(j.data)) {
+            j.data.forEach(e => addOption(selEstado, e.id, e.nombre));
+            selEstado.value = estadoSel || '';
+        } else {
+            selEstado.value = selEstado.dataset.prev || '';
+        }
+    } catch (err) {
+        console.warn('No se pudo cargar estados', err);
+        selEstado.value = selEstado.dataset.prev || '';
+    }
+
+    // Cargar DOCTORES
+    try {
+        resetSelect(selDoctor, 'Todos');
+        const r = await fetch('/api/agenda/doctores', { headers: { 'Accept': 'application/json' } });
+        const j = await r.json();
+        if (j.ok && Array.isArray(j.data)) {
+            j.data.forEach(d => addOption(selDoctor, (d.id ?? d.nombre), d.nombre));
+            selDoctor.value = doctorSel || '';
+        } else {
+            selDoctor.value = selDoctor.dataset.prev || '';
+        }
+    } catch (err) {
+        console.warn('No se pudo cargar doctores', err);
+        selDoctor.value = selDoctor.dataset.prev || '';
+    }
+});
+</script>
+@endpush
+
+{{-- NUEVO: carga de tabla desde la API con filtros --}}
+@push('js')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form   = document.getElementById('filtrosForm');
+    const tbody  = document.getElementById('citasTbody');
+
+    const SHOW_DOCTOR = {{ $showDoctorColumn ? 'true' : 'false' }};
+    const SHOW_ACTION = {{ $showActions ? 'true' : 'false' }};
+    const ROL         = @json($rol);
+
+    const estadoBadge = (estado) => {
+        switch (estado) {
+            case 'Confirmada': return 'success';
+            case 'Pendiente':  return 'warning';
+            case 'Cancelada':  return 'danger';
+            default:           return 'secondary';
+        }
+    };
+
+    const qs = () => {
+        const p = new URLSearchParams(new FormData(form));
+        ['desde','hasta','estado','doctor'].forEach(k => { if (!p.get(k)) p.delete(k); });
+        return p.toString();
+    };
+
+    const pintarVacio = (msg = 'Sin resultados con los filtros actuales.') => {
+        const colspan = 6 + (SHOW_DOCTOR ? 1 : 0) + (SHOW_ACTION ? 1 : 0);
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted">${msg}</td></tr>`;
+    };
+
+    const pintarLoading = () => {
+        const colspan = 6 + (SHOW_DOCTOR ? 1 : 0) + (SHOW_ACTION ? 1 : 0);
+        tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted">
+            <i class="fas fa-spinner fa-spin"></i> Cargando...
+        </td></tr>`;
+    };
+
+    const accionesHTML = (id) => {
+        if (!SHOW_ACTION) return '';
+        if (ROL === 'ADMIN' || ROL === 'RECEPCIONISTA' || ROL === 'DOCTOR') {
+            return `
+                <td class="text-nowrap">
+                    <a  href="{{ url('agenda/citas') }}/${id}"
+                        class="btn btn-xs btn-info"
+                        title="Ver"
+                        data-toggle="modal" data-target="#modalVer"
+                        data-id="${id}">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a  href="{{ url('agenda/citas') }}/${id}/reprogramar"
+                        class="btn btn-xs btn-warning"
+                        title="Reprogramar"
+                        data-toggle="modal" data-target="#modalReprogramar"
+                        data-id="${id}">
+                        <i class="fas fa-sync"></i>
+                    </a>
+                    <button type="button"
+                        class="btn btn-xs btn-danger btn-cancelar"
+                        title="Cancelar"
+                        data-toggle="modal" data-target="#modalCancelar"
+                        data-action="{{ url('agenda/citas') }}/${id}"
+                        data-id="${id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+        }
+        return SHOW_ACTION ? '<td></td>' : '';
+    };
+
+    const filaHTML = (cita, idx) => {
+        const id     = cita.id ?? (idx + 1);
+        const badge  = estadoBadge(cita.estado);
+        return `
+            <tr>
+                <td>${cita.fecha ?? ''}</td>
+                <td>${cita.hora ?? ''}</td>
+                <td>${cita.paciente ?? ''}</td>
+                ${SHOW_DOCTOR ? `<td>${cita.doctor ?? ''}</td>` : ``}
+                <td><span class="badge badge-${badge}">${cita.estado ?? ''}</span></td>
+                <td>${cita.motivo ?? ''}</td>
+                ${accionesHTML(id)}
+            </tr>
+        `;
+    };
+
+    const cargarCitas = async () => {
+        pintarLoading();
+        try {
+            const url = '/api/agenda/citas' + (qs() ? `?${qs()}` : '');
+            const r   = await fetch(url, { headers: { 'Accept': 'application/json' } });
+            const j   = await r.json();
+            if (!j.ok) throw new Error('Respuesta inválida');
+
+            const data = Array.isArray(j.data) ? j.data : [];
+            if (!data.length) return pintarVacio();
+
+            tbody.innerHTML = data.map((c, i) => filaHTML(c, i)).join('');
+        } catch (err) {
+            console.error(err);
+            pintarVacio('No se pudo cargar la lista. Intenta nuevamente.');
+        }
+    };
+
+    // Carga inicial según los filtros actuales de la URL
+    cargarCitas();
+
+    // Intercepta el submit para refrescar con la API sin recargar
+    form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        cargarCitas();
+        const q = qs();
+        const newUrl = q ? (`${location.pathname}?${q}`) : location.pathname;
+        window.history.replaceState({}, '', newUrl);
     });
 });
 </script>
