@@ -193,25 +193,29 @@ Route::get('/db-check', function () {
 // Estas rutas solo muestran vistas (stub). La lógica/queries las añadimos después.
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
 
-    Route::get('/citas', function () {
-        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? ''); // ajusta si tu campo es otro
-        switch ($rol) {
-            case 'DOCTOR':        return view('modulo-citas.doctor.citas.index');
-            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.citas.index');
-            case 'PACIENTE':      return view('modulo-citas.paciente.citas.index');
-            default:              return view('modulo-citas.recepcionista.citas.index'); // Admin usa la global
-        }
-    })->name('agenda.citas');
+    // /agenda/citas
+Route::get('/citas', function () {
+    $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+    return match ($rol) {
+        'ADMIN'         => view('modulo-citas.admin.citas.index'),
+        'DOCTOR'        => view('modulo-citas.doctor.citas.index'),
+        'RECEPCIONISTA' => view('modulo-citas.recepcionista.citas.index'),
+        'PACIENTE'      => view('modulo-citas.paciente.citas.index'),
+        default         => view('modulo-citas.admin.citas.index'),
+    };
+})->name('agenda.citas');
 
-    Route::get('/calendario', function () {
-        $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
-        switch ($rol) {
-            case 'DOCTOR':        return view('modulo-citas.doctor.calendario.index');
-            case 'RECEPCIONISTA': return view('modulo-citas.recepcionista.calendario.index');
-            case 'PACIENTE':      return view('modulo-citas.paciente.calendario.index');
-            default:              return view('modulo-citas.recepcionista.calendario.index'); // Admin
-        }
-    })->name('agenda.calendario');
+// /agenda/calendario
+Route::get('/calendario', function () {
+    $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
+    return match ($rol) {
+        'ADMIN'         => view('modulo-citas.admin.calendario.index'),
+        'DOCTOR'        => view('modulo-citas.doctor.calendario.index'),
+        'RECEPCIONISTA' => view('modulo-citas.recepcionista.calendario.index'),
+        'PACIENTE'      => view('modulo-citas.paciente.calendario.index'),
+        default         => view('modulo-citas.admin.calendario.index'),
+    };
+})->name('agenda.calendario');
 
     Route::get('/reportes', function () {
         $rol = strtoupper(auth()->user()->rol->NOM_ROL ?? '');
