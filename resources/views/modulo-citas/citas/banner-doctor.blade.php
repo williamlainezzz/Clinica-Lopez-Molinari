@@ -1,3 +1,4 @@
-<div class="alert alert-success">
-    <i class="fas fa-user-md"></i> Doctor: listado de <b>tus</b> citas, día a día.
+<div class="alert alert-warning shadow-sm">
+    <i class="fas fa-user-md mr-2"></i>
+    Visualiza tus citas programadas y coordina reprogramaciones o cancelaciones con el equipo de recepción.
 </div>

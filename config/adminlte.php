@@ -253,13 +253,14 @@ return [
             'header' => '',
         ],
         [
-            'text' => 'Personas & Usuarios',
-            'icon' => 'fas fa-users',
+            'text'  => 'Personas & Usuarios',
+            'icon'  => 'fas fa-users',
+            'route' => 'personas.index',
             'submenu' => [
-                ['text' => 'Doctores',        'route' => 'doctores.index',        'icon' => 'far fa-circle'],
-                ['text' => 'Pacientes',       'route' => 'pacientes.index',       'icon' => 'far fa-circle'],
-                ['text' => 'Recepcionistas',  'route' => 'recepcionistas.index',  'icon' => 'far fa-circle'],
-                ['text' => 'Administradores', 'route' => 'administradores.index', 'icon' => 'far fa-circle'],
+                ['text' => 'Doctores',        'route' => ['personas.index', ['section' => 'doctores']],        'icon' => 'far fa-circle'],
+                ['text' => 'Pacientes',       'route' => ['personas.index', ['section' => 'pacientes']],       'icon' => 'far fa-circle'],
+                ['text' => 'Recepcionistas',  'route' => ['personas.index', ['section' => 'recepcionistas']],  'icon' => 'far fa-circle'],
+                ['text' => 'Administradores', 'route' => ['personas.index', ['section' => 'administradores']], 'icon' => 'far fa-circle'],
             ],
         ],
 

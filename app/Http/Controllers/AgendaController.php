@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AgendaController extends Controller
@@ -13,9 +14,9 @@ class AgendaController extends Controller
     private function render(string $section, Request $request)
     {
         $user = auth()->user();
-        $rol  = strtoupper(optional($user->rol)->NOM_ROL ?? '');   // ADMIN | DOCTOR | RECEPCIONISTA | PACIENTE
+        Carbon::setLocale('es');
+        $rol  = strtoupper(optional($user?->rol)->NOM_ROL ?? '');   // ADMIN | DOCTOR | RECEPCIONISTA | PACIENTE
 
-        // Mapeos legibles
         $labels = [
             'ADMIN'         => 'Admin',
             'DOCTOR'        => 'Doctor',
@@ -24,88 +25,250 @@ class AgendaController extends Controller
         ];
         $rolLabel = $labels[$rol] ?? 'Admin';
 
-        // Nombre de ruta actual
         $routeName = match (strtoupper($section)) {
             'CITAS'       => 'agenda.citas',
             'CALENDARIO'  => 'agenda.calendario',
             default       => 'agenda.reportes',
         };
 
-        // Keys para ubicar parciales
         $sectionKey = match (strtoupper($section)) {
             'CITAS'       => 'citas',
             'CALENDARIO'  => 'calendario',
             default       => 'reportes',
         };
-        $rolKey = strtolower($rol ?: 'admin'); // admin|doctor|recepcionista|paciente
+        $rolKey = strtolower($rol ?: 'admin');
 
-        // Nombres de parciales banner/toolbar (se incluyen con @includeIf)
         $bannerPartial  = "modulo-citas.{$sectionKey}.banner-{$rolKey}";
         $toolbarPartial = "modulo-citas.{$sectionKey}.toolbar-{$rolKey}";
 
-        // Filtros GET
         $filters = [
             'desde'  => $request->query('desde'),
             'hasta'  => $request->query('hasta'),
-            'estado' => $request->query('estado'),   // Confirmada | Pendiente | Cancelada
-            'doctor' => $request->query('doctor'),   // Dr. López | Dra. Molina
+            'estado' => $request->query('estado'),
+            'doctor' => $request->query('doctor'),
         ];
 
-        // Catálogos de filtro DEMO (luego vendrán de la BD)
         $catalogoEstados = ['Confirmada','Pendiente','Cancelada'];
-        $catalogoDoctores = ['Dr. López', 'Dra. Molina'];
+        $catalogoDoctores = ['Dr. Marcos López', 'Dra. Lilian Molina'];
 
-        // Dataset DEMO (luego se reemplaza por consultas reales acordes a tu esquema)
-        $rows = collect([
-            ['fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
-            ['fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
-            ['fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control'],
+        $events = collect([
+            [
+                'id'       => 1,
+                'title'    => 'Limpieza dental · Ana Rivera',
+                'start'    => '2025-11-12T08:30:00',
+                'end'      => '2025-11-12T09:15:00',
+                'doctor'   => 'Dr. Marcos López',
+                'paciente' => 'Ana Rivera',
+                'estado'   => 'Confirmada',
+                'motivo'   => 'Limpieza semestral',
+                'color'    => '#28a745',
+            ],
+            [
+                'id'       => 2,
+                'title'    => 'Control ortodoncia · Carlos Pérez',
+                'start'    => '2025-11-12T09:30:00',
+                'end'      => '2025-11-12T10:10:00',
+                'doctor'   => 'Dra. Lilian Molina',
+                'paciente' => 'Carlos Pérez',
+                'estado'   => 'Pendiente',
+                'motivo'   => 'Ajuste de brackets',
+                'color'    => '#ffc107',
+            ],
+            [
+                'id'       => 3,
+                'title'    => 'Evaluación endodoncia · María Gómez',
+                'start'    => '2025-11-12T10:30:00',
+                'end'      => '2025-11-12T11:15:00',
+                'doctor'   => 'Dr. Marcos López',
+                'paciente' => 'María Gómez',
+                'estado'   => 'Cancelada',
+                'motivo'   => 'Paciente reagendó',
+                'color'    => '#dc3545',
+            ],
+            [
+                'id'       => 4,
+                'title'    => 'Emergencia · José Alvarado',
+                'start'    => '2025-11-13T08:00:00',
+                'end'      => '2025-11-13T09:00:00',
+                'doctor'   => 'Dr. Gustavo Paredes',
+                'paciente' => 'José Alvarado',
+                'estado'   => 'Confirmada',
+                'motivo'   => 'Dolor intenso',
+                'color'    => '#28a745',
+            ],
+            [
+                'id'       => 5,
+                'title'    => 'Seguimiento · Ana Rivera',
+                'start'    => '2025-11-15T15:00:00',
+                'end'      => '2025-11-15T15:45:00',
+                'doctor'   => 'Dr. Marcos López',
+                'paciente' => 'Ana Rivera',
+                'estado'   => 'Pendiente',
+                'motivo'   => 'Revisión general',
+                'color'    => '#ffc107',
+            ],
         ]);
 
-        // Reglas visuales por rol
         $isAdmin  = ($rol === 'ADMIN');
         $isDoc    = ($rol === 'DOCTOR');
         $isRecep  = ($rol === 'RECEPCIONISTA');
         $isPac    = ($rol === 'PACIENTE');
 
-        // Qué columnas/acciones mostrar
-        $showDoctorColumn = $isAdmin || $isRecep;               // Admin/Recep ven columna "Doctor"
-        $showActions      = $isAdmin || $isRecep || $isDoc;     // Paciente sin acciones
-        $readOnly         = $isPac;
-
-        // En DOCTOR filtramos DEMO para que vea "sus" citas (aquí simulamos Dr. López)
-        if ($isDoc) {
-            $rows = $rows->where('doctor', 'Dr. López');
+        $doctorName = $isDoc ? (optional($user?->persona)->nombre_completo ?: 'Dr. Marcos López') : null;
+        if ($isDoc && !$events->contains(fn($event) => $event['doctor'] === $doctorName)) {
+            $doctorName = 'Dr. Marcos López';
         }
 
-        // Aplicar filtros GET
+        $patientName = $isPac ? (optional($user?->persona)->nombre_completo ?: 'Ana Rivera') : null;
+        if ($isPac && !$events->contains(fn($event) => $event['paciente'] === $patientName)) {
+            $patientName = 'Ana Rivera';
+        }
+
+        $filteredEvents = $events
+            ->when($isDoc, fn($collection) => $collection->where('doctor', $doctorName))
+            ->when($isPac, fn($collection) => $collection->where('paciente', $patientName))
+            ->values();
+
+        $rows = $filteredEvents->map(function ($event) {
+            $start = Carbon::parse($event['start']);
+            return [
+                'fecha'    => $start->format('Y-m-d'),
+                'hora'     => $start->format('H:i'),
+                'paciente' => $event['paciente'],
+                'doctor'   => $event['doctor'],
+                'estado'   => $event['estado'],
+                'motivo'   => $event['motivo'],
+            ];
+        });
+
         $rows = $rows->filter(function ($row) use ($filters) {
-            if ($filters['estado'] && strcasecmp($row['estado'], $filters['estado']) !== 0) return false;
-            if ($filters['doctor'] && strcasecmp($row['doctor'], $filters['doctor']) !== 0) return false;
-            if ($filters['desde'] && $row['fecha'] < $filters['desde']) return false;
-            if ($filters['hasta'] && $row['fecha'] > $filters['hasta']) return false;
+            if ($filters['estado'] && strcasecmp($row['estado'], $filters['estado']) !== 0) {
+                return false;
+            }
+            if ($filters['doctor'] && strcasecmp($row['doctor'], $filters['doctor']) !== 0) {
+                return false;
+            }
+            if ($filters['desde'] && $row['fecha'] < $filters['desde']) {
+                return false;
+            }
+            if ($filters['hasta'] && $row['fecha'] > $filters['hasta']) {
+                return false;
+            }
             return true;
         })->values()->all();
 
-        // Títulos de página
+        $showDoctorColumn = $isAdmin || $isRecep;
+        $showActions      = $isRecep || $isDoc;
+        $readOnly         = $isPac || $isAdmin;
+
         $pageTitle = "{$section} · {$rolLabel}";
         $heading   = "{$section} {$rolLabel}";
 
-        return view('modulo-citas.shared.lista', [
+        $view = $sectionKey === 'calendario'
+            ? 'modulo-citas.calendario.index'
+            : 'modulo-citas.shared.lista';
+
+        $viewData = [
             'pageTitle'        => $pageTitle,
             'heading'          => $heading,
             'routeName'        => $routeName,
             'filters'          => $filters,
-            'rows'             => $rows,
-            'catalogoEstados'  => $catalogoEstados,
-            'catalogoDoctores' => $catalogoDoctores,
             'bannerPartial'    => $bannerPartial,
             'toolbarPartial'   => $toolbarPartial,
-            'rol'              => $rol,                 // para decidir acciones/etiquetas en Blade
+            'rol'              => $rol,
             'showDoctorColumn' => $showDoctorColumn,
             'showActions'      => $showActions,
             'readOnly'         => $readOnly,
-            'sectionKey'       => $sectionKey,          // por si lo necesitas en Blade
-        ]);
+            'sectionKey'       => $sectionKey,
+        ];
+
+        if ($sectionKey === 'calendario') {
+            $legend = [
+                ['label' => 'Confirmada', 'variant' => 'success', 'color' => '#28a745'],
+                ['label' => 'Pendiente',  'variant' => 'warning', 'color' => '#ffc107'],
+                ['label' => 'Cancelada',  'variant' => 'danger',  'color' => '#dc3545'],
+            ];
+
+            $quickActions = [
+                [
+                    'label'       => 'Nueva cita',
+                    'icon'        => 'fas fa-plus-circle',
+                    'class'       => 'btn btn-primary btn-block',
+                    'description' => 'Agendar una cita en el espacio seleccionado.',
+                    'disabled'    => !($isRecep || $isDoc),
+                ],
+                [
+                    'label'       => 'Reprogramar',
+                    'icon'        => 'fas fa-sync',
+                    'class'       => 'btn btn-warning btn-block',
+                    'description' => 'Mover una cita a otro horario disponible.',
+                    'disabled'    => !($isRecep || $isDoc),
+                ],
+                [
+                    'label'       => 'Cancelar cita',
+                    'icon'        => 'fas fa-times-circle',
+                    'class'       => 'btn btn-outline-danger btn-block',
+                    'description' => 'Registrar una cancelación con motivo.',
+                    'disabled'    => !($isRecep || $isDoc),
+                ],
+            ];
+
+            $capabilities = match ($rol) {
+                'ADMIN'         => ['Monitorea la agenda completa en tiempo real.', 'Sin acciones de edición para preservar la trazabilidad.'],
+                'RECEPCIONISTA' => ['Crea y modifica citas directamente en el calendario.', 'Confirma o reprograma citas según disponibilidad del doctor.'],
+                'DOCTOR'        => ['Reprograma y confirma citas propias.', 'Agrega notas médicas para compartir con recepción.'],
+                'PACIENTE'      => ['Consulta tus citas programadas y su estado.', 'Solicita cambios a través de recepción.'],
+                default         => ['Vista informativa del calendario.'],
+            };
+
+            $upcomingEvents = $filteredEvents
+                ->sortBy('start')
+                ->map(function ($event) {
+                    $start = Carbon::parse($event['start']);
+                    return [
+                        'fecha'    => $start->translatedFormat('d M Y'),
+                        'hora'     => $start->format('H:i'),
+                        'doctor'   => $event['doctor'],
+                        'paciente' => $event['paciente'],
+                        'estado'   => $event['estado'],
+                        'motivo'   => $event['motivo'],
+                    ];
+                })
+                ->take(6)
+                ->values()
+                ->all();
+
+            $viewData = array_merge($viewData, [
+                'calendarEvents' => $filteredEvents->map(function ($event) {
+                    return [
+                        'id'              => $event['id'],
+                        'title'           => $event['title'],
+                        'start'           => $event['start'],
+                        'end'             => $event['end'],
+                        'backgroundColor' => $event['color'],
+                        'borderColor'     => $event['color'],
+                        'extendedProps'   => [
+                            'doctor'   => $event['doctor'],
+                            'paciente' => $event['paciente'],
+                            'estado'   => $event['estado'],
+                            'motivo'   => $event['motivo'],
+                        ],
+                    ];
+                })->values()->all(),
+                'legend'         => $legend,
+                'quickActions'   => $quickActions,
+                'upcomingEvents' => $upcomingEvents,
+                'capabilities'   => $capabilities,
+                'isReadOnly'     => $readOnly,
+            ]);
+        } else {
+            $viewData = array_merge($viewData, [
+                'rows'             => $rows,
+                'catalogoEstados'  => $catalogoEstados,
+                'catalogoDoctores' => $catalogoDoctores,
+            ]);
+        }
+
+        return view($view, $viewData);
     }
 }

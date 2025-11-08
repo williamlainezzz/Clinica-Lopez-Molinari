@@ -1,2 +1,4 @@
-<a class="btn btn-secondary"><i class="fas fa-layer-group"></i> Ver por doctor</a>
-<a class="btn btn-secondary"><i class="fas fa-hospital"></i> Ver por sala</a>
+<div class="d-flex flex-wrap align-items-center text-muted" style="gap: .5rem;">
+    <span class="badge badge-secondary"><i class="fas fa-eye mr-1"></i> Supervisión</span>
+    <span>Utiliza las vistas para auditar la ocupación sin modificar eventos.</span>
+</div>
