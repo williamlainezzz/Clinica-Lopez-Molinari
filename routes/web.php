@@ -25,6 +25,7 @@ use App\Models\Usuario;
 
 // --- AGENDA: Citas / Calendario / Reportes ---
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\PersonaController;
 
 /* =========================
 |  Público / Dashboard
@@ -56,11 +57,8 @@ Route::get('/export/citas.csv', function () {
 /* =========================
 |  Personas (vistas)
 ========================= */
-Route::prefix('personas')->group(function () {
-    Route::view('/doctores',        'doctores.index')->name('doctores.index');
-    Route::view('/pacientes',       'pacientes.index')->name('pacientes.index');
-    Route::view('/recepcionistas',  'recepcionistas.index')->name('recepcionistas.index');
-    Route::view('/administradores', 'administradores.index')->name('administradores.index');
+Route::middleware(['auth'])->prefix('personas')->name('personas.')->group(function () {
+    Route::get('/', [PersonaController::class, 'index'])->name('index');
 });
 
 /* =========================

@@ -37,7 +37,7 @@
       </div>
       <div class="icon"><i class="fas fa-user-injured"></i></div>
       {{-- este ya es correcto --}}
-      <a href="{{ route('pacientes.index') }}" class="small-box-footer">Ver pacientes <i class="fas fa-arrow-circle-right"></i></a>
+      <a href="{{ route('personas.index', ['section' => 'pacientes']) }}" class="small-box-footer">Ver pacientes <i class="fas fa-arrow-circle-right"></i></a>
     </div>
   </div>
 

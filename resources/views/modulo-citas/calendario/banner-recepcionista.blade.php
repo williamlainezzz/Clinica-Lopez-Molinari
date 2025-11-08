@@ -1,3 +1,4 @@
-<div class="alert alert-info">
-    <i class="fas fa-calendar-day"></i> Calendario de Recepción (todos los doctores).
+<div class="alert alert-success shadow-sm">
+    <i class="fas fa-calendar-day mr-2"></i>
+    Controla la agenda de todos los doctores, crea nuevas citas y confirma cambios en tiempo real.
 </div>
