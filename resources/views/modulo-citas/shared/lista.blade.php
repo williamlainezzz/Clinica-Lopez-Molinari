@@ -3,7 +3,29 @@
 @section('title', $pageTitle ?? 'Agenda')
 
 @section('content_header')
-    <h1>{{ $heading ?? 'Agenda' }}</h1>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <div class="mb-3 mb-md-0">
+            <h1 class="mb-1">{{ $heading ?? 'Agenda' }}</h1>
+            <p class="text-muted mb-0">Panel de citas diseñado para el rol <strong>{{ strtolower($rol ?? 'admin') }}</strong>.</p>
+        </div>
+
+        @if(!empty($nextAppointment))
+            <div class="card shadow-sm mb-0">
+                <div class="card-body py-2 px-3 d-flex align-items-center">
+                    <small class="text-uppercase text-muted">Próxima cita</small>
+                    <div class="d-flex align-items-center ml-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-3" style="width: 42px; height: 42px;">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">{{ $nextAppointment['fecha'] }} · {{ $nextAppointment['hora'] }}</div>
+                            <div class="small text-muted">{{ $nextAppointment['paciente'] }} con {{ $nextAppointment['doctor'] }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    </div>
 @endsection
 
 @section('content')
@@ -11,8 +33,54 @@
     {{-- Banner por rol/section --}}
     @includeIf($bannerPartial)
 
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="small-box bg-gradient-primary">
+                <div class="inner">
+                    <h3 class="mb-0">{{ $stats['total'] ?? 0 }}</h3>
+                    <p class="mb-0">Citas registradas</p>
+                </div>
+                <div class="icon"><i class="fas fa-notes-medical"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="small-box bg-gradient-success">
+                <div class="inner">
+                    <h3 class="mb-0">{{ $stats['confirmadas'] ?? 0 }}</h3>
+                    <p class="mb-0">Confirmadas</p>
+                </div>
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="small-box bg-gradient-warning">
+                <div class="inner">
+                    <h3 class="mb-0">{{ $stats['pendientes'] ?? 0 }}</h3>
+                    <p class="mb-0">Pendientes</p>
+                </div>
+                <div class="icon"><i class="fas fa-hourglass-half"></i></div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="small-box bg-gradient-danger">
+                <div class="inner">
+                    <h3 class="mb-0">{{ $stats['canceladas'] ?? 0 }}</h3>
+                    <p class="mb-0">Canceladas</p>
+                </div>
+                <div class="icon"><i class="fas fa-times-circle"></i></div>
+            </div>
+        </div>
+    </div>
+
+    @if($readOnly)
+        <div class="callout callout-info">
+            <h5 class="mb-1"><i class="fas fa-eye"></i> Modo lectura</h5>
+            <p class="mb-0">Este rol solo puede consultar el historial de citas. Las acciones de creación o edición están deshabilitadas.</p>
+        </div>
+    @endif
+
     <div class="card">
-        <div class="card-header">
+        <div class="card-header bg-white border-bottom-0">
             {{-- Toolbar por rol/section --}}
             <div class="mb-3">
                 @includeIf($toolbarPartial)
@@ -109,22 +177,25 @@
 
                                 @if($showActions)
                                     <td class="text-nowrap">
-                                        {{-- Acciones por rol (aún sin conectar) --}}
-                                        @switch($rol)
-                                            @case('ADMIN')
-                                            @case('RECEPCIONISTA')
-                                                <a class="btn btn-xs btn-info"    title="Ver"><i class="fas fa-eye"></i></a>
-                                                <a class="btn btn-xs btn-primary" title="Editar"><i class="fas fa-edit"></i></a>
-                                                <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-sync"></i></a>
-                                                <a class="btn btn-xs btn-danger"  title="Cancelar"><i class="fas fa-times"></i></a>
-                                                @break
+                                        @if($canViewDetail)
+                                            <button class="btn btn-xs btn-outline-info" title="Ver detalle" data-toggle="modal" data-target="#mdlDetalle">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        @endif
 
-                                            @case('DOCTOR')
-                                                <a class="btn btn-xs btn-info"    title="Ver"><i class="fas fa-eye"></i></a>
-                                                <a class="btn btn-xs btn-warning" title="Reprogramar"><i class="fas fa-sync"></i></a>
-                                                <a class="btn btn-xs btn-danger"  title="Cancelar"><i class="fas fa-times"></i></a>
-                                                @break
-                                        @endswitch
+                                        @if($canManage)
+                                            <button class="btn btn-xs btn-outline-primary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
+                                            <button class="btn btn-xs btn-outline-warning" title="Reprogramar">
+                                                <i class="fas fa-sync"></i>
+                                            </button>
+
+                                            <button class="btn btn-xs btn-outline-danger" title="Cancelar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        @endif
                                     </td>
                                 @endif
                             </tr>
