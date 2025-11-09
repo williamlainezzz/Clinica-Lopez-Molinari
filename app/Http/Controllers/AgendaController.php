@@ -56,10 +56,12 @@ class AgendaController extends Controller
         $catalogoDoctores = ['Dr. López', 'Dra. Molina'];
 
         // Dataset DEMO (luego se reemplaza por consultas reales acordes a tu esquema)
-        $rows = collect([
-            ['fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza'],
+        $dataset = collect([
+            ['fecha' => '2025-11-12', 'hora' => '08:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Confirmada', 'motivo' => 'Limpieza dental'],
             ['fecha' => '2025-11-12', 'hora' => '09:00', 'paciente' => 'Carlos Pérez', 'doctor' => 'Dra. Molina', 'estado' => 'Pendiente',  'motivo' => 'Dolor de muela'],
-            ['fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control'],
+            ['fecha' => '2025-11-12', 'hora' => '10:15', 'paciente' => 'María Gómez',  'doctor' => 'Dr. López',   'estado' => 'Cancelada',  'motivo' => 'Control general'],
+            ['fecha' => '2025-11-13', 'hora' => '11:00', 'paciente' => 'Pedro Díaz',   'doctor' => 'Dra. Molina', 'estado' => 'Confirmada', 'motivo' => 'Ortodoncia'],
+            ['fecha' => '2025-11-13', 'hora' => '13:30', 'paciente' => 'Ana Rivera',   'doctor' => 'Dr. López',   'estado' => 'Pendiente',  'motivo' => 'Revisión anual'],
         ]);
 
         // Reglas visuales por rol
@@ -68,24 +70,46 @@ class AgendaController extends Controller
         $isRecep  = ($rol === 'RECEPCIONISTA');
         $isPac    = ($rol === 'PACIENTE');
 
-        // Qué columnas/acciones mostrar
-        $showDoctorColumn = $isAdmin || $isRecep;               // Admin/Recep ven columna "Doctor"
-        $showActions      = $isAdmin || $isRecep || $isDoc;     // Paciente sin acciones
-        $readOnly         = $isPac;
-
         // En DOCTOR filtramos DEMO para que vea "sus" citas (aquí simulamos Dr. López)
         if ($isDoc) {
-            $rows = $rows->where('doctor', 'Dr. López');
+            $dataset = $dataset->where('doctor', 'Dr. López');
+        }
+
+        // En PACIENTE mostramos únicamente sus citas (simulamos paciente "Ana Rivera")
+        if ($isPac) {
+            $dataset = $dataset->where('paciente', 'Ana Rivera');
         }
 
         // Aplicar filtros GET
-        $rows = $rows->filter(function ($row) use ($filters) {
+        $filtered = $dataset->filter(function ($row) use ($filters) {
             if ($filters['estado'] && strcasecmp($row['estado'], $filters['estado']) !== 0) return false;
             if ($filters['doctor'] && strcasecmp($row['doctor'], $filters['doctor']) !== 0) return false;
             if ($filters['desde'] && $row['fecha'] < $filters['desde']) return false;
             if ($filters['hasta'] && $row['fecha'] > $filters['hasta']) return false;
             return true;
         })->values()->all();
+
+        $rows = collect($filtered);
+
+        // Qué columnas/acciones mostrar
+        $showDoctorColumn = $isAdmin || $isRecep;         // Admin/Recep ven columna "Doctor"
+        $canManage        = $isRecep || $isDoc;           // Pueden crear/editar
+        $canViewDetail    = true;                         // Todos pueden abrir el detalle
+        $showActions      = $canManage || $canViewDetail; // Mostrar columna acciones
+        $readOnly         = !$canManage;
+
+        $stats = [
+            'total'       => $rows->count(),
+            'confirmadas' => $rows->where('estado', 'Confirmada')->count(),
+            'pendientes'  => $rows->where('estado', 'Pendiente')->count(),
+            'canceladas'  => $rows->where('estado', 'Cancelada')->count(),
+        ];
+
+        $nextAppointment = $rows
+            ->sortBy(fn ($row) => sprintf('%s %s', $row['fecha'], $row['hora']))
+            ->first();
+
+        $rows = $rows->values()->all();
 
         // Títulos de página
         $pageTitle = "{$section} · {$rolLabel}";
@@ -105,6 +129,10 @@ class AgendaController extends Controller
             'showDoctorColumn' => $showDoctorColumn,
             'showActions'      => $showActions,
             'readOnly'         => $readOnly,
+            'canManage'        => $canManage,
+            'canViewDetail'    => $canViewDetail,
+            'stats'            => $stats,
+            'nextAppointment'  => $nextAppointment,
             'sectionKey'       => $sectionKey,          // por si lo necesitas en Blade
         ]);
     }
