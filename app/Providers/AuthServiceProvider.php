@@ -95,5 +95,61 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('seguridad.bitacora.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BITACORA', 'VER'));
         Gate::define('seguridad.backups.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BACKUPS',  'VER'));
         Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
+
+        // ==========================================================
+        // Personas: visibilidad por rol y/o permisos
+        // ==========================================================
+        Gate::define('personas.menu', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            $objetos = [
+                'PERSONAS_DOCTORES',
+                'PERSONAS_PACIENTES',
+                'PERSONAS_RECEPCIONISTAS',
+                'PERSONAS_ADMINISTRADORES',
+            ];
+
+            foreach ($objetos as $obj) {
+                if ($has($user, $obj, 'VER')) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'PERSONAS_DOCTORES', 'VER');
+        });
+
+        Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'PERSONAS_PACIENTES', 'VER');
+        });
+
+        Gate::define('personas.recepcionistas.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER');
+        });
+
+        Gate::define('personas.administradores.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'PERSONAS_ADMINISTRADORES', 'VER');
+        });
     }
 }
