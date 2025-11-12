@@ -14,87 +14,62 @@ class SecurityPermissionsSeeder extends Seeder
             ->get()
             ->mapWithKeys(fn ($rol) => [strtoupper(trim($rol->NOM_ROL)) => (int) $rol->COD_ROL]);
 
-        $matrix = [
-            'SEGURIDAD_ROLES' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'SEGURIDAD_PERMISOS' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'SEGURIDAD_OBJETOS' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'SEGURIDAD_BITACORA' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'SEGURIDAD_BACKUPS' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'PERSONAS_DOCTORES' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [1, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'PERSONAS_PACIENTES' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [1, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'PERSONAS_RECEPCIONISTAS' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
-            'PERSONAS_ADMINISTRADORES' => [
-                'ADMIN'         => [1, 1, 1, 1],
-                'RECEPCIONISTA' => [0, 0, 0, 0],
-                'DOCTOR'        => [0, 0, 0, 0],
-                'PACIENTE'      => [0, 0, 0, 0],
-            ],
+        $objetosPersonaSeguridad = [
+            'SEGURIDAD_ROLES',
+            'SEGURIDAD_PERMISOS',
+            'SEGURIDAD_OBJETOS',
+            'SEGURIDAD_BITACORA',
+            'SEGURIDAD_BACKUPS',
+            'PERSONAS_DOCTORES',
+            'PERSONAS_PACIENTES',
+            'PERSONAS_RECEPCIONISTAS',
+            'PERSONAS_ADMINISTRADORES',
         ];
 
         $objetos = DB::table('tbl_objeto')
-            ->whereIn('NOM_OBJETO', array_keys($matrix))
+            ->whereIn('NOM_OBJETO', $objetosPersonaSeguridad)
             ->pluck('COD_OBJETO', 'NOM_OBJETO');
 
-        foreach ($matrix as $objeto => $rolesConfig) {
+        $defaultGrant = fn (int $rolId, int $objId, array $flags) => DB::table('tbl_permiso')->updateOrInsert(
+            ['FK_COD_ROL' => $rolId, 'FK_COD_OBJETO' => $objId],
+            [
+                'ESTADO_PERMISO' => 1,
+                'VER'            => $flags[0] ?? 0,
+                'CREAR'          => $flags[1] ?? 0,
+                'EDITAR'         => $flags[2] ?? 0,
+                'ELIMINAR'       => $flags[3] ?? 0,
+            ]
+        );
+
+        foreach ($roles as $rolNombre => $rolId) {
+            foreach ($objetos as $nomObjeto => $objId) {
+                $defaultFlags = $rolNombre === 'ADMIN' ? [1, 1, 1, 1] : [0, 0, 0, 0];
+                $defaultGrant($rolId, $objId, $defaultFlags);
+            }
+        }
+
+        $overrides = [
+            'PERSONAS_DOCTORES' => [
+                'RECEPCIONISTA' => [1, 0, 0, 0],
+            ],
+            'PERSONAS_PACIENTES' => [
+                'RECEPCIONISTA' => [1, 0, 0, 0],
+            ],
+        ];
+
+        foreach ($overrides as $objeto => $rolesConfig) {
             $objId = $objetos[$objeto] ?? null;
             if (!$objId) {
                 continue;
             }
 
-            foreach ($roles as $rolNombre => $rolId) {
-                $valores = $rolesConfig[$rolNombre] ?? [0, 0, 0, 0];
-                [$ver, $crear, $editar, $eliminar] = $valores;
+            foreach ($rolesConfig as $rolNombre => $flags) {
+                $rolId = $roles[$rolNombre] ?? null;
+                if (!$rolId) {
+                    continue;
+                }
 
-                DB::table('tbl_permiso')->updateOrInsert(
-                    ['FK_COD_ROL' => $rolId, 'FK_COD_OBJETO' => $objId],
-                    [
-                        'ESTADO_PERMISO' => 1,
-                        'VER'            => $ver,
-                        'CREAR'          => $crear,
-                        'EDITAR'         => $editar,
-                        'ELIMINAR'       => $eliminar,
-                    ]
-                );
+                $defaultGrant($rolId, $objId, $flags);
             }
         }
     }
