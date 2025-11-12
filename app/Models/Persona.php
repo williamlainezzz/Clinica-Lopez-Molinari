@@ -55,4 +55,21 @@ class Persona extends Model
         $segundoNombre = $this->SEGUNDO_NOMBRE ? (' ' . $this->SEGUNDO_NOMBRE) : '';
         return trim($this->PRIMER_NOMBRE . $segundoNombre . ' ' . $this->PRIMER_APELLIDO);
     }
+
+// Relaciones con Cita y DoctorPaciente
+public function citasComoPaciente() {
+    return $this->hasMany(Cita::class, 'FK_COD_PACIENTE', 'COD_PERSONA');
+}
+public function citasComoDoctor() {
+    return $this->hasMany(Cita::class, 'FK_COD_DOCTOR', 'COD_PERSONA');
+}
+public function pacientesAsignados() { // para el doctor
+    return $this->hasMany(DoctorPaciente::class, 'FK_COD_DOCTOR', 'COD_PERSONA');
+}
+public function doctoresAsignados() { // para el paciente
+    return $this->hasMany(DoctorPaciente::class, 'FK_COD_PACIENTE', 'COD_PERSONA');
+}
+
+
+
 }
