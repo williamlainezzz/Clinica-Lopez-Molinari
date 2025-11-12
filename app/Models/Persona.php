@@ -39,6 +39,16 @@ class Persona extends Model
         return $this->hasMany(Correo::class, 'FK_COD_PERSONA', 'COD_PERSONA');
     }
 
+    public function direcciones()
+    {
+        return $this->hasMany(Direccion::class, 'FK_COD_PERSONA', 'COD_PERSONA');
+    }
+
+    public function usuario()
+    {
+        return $this->hasOne(Usuario::class, 'FK_COD_PERSONA', 'COD_PERSONA');
+    }
+
     // Accesor: $persona->nombre_completo
     public function getNombreCompletoAttribute()
     {
