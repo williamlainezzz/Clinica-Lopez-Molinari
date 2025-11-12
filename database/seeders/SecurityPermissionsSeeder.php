@@ -10,11 +10,15 @@ class SecurityPermissionsSeeder extends Seeder
     public function run(): void
     {
         $roles = DB::table('tbl_rol')
-            ->select('COD_ROL', 'NOM_ROL')
-            ->get()
-            ->mapWithKeys(fn ($rol) => [strtoupper(trim($rol->NOM_ROL)) => (int) $rol->COD_ROL]);
+            ->pluck('COD_ROL', 'NOM_ROL')
+            ->mapWithKeys(fn ($id, $name) => [strtoupper(trim($name)) => (int) $id]);
 
-        $objetosPersonaSeguridad = [
+        $adminId  = $roles['ADMIN'] ?? null;
+        $recepId  = $roles['RECEPCIONISTA'] ?? null;
+        $doctorId = $roles['DOCTOR'] ?? null;
+        $pacId    = $roles['PACIENTE'] ?? null;
+
+        $objetosNombres = [
             'SEGURIDAD_ROLES',
             'SEGURIDAD_PERMISOS',
             'SEGURIDAD_OBJETOS',
@@ -27,49 +31,53 @@ class SecurityPermissionsSeeder extends Seeder
         ];
 
         $objetos = DB::table('tbl_objeto')
-            ->whereIn('NOM_OBJETO', $objetosPersonaSeguridad)
+            ->whereIn('NOM_OBJETO', $objetosNombres)
             ->pluck('COD_OBJETO', 'NOM_OBJETO');
 
-        $defaultGrant = fn (int $rolId, int $objId, array $flags) => DB::table('tbl_permiso')->updateOrInsert(
-            ['FK_COD_ROL' => $rolId, 'FK_COD_OBJETO' => $objId],
-            [
-                'ESTADO_PERMISO' => 1,
-                'VER'            => $flags[0] ?? 0,
-                'CREAR'          => $flags[1] ?? 0,
-                'EDITAR'         => $flags[2] ?? 0,
-                'ELIMINAR'       => $flags[3] ?? 0,
-            ]
-        );
+        $upsertPerm = function (?int $rolId, ?int $objId, int $ver, int $crear, int $editar, int $eliminar): void {
+            if (!$rolId || !$objId) {
+                return;
+            }
 
-        foreach ($roles as $rolNombre => $rolId) {
-            foreach ($objetos as $nomObjeto => $objId) {
-                $defaultFlags = $rolNombre === 'ADMIN' ? [1, 1, 1, 1] : [0, 0, 0, 0];
-                $defaultGrant($rolId, $objId, $defaultFlags);
+            DB::table('tbl_permiso')->updateOrInsert(
+                ['FK_COD_ROL' => $rolId, 'FK_COD_OBJETO' => $objId],
+                [
+                    'ESTADO_PERMISO' => 1,
+                    'VER'      => $ver,
+                    'CREAR'    => $crear,
+                    'EDITAR'   => $editar,
+                    'ELIMINAR' => $eliminar,
+                ]
+            );
+        };
+
+        if ($adminId) {
+            foreach ($objetos as $objId) {
+                $upsertPerm($adminId, $objId, 1, 1, 1, 1);
             }
         }
 
-        $overrides = [
-            'PERSONAS_DOCTORES' => [
-                'RECEPCIONISTA' => [1, 0, 0, 0],
-            ],
-            'PERSONAS_PACIENTES' => [
-                'RECEPCIONISTA' => [1, 0, 0, 0],
-            ],
+        $otrosRoles = array_filter([
+            $recepId,
+            $doctorId,
+            $pacId,
+        ]);
+
+        foreach ($otrosRoles as $rolId) {
+            foreach ($objetos as $objId) {
+                $upsertPerm($rolId, $objId, 0, 0, 0, 0);
+            }
+        }
+
+        $recepcionistaOverrides = [
+            'PERSONAS_DOCTORES',
+            'PERSONAS_PACIENTES',
         ];
 
-        foreach ($overrides as $objeto => $rolesConfig) {
-            $objId = $objetos[$objeto] ?? null;
-            if (!$objId) {
-                continue;
-            }
-
-            foreach ($rolesConfig as $rolNombre => $flags) {
-                $rolId = $roles[$rolNombre] ?? null;
-                if (!$rolId) {
-                    continue;
-                }
-
-                $defaultGrant($rolId, $objId, $flags);
+        if ($recepId) {
+            foreach ($recepcionistaOverrides as $objNombre) {
+                $objId = $objetos[$objNombre] ?? null;
+                $upsertPerm($recepId, $objId, 1, 0, 0, 0);
             }
         }
     }
