@@ -13,6 +13,9 @@ use App\Http\Controllers\Seguridad\BitacoraController;
 use App\Http\Controllers\Seguridad\BackupController;
 use App\Http\Controllers\Seguridad\UsuarioController;
 
+// Personas
+use App\Http\Controllers\Personas\PersonaController;
+
 // Perfil
 use App\Http\Controllers\ProfileController;
 
@@ -54,13 +57,24 @@ Route::get('/export/citas.csv', function () {
 })->name('export.citas.csv');
 
 /* =========================
-|  Personas (vistas)
+|  Personas (controlador)
 ========================= */
-Route::prefix('personas')->group(function () {
-    Route::view('/doctores',        'doctores.index')->name('doctores.index');
-    Route::view('/pacientes',       'pacientes.index')->name('pacientes.index');
-    Route::view('/recepcionistas',  'recepcionistas.index')->name('recepcionistas.index');
-    Route::view('/administradores', 'administradores.index')->name('administradores.index');
+Route::middleware('auth')->prefix('personas')->group(function () {
+    Route::get('/doctores', [PersonaController::class, 'doctores'])
+        ->middleware('can:personas.doctores.ver')
+        ->name('doctores.index');
+
+    Route::get('/pacientes', [PersonaController::class, 'pacientes'])
+        ->middleware('can:personas.pacientes.ver')
+        ->name('pacientes.index');
+
+    Route::get('/recepcionistas', [PersonaController::class, 'recepcionistas'])
+        ->middleware('can:personas.recepcionistas.ver')
+        ->name('recepcionistas.index');
+
+    Route::get('/administradores', [PersonaController::class, 'administradores'])
+        ->middleware('can:personas.administradores.ver')
+        ->name('administradores.index');
 });
 
 /* =========================
