@@ -13,7 +13,7 @@
                 <i class="fas fa-plus"></i>
                 Nueva cita
             </button>
-            <a href="{{ route('export.citas.csv') }}" class="btn btn-outline-secondary shadow-sm">
+            <a href="#" class="btn btn-outline-secondary shadow-sm" role="button">
                 <i class="fas fa-file-export"></i>
                 Exportar CSV
             </a>
