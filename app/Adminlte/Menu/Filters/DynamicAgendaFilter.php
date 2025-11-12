@@ -2,14 +2,11 @@
 
 namespace App\Adminlte\Menu\Filters;
 
-use Illuminate\Contracts\Auth\Factory as AuthFactory;
+use Illuminate\Support\Facades\Auth;
 use JeroenNoten\LaravelAdminLte\Menu\Filters\FilterInterface;
 
 class DynamicAgendaFilter implements FilterInterface
 {
-    public function __construct(private readonly AuthFactory $auth)
-    {
-    }
 
     public function transform($item)
     {
@@ -17,7 +14,7 @@ class DynamicAgendaFilter implements FilterInterface
             return $item;
         }
 
-        $user = $this->auth->user();
+        $user = Auth::user();
         if (!$user) {
             return $this->applyFallback($item);
         }
