@@ -45,7 +45,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformCitasItem(array $item, string $role): array|bool
+    private function transformCitasItem(array $item, string $role)
     {
         $labels = [
             'ADMIN'         => 'Ver citas',
@@ -59,7 +59,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformCalendarioItem(array $item, string $role): array|bool
+    private function transformCalendarioItem(array $item, string $role)
     {
         if ($role === 'PACIENTE') {
             return false;
@@ -70,7 +70,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformReportesItem(array $item, string $role): array|bool
+    private function transformReportesItem(array $item, string $role)
     {
         return match ($role) {
             'ADMIN'    => $item,
@@ -86,7 +86,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function applyFallback($item): array
+    private function applyFallback(array $item): array
     {
         if ($item['key'] === 'agenda-menu') {
             $item['text'] = 'Citas';
