@@ -212,13 +212,13 @@ return [
         
        // Modulo de citas (menú)
 [
-    'text'  => 'Agenda',
+    'text'  => 'Citas',
     'icon'  => 'fas fa-calendar-check',
     'submenu' => [
 
         // Citas
         [
-            'text'   => 'Citas',
+            'text'   => 'Ver Citas',
             'route'  => 'agenda.citas',
             'icon'   => 'far fa-circle',
             'active' => ['agenda/citas*'],
@@ -227,7 +227,7 @@ return [
 
         // Calendario
         [
-            'text'   => 'Calendario',
+            'text'   => 'Agenda',
             'route'  => 'agenda.calendario',
             'icon'   => 'far fa-circle',
             'active' => ['agenda/calendario*'],
@@ -236,7 +236,7 @@ return [
 
         // Reportes
         [
-            'text'   => 'Reportes',
+            'text'   => 'Historial',
             'route'  => 'agenda.reportes',
             'icon'   => 'far fa-circle',
             'active' => ['agenda/reportes*'],
