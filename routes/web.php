@@ -194,36 +194,28 @@ Route::get('/db-check', function () {
 ======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
     Route::get('/citas', [AgendaController::class, 'citas'])->name('agenda.citas');
+    // 🔁 Reemplaza ESTA línea:
+    // Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
 
-    // IMPORTANTE: /agenda/calendario redirige al calendario real
-    Route::get('/calendario', fn() => redirect()->route('citas.calendario'))
-        ->name('agenda.calendario');
+    // ✅ POR ESTA redirección al nuevo calendario:
+    Route::get('/calendario', fn() => redirect()->route('citas.calendario'))->name('agenda.calendario');
 
     Route::get('/reportes', [AgendaController::class, 'reportes'])->name('agenda.reportes');
 });
+
 
 /* =========================
 |  CITAS (rutas reales)
 |  index, show, exportCsv
 ========================= */
+// ✅ Mantén este bloque (con auth) UNA sola vez
 Route::middleware(['auth'])->group(function () {
-    Route::get('/citas', [CitasController::class, 'index'])->name('citas.index');
-    Route::get('/citas/{cita}', [CitasController::class, 'show'])->name('citas.show');
-    Route::get('/citas/export/csv', [CitasController::class, 'exportCsv'])->name('export.citas.csv');
-
-    // Calendario (FullCalendar)
-    Route::get('/citas/calendario', [CalendarioController::class, 'view'])
-        ->name('citas.calendario');
-
-    Route::get('/citas/calendario/events', [CalendarioController::class, 'events'])
-        ->name('citas.events');
-
-    Route::post('/citas/calendario/event', [CalendarioController::class, 'createFromCalendar'])
-        ->name('citas.calendar.create');
-
-    Route::patch('/citas/calendario/event/{cita}', [CalendarioController::class, 'updateFromCalendar'])
-        ->name('citas.calendar.update');
+    Route::get('/citas/calendario',        [\App\Http\Controllers\Citas\CalendarioController::class, 'view'])->name('citas.calendario');
+    Route::get('/citas/calendario/events', [\App\Http\Controllers\Citas\CalendarioController::class, 'events'])->name('citas.events');
+    Route::post('/citas/calendario/event', [\App\Http\Controllers\Citas\CalendarioController::class, 'createFromCalendar'])->name('citas.calendar.create');
+    Route::patch('/citas/calendario/event/{cita}', [\App\Http\Controllers\Citas\CalendarioController::class, 'updateFromCalendar'])->name('citas.calendar.update');
 });
+
 
 /* =========================
 |  (Reservado) Flujo Doctor/Paciente
