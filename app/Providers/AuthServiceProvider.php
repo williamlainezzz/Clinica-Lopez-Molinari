@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\Permissions\PermissionChecker;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -18,138 +18,77 @@ class AuthServiceProvider extends ServiceProvider
     ];
 
     /**
-     * ID del rol que consideramos súper-administrador por defecto.
-     * (se mantiene 1 por compatibilidad, pero ya no dependemos sólo de él)
-     */
-    private int $ADMIN_ROLE_ID = 1;
-
-    /**
      * Registra gates/abilities.
      */
-    public function boot(): void
+    public function boot(PermissionChecker $permissions): void
     {
         $this->registerPolicies();
 
-        // ------- Helpers locales -------
-        $isAdmin = function ($user): bool {
-            $rolId = (int)($user->FK_COD_ROL ?? 0);
-
-            // 1) Por ID
-            if ($rolId === $this->ADMIN_ROLE_ID) {
-                return true;
-            }
-
-            // 2) Por nombre de rol (tolerante a mayúsculas/minúsculas)
-            $nom = DB::table('tbl_rol')->where('COD_ROL', $rolId)->value('NOM_ROL');
-            return $nom && strtoupper(trim($nom)) === 'ADMIN';
-        };
-
-        $has = function ($user, string $objeto, string $accion = 'VER'): bool {
-            // Usa helper puede() si está cargado
-            if (function_exists('puede')) {
-                return puede($objeto, $accion);
-            }
-
-            // Fallback directo a la BD si no está el helper
-            $rolId  = (int)($user->FK_COD_ROL ?? 0);
-            $accion = strtoupper($accion);
-            $row = DB::selectOne(
-                "SELECT fn_tiene_permiso(?, ?, ?) AS ok",
-                [$rolId, $objeto, $accion]
-            );
-            return $row && (int)$row->ok === 1;
-        };
-
-        // ==========================================================
-        // Gate para mostrar el BLOQUE "Seguridad" en el menú
-        // Visible si: es ADMIN o tiene VER en CUALQUIER objeto de seguridad.
-        // ==========================================================
-        Gate::define('seguridad.menu', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            $objetos = [
-                'SEGURIDAD_PERMISOS',
-                'SEGURIDAD_OBJETOS',
-                'SEGURIDAD_ROLES',
-                'SEGURIDAD_BITACORA',
-                'SEGURIDAD_BACKUPS',
-                'SEGURIDAD_USUARIOS',
-            ];
-
-            foreach ($objetos as $obj) {
-                if ($has($user, $obj, 'VER')) {
-                    return true;
-                }
-            }
-            return false;
+        Gate::before(static function ($user) use ($permissions) {
+            return $permissions->isAdmin($user) ? true : null;
         });
 
-        // ==========================================================
-        // Gates por pantalla
-        // ==========================================================
-        Gate::define('seguridad.permisos.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
-        Gate::define('seguridad.objetos.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
-        Gate::define('seguridad.roles.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
-        Gate::define('seguridad.bitacora.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BITACORA', 'VER'));
-        Gate::define('seguridad.backups.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BACKUPS',  'VER'));
-        Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
+        $this->registerMenuGate('seguridad.menu', [
+            'SEGURIDAD_PERMISOS',
+            'SEGURIDAD_OBJETOS',
+            'SEGURIDAD_ROLES',
+            'SEGURIDAD_BITACORA',
+            'SEGURIDAD_BACKUPS',
+            'SEGURIDAD_USUARIOS',
+        ], $permissions);
 
-        // ==========================================================
-        // Personas: visibilidad por rol y/o permisos
-        // ==========================================================
-        Gate::define('personas.menu', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
+        $this->registerMenuGate('personas.menu', [
+            'PERSONAS_DOCTORES',
+            'PERSONAS_PACIENTES',
+            'PERSONAS_RECEPCIONISTAS',
+            'PERSONAS_ADMINISTRADORES',
+        ], $permissions);
 
-            $objetos = [
-                'PERSONAS_DOCTORES',
-                'PERSONAS_PACIENTES',
-                'PERSONAS_RECEPCIONISTAS',
-                'PERSONAS_ADMINISTRADORES',
-            ];
+        $this->registerObjectGates([
+            'seguridad.permisos.ver'       => 'SEGURIDAD_PERMISOS',
+            'seguridad.objetos.ver'        => 'SEGURIDAD_OBJETOS',
+            'seguridad.roles.ver'          => 'SEGURIDAD_ROLES',
+            'seguridad.bitacora.ver'       => 'SEGURIDAD_BITACORA',
+            'seguridad.backups.ver'        => 'SEGURIDAD_BACKUPS',
+            'seguridad.usuarios.ver'       => 'SEGURIDAD_USUARIOS',
+            'personas.doctores.ver'        => 'PERSONAS_DOCTORES',
+            'personas.pacientes.ver'       => 'PERSONAS_PACIENTES',
+            'personas.recepcionistas.ver'  => 'PERSONAS_RECEPCIONISTAS',
+            'personas.administradores.ver' => 'PERSONAS_ADMINISTRADORES',
+        ], $permissions);
+    }
 
-            foreach ($objetos as $obj) {
-                if ($has($user, $obj, 'VER')) {
+    private function registerMenuGate(string $ability, array $objects, PermissionChecker $permissions): void
+    {
+        Gate::define($ability, static function ($user) use ($permissions, $objects) {
+            foreach ($objects as $object) {
+                if ($permissions->hasPermission($user, $object, 'VER')) {
                     return true;
                 }
             }
 
             return false;
         });
+    }
 
-        Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
+    private function registerObjectGates(array $definitions, PermissionChecker $permissions): void
+    {
+        foreach ($definitions as $ability => $definition) {
+            $object = is_array($definition)
+                ? ($definition['object'] ?? ($definition[0] ?? null))
+                : $definition;
+
+            $action = is_array($definition)
+                ? strtoupper($definition['action'] ?? ($definition[1] ?? 'VER'))
+                : 'VER';
+
+            if (!$object) {
+                continue;
             }
 
-            return $has($user, 'PERSONAS_DOCTORES', 'VER');
-        });
-
-        Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_PACIENTES', 'VER');
-        });
-
-        Gate::define('personas.recepcionistas.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER');
-        });
-
-        Gate::define('personas.administradores.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_ADMINISTRADORES', 'VER');
-        });
+            Gate::define($ability, static function ($user) use ($permissions, $object, $action) {
+                return $permissions->hasPermission($user, $object, $action);
+            });
+        }
     }
 }
