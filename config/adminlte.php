@@ -212,12 +212,14 @@ return [
         
        // Modulo de citas (menú)
 [
+    'key'   => 'agenda-menu',
     'text'  => 'Agenda',
     'icon'  => 'fas fa-calendar-check',
     'submenu' => [
 
         // Citas
         [
+            'key'    => 'agenda.citas',
             'text'   => 'Citas',
             'route'  => 'agenda.citas',
             'icon'   => 'far fa-circle',
@@ -227,6 +229,7 @@ return [
 
         // Calendario
         [
+            'key'    => 'agenda.calendario',
             'text'   => 'Calendario',
             'route'  => 'agenda.calendario',
             'icon'   => 'far fa-circle',
@@ -236,6 +239,7 @@ return [
 
         // Reportes
         [
+            'key'    => 'agenda.reportes',
             'text'   => 'Reportes',
             'route'  => 'agenda.reportes',
             'icon'   => 'far fa-circle',
@@ -381,6 +385,7 @@ return [
         JeroenNoten\LaravelAdminLte\Menu\Filters\ClassesFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\LangFilter::class,
         JeroenNoten\LaravelAdminLte\Menu\Filters\DataFilter::class,
+        App\Adminlte\Menu\Filters\DynamicAgendaFilter::class,
     ],
 
     /*
