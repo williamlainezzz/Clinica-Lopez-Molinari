@@ -2,11 +2,19 @@
 
 namespace App\Adminlte\Menu\Filters;
 
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Contracts\Auth\Factory as AuthFactory;
 use JeroenNoten\LaravelAdminLte\Menu\Filters\FilterInterface;
 
 class DynamicAgendaFilter implements FilterInterface
 {
+
+    private string $guard;
+
+    public function __construct(private AuthFactory $auth)
+    {
+        $this->guard = config('adminlte.guard')
+            ?? config('auth.defaults.guard', 'web');
+    }
 
     public function transform($item)
     {
@@ -14,7 +22,7 @@ class DynamicAgendaFilter implements FilterInterface
             return $item;
         }
 
-        $user = Auth::user();
+        $user = $this->auth->guard($this->guard)->user();
         if (!$user) {
             return $this->applyFallback($item);
         }
@@ -37,7 +45,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformCitasItem(array $item, string $role)
+    private function transformCitasItem(array $item, string $role): array|bool
     {
         $labels = [
             'ADMIN'         => 'Ver citas',
@@ -51,7 +59,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformCalendarioItem(array $item, string $role)
+    private function transformCalendarioItem(array $item, string $role): array|bool
     {
         if ($role === 'PACIENTE') {
             return false;
@@ -62,7 +70,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function transformReportesItem(array $item, string $role)
+    private function transformReportesItem(array $item, string $role): array|bool
     {
         return match ($role) {
             'ADMIN'    => $item,
@@ -78,7 +86,7 @@ class DynamicAgendaFilter implements FilterInterface
         return $item;
     }
 
-    private function applyFallback($item)
+    private function applyFallback($item): array
     {
         if ($item['key'] === 'agenda-menu') {
             $item['text'] = 'Citas';
