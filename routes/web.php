@@ -212,10 +212,12 @@ Route::middleware(['auth'])->group(function () {
 |  (Reservado) Calendario y flujo Doctor/Paciente
 |  Se activarán cuando conectemos esos controladores.
 ========================= */
-// Route::get('/citas/calendario', [CalendarioController::class, 'view'])->name('citas.calendario');
-// Route::get('/citas/calendario/events', [CalendarioController::class, 'events'])->name('citas.events');
-// Route::post('/citas/calendario/event', [CalendarioController::class, 'createFromCalendar'])->name('citas.calendar.create');
-// Route::patch('/citas/calendario/event/{cita}', [CalendarioController::class, 'updateFromCalendar'])->name('citas.calendar.update');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/citas/calendario', [\App\Http\Controllers\Citas\CalendarioController::class, 'view'])->name('citas.calendario');
+    Route::get('/citas/calendario/events', [\App\Http\Controllers\Citas\CalendarioController::class, 'events'])->name('citas.events');
+    Route::post('/citas/calendario/event', [\App\Http\Controllers\Citas\CalendarioController::class, 'createFromCalendar'])->name('citas.calendar.create');
+    Route::patch('/citas/calendario/event/{cita}', [\App\Http\Controllers\Citas\CalendarioController::class, 'updateFromCalendar'])->name('citas.calendar.update');
+});
 // Route::get('/mis-pacientes', [MisPacientesController::class, 'index'])->name('doctor.pacientes');
 // Route::post('/mis-pacientes/asignar', [MisPacientesController::class, 'asignarExistente'])->name('doctor.pacientes.asignar');
 // Route::post('/invitar-paciente', [InvitacionController::class, 'store'])->name('doctor.invitar');
