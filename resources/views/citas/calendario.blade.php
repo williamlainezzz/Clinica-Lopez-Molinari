@@ -2,7 +2,8 @@
 @section('title','Calendario')
 
 @push('css')
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+  {{-- FullCalendar CSS correcto --}}
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
   <style>
     /* panel izquierdo tipo AdminLTE */
     .fc-sidebar {min-width: 300px}
@@ -157,10 +158,12 @@
 @endsection
 
 @push('js')
+  {{-- FullCalendar JS (bundle global) --}}
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const DEFAULT_ESTADO = Number({{ array_key_first($estados) ?? 1 }}) || 1;
 
       // ==== colores quick-add ====
       let currentColor = '#3788d8';
@@ -175,7 +178,7 @@
       // ==== hacer arrastrables los "external events" ====
       @can('create', App\Models\Cita::class)
       const containerEl = document.getElementById('external-events');
-      if (containerEl && FullCalendar && FullCalendar.Draggable) {
+      if (containerEl && window.FullCalendar && FullCalendar.Draggable) {
         new FullCalendar.Draggable(containerEl, {
           itemSelector: '.external-event',
           eventData: function(el) {
@@ -204,12 +207,16 @@
         },
         events: {
           url: '{{ route('citas.events') }}',
-          failure() { alert('No se pudieron cargar los eventos'); }
+          failure(res) {
+            console.error('Fallo cargando eventos', res);
+            alert('No se pudieron cargar los eventos');
+          }
         },
         dateClick(info) {
           @can('create', App\Models\Cita::class)
             // quick-add si hay título, si no abre modal completo
-            const title = document.getElementById('quick-title')?.value?.trim();
+            const titleEl = document.getElementById('quick-title');
+            const title = (titleEl?.value || '').trim();
             if (title) {
               createEventQuick(info.dateStr + 'T09:00:00', title, currentColor);
             } else {
@@ -224,7 +231,7 @@
             const bg = info.draggedEl.style.backgroundColor;
             createEventQuick(info.dateStr + 'T09:00:00', title, bg, () => {
               if (document.getElementById('remove-after-drop')?.checked) {
-                info.draggedEl.parentNode.removeChild(info.draggedEl);
+                info.draggedEl.parentNode.remove();
               }
             });
           @endcan
@@ -254,29 +261,34 @@
       // quick add desde sidebar color + input
       document.getElementById('quick-add')?.addEventListener('click', () => {
         const sel = calendar.getDate(); // fecha visible
-        const title = document.getElementById('quick-title').value.trim();
+        const title = (document.getElementById('quick-title')?.value || '').trim();
         if (!title) return;
         const yyyy = sel.getFullYear(), mm = String(sel.getMonth()+1).padStart(2,'0'), dd = '01';
         createEventQuick(`${yyyy}-${mm}-${dd}T09:00:00`, title, currentColor);
       });
 
       function createEventQuick(startISO, title, color, after) {
+        const payload = {
+          start: startISO,        // el backend acepta "start"
+          startISO: startISO,     // y también "startISO" (compat)
+          MOT_CITA: title,
+          ESTADO_CITA: DEFAULT_ESTADO
+          // Si quieres forzar doctor/paciente por rol, se puede completar aquí más adelante
+        };
         fetch(`{{ route('citas.calendar.create') }}`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json','X-CSRF-TOKEN': csrf},
-          body: JSON.stringify({
-            start,            // compat: algunos backends leen "start" directo
-            startISO,         // por si prefieres esta key
-            MOT_CITA: title,
-            ESTADO_CITA: {{ array_key_first($estados) }}, // primer estado como default
-            color
-          }).replace('"start":', '') // evita duplicado si no usas "start"
+          body: JSON.stringify(payload)
         }).then(async r => {
           if (!r.ok) throw new Error(await r.text());
-          document.getElementById('quick-title').value = '';
+          const titleEl = document.getElementById('quick-title');
+          if (titleEl) titleEl.value = '';
           calendar.refetchEvents();
           after && after();
-        }).catch(() => alert('Error creando la cita'));
+        }).catch(err => {
+          console.error(err);
+          alert('Error creando la cita');
+        });
       }
 
       // Modal Crear (completo)
@@ -291,7 +303,10 @@
           if (!r.ok) throw new Error(await r.text());
           $('#modalCrear').modal('hide');
           calendar.refetchEvents();
-        }).catch(() => alert('Error creando la cita'));
+        }).catch(err => {
+          console.error(err);
+          alert('Error creando la cita');
+        });
       });
 
       // Modal Editar
@@ -307,7 +322,10 @@
           if (!r.ok) throw new Error(await r.text());
           $('#modalEditar').modal('hide');
           calendar.refetchEvents();
-        }).catch(() => alert('Error actualizando la cita'));
+        }).catch(err => {
+          console.error(err);
+          alert('Error actualizando la cita');
+        });
       });
     });
   </script>
