@@ -25,11 +25,28 @@ class PermissionChecker
             return false;
         }
 
-        $roleName = DB::table('tbl_rol')
-            ->where('COD_ROL', $roleId)
-            ->value('NOM_ROL');
+        $roleName = $this->resolveRoleName($roleId);
 
         return $roleName && strtoupper(trim($roleName)) === 'ADMIN';
+    }
+
+    public function roleIs($user, array $roles): bool
+    {
+        $roleId = (int)($user->FK_COD_ROL ?? 0);
+
+        if ($roleId <= 0 || $roles === []) {
+            return false;
+        }
+
+        $roleName = $this->resolveRoleName($roleId);
+
+        if (!$roleName) {
+            return false;
+        }
+
+        $targets = array_map(static fn ($role) => strtoupper(trim((string) $role)), $roles);
+
+        return in_array(strtoupper(trim($roleName)), $targets, true);
     }
 
     public function hasPermission($user, string $object, string $action = 'VER'): bool
@@ -52,5 +69,12 @@ class PermissionChecker
         );
 
         return $row && (int)($row->ok ?? 0) === 1;
+    }
+
+    private function resolveRoleName(int $roleId): ?string
+    {
+        return DB::table('tbl_rol')
+            ->where('COD_ROL', $roleId)
+            ->value('NOM_ROL');
     }
 }

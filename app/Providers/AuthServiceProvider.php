@@ -42,7 +42,7 @@ class AuthServiceProvider extends ServiceProvider
             'PERSONAS_PACIENTES',
             'PERSONAS_RECEPCIONISTAS',
             'PERSONAS_ADMINISTRADORES',
-        ], $permissions);
+        ], $permissions, ['RECEPCIONISTA']);
 
         $this->registerObjectGates([
             'seguridad.permisos.ver'       => 'SEGURIDAD_PERMISOS',
@@ -51,16 +51,26 @@ class AuthServiceProvider extends ServiceProvider
             'seguridad.bitacora.ver'       => 'SEGURIDAD_BITACORA',
             'seguridad.backups.ver'        => 'SEGURIDAD_BACKUPS',
             'seguridad.usuarios.ver'       => 'SEGURIDAD_USUARIOS',
-            'personas.doctores.ver'        => 'PERSONAS_DOCTORES',
-            'personas.pacientes.ver'       => 'PERSONAS_PACIENTES',
+            'personas.doctores.ver'        => [
+                'object' => 'PERSONAS_DOCTORES',
+                'roles'  => ['RECEPCIONISTA'],
+            ],
+            'personas.pacientes.ver'       => [
+                'object' => 'PERSONAS_PACIENTES',
+                'roles'  => ['RECEPCIONISTA'],
+            ],
             'personas.recepcionistas.ver'  => 'PERSONAS_RECEPCIONISTAS',
             'personas.administradores.ver' => 'PERSONAS_ADMINISTRADORES',
         ], $permissions);
     }
 
-    private function registerMenuGate(string $ability, array $objects, PermissionChecker $permissions): void
+    private function registerMenuGate(string $ability, array $objects, PermissionChecker $permissions, array $fallbackRoles = []): void
     {
-        Gate::define($ability, static function ($user) use ($permissions, $objects) {
+        Gate::define($ability, static function ($user) use ($permissions, $objects, $fallbackRoles) {
+            if ($fallbackRoles !== [] && $permissions->roleIs($user, $fallbackRoles)) {
+                return true;
+            }
+
             foreach ($objects as $object) {
                 if ($permissions->hasPermission($user, $object, 'VER')) {
                     return true;
@@ -82,11 +92,19 @@ class AuthServiceProvider extends ServiceProvider
                 ? strtoupper($definition['action'] ?? ($definition[1] ?? 'VER'))
                 : 'VER';
 
+            $fallbackRoles = is_array($definition)
+                ? ($definition['roles'] ?? [])
+                : [];
+
             if (!$object) {
                 continue;
             }
 
-            Gate::define($ability, static function ($user) use ($permissions, $object, $action) {
+            Gate::define($ability, static function ($user) use ($permissions, $object, $action, $fallbackRoles) {
+                if ($fallbackRoles !== [] && $permissions->roleIs($user, $fallbackRoles)) {
+                    return true;
+                }
+
                 return $permissions->hasPermission($user, $object, $action);
             });
         }
