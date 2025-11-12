@@ -26,8 +26,14 @@ use App\Http\Controllers\PermisoController;
 // Model para /db-check
 use App\Models\Usuario;
 
-// --- AGENDA: Citas / Calendario / Reportes ---
+// --- AGENDA (vistas stub)
 use App\Http\Controllers\AgendaController;
+
+// --- Citas (controladores reales que ya creamos)
+use App\Http\Controllers\Citas\CitasController;
+use App\Http\Controllers\Citas\CalendarioController;
+use App\Http\Controllers\Citas\MisPacientesController;
+use App\Http\Controllers\Citas\InvitacionController;
 
 /* =========================
 |  Público / Dashboard
@@ -36,25 +42,6 @@ Route::get('/', fn() => view('welcome'))->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
 
 require __DIR__ . '/auth.php';
-
-/* =========================
-|  Export (demo CSV)
-========================= */
-Route::get('/export/citas.csv', function () {
-    $rows = [
-        ['Fecha','Hora','Paciente','Doctor','Estado','Motivo'],
-        ['2025-08-12','08:30','Ana Rivera','Dr. López','Confirmada','Limpieza'],
-        ['2025-08-12','09:00','Carlos Pérez','Dra. Molina','Pendiente','Dolor muela'],
-    ];
-    $tmp = fopen('temp://memory', 'r+');
-    foreach ($rows as $r) fputcsv($tmp, $r);
-    rewind($tmp);
-
-    return response(stream_get_contents($tmp), 200, [
-        'Content-Type'        => 'text/csv',
-        'Content-Disposition' => 'attachment; filename="citas.csv"',
-    ]);
-})->name('export.citas.csv');
 
 /* =========================
 |  Personas (controlador)
@@ -203,10 +190,35 @@ Route::get('/db-check', function () {
 
 /* =======================================================
 |  AGENDA: Citas / Calendario / Reportes (por ROL)
-|  Estas rutas muestran vistas (stubs). La lógica real va luego.
+|  (vistas stub; la lógica real la vamos activando por partes)
 ======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
     Route::get('/citas', [AgendaController::class, 'citas'])->name('agenda.citas');
     Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
     Route::get('/reportes', [AgendaController::class, 'reportes'])->name('agenda.reportes');
 });
+
+/* =========================
+|  CITAS (rutas reales)
+|  Solo las que ya tenemos implementadas: index, show, exportCsv
+========================= */
+Route::middleware(['auth'])->group(function () {
+    Route::get('/citas', [CitasController::class, 'index'])->name('citas.index');
+    Route::get('/citas/{cita}', [CitasController::class, 'show'])->name('citas.show');
+    Route::get('/citas/export/csv', [CitasController::class, 'exportCsv'])->name('export.citas.csv');
+});
+
+/* =========================
+|  (Reservado) Calendario y flujo Doctor/Paciente
+|  Se activarán cuando conectemos esos controladores.
+========================= */
+// Route::get('/citas/calendario', [CalendarioController::class, 'view'])->name('citas.calendario');
+// Route::get('/citas/calendario/events', [CalendarioController::class, 'events'])->name('citas.events');
+// Route::post('/citas/calendario/event', [CalendarioController::class, 'createFromCalendar'])->name('citas.calendar.create');
+// Route::patch('/citas/calendario/event/{cita}', [CalendarioController::class, 'updateFromCalendar'])->name('citas.calendar.update');
+// Route::get('/mis-pacientes', [MisPacientesController::class, 'index'])->name('doctor.pacientes');
+// Route::post('/mis-pacientes/asignar', [MisPacientesController::class, 'asignarExistente'])->name('doctor.pacientes.asignar');
+// Route::post('/invitar-paciente', [InvitacionController::class, 'store'])->name('doctor.invitar');
+// Route::get('/invitar-paciente/{id}/qr', [InvitacionController::class, 'qr'])->name('doctor.invitar.qr');
+// Route::get('/registro/invitacion/{token}', [InvitacionController::class, 'showSignup'])->name('signup.invite');
+// Route::post('/registro/invitacion/{token}', [InvitacionController::class, 'submitSignup'])->name('signup.invite.submit');

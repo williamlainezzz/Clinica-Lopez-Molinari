@@ -13,12 +13,10 @@ class Usuario extends Authenticatable
     protected $table = 'tbl_usuario';
     protected $primaryKey = 'COD_USUARIO';
 
-    // ❗ Tu tabla NO tiene created_at/updated_at
+    // Tu tabla no tiene timestamps ni remember_token
     public $timestamps = false;
     const CREATED_AT = null;
     const UPDATED_AT = null;
-
-    // La tabla no tiene remember_token
     protected $rememberTokenName = null;
 
     protected $fillable = [
@@ -37,13 +35,13 @@ class Usuario extends Authenticatable
         return $this->PWD_USUARIO;
     }
 
-    /** Alias por si alguna vista usa Auth::user()->name */
+    /** Alias usado a veces por vistas: Auth::user()->name */
     public function getNameAttribute()
     {
         return $this->USR_USUARIO;
     }
 
-    /** Email a usar para reset de contraseña (desde tbl_correo por persona) */
+    /** Email para reset (desde tbl_correo por persona) */
     public function getEmailForPasswordReset()
     {
         return DB::table('tbl_correo')
@@ -52,12 +50,13 @@ class Usuario extends Authenticatable
             ->value('CORREO');
     }
 
-    /** Canal de notificaciones por mail -> usa el correo anterior */
+    /** Canal de notificación mail */
     public function routeNotificationForMail($notification = null)
     {
         return $this->getEmailForPasswordReset();
     }
 
+    // ---------------- Relaciones ----------------
     public function usuarioPreguntas()
     {
         return $this->hasMany(UsuarioPregunta::class, 'FK_COD_USUARIO', 'COD_USUARIO');
@@ -81,5 +80,64 @@ class Usuario extends Authenticatable
     public function rol()
     {
         return $this->belongsTo(Rol::class, 'FK_COD_ROL', 'COD_ROL');
+    }
+
+    /* ======= Helpers para Policies/Roles/Permisos ======= */
+
+    /**
+     * Verifica si el usuario tiene alguno de los roles indicados.
+     * Acepta string ("ADMIN") o array(["ADMIN","DOCTOR"]).
+     */
+    public function esRol(string|array $roles): bool
+    {
+        $nom = strtoupper(trim(optional($this->rol)->NOM_ROL ?? ''));
+        if ($nom === '') return false;
+
+        $roles = (array)$roles;
+        $roles = array_map(fn($r) => strtoupper(trim($r)), $roles);
+
+        return in_array($nom, $roles, true);
+    }
+
+    /**
+     * Verifica permiso contra TBL_PERMISO/TBL_OBJETO.
+     * $obj puede ser string o array de nombres de objeto.
+     * $accion: VER|CREAR|EDITAR|ELIMINAR
+     */
+    public function tienePermiso(string|array $obj, string $accion = 'VER'): bool
+    {
+        $accion = strtoupper($accion);
+        if (!in_array($accion, ['VER','CREAR','EDITAR','ELIMINAR'])) {
+            $accion = 'VER';
+        }
+
+        $objetos = (array)$obj;
+
+        $count = DB::table('tbl_permiso as p')
+            ->join('tbl_objeto as o', 'o.COD_OBJETO', '=', 'p.FK_COD_OBJETO')
+            ->where('p.FK_COD_ROL', $this->FK_COD_ROL)
+            ->whereIn('o.NOM_OBJETO', $objetos)
+            ->where('p.ESTADO_PERMISO', 1)
+            ->where("p.$accion", 1)
+            ->count();
+
+        return $count > 0;
+    }
+
+    public function personaId(): ?int
+    {
+        return optional($this->persona)->COD_PERSONA ?? null;
+    }
+
+    /** Para citas: id de doctor = COD_PERSONA si su rol es DOCTOR */
+    public function doctorId(): ?int
+    {
+        return $this->esRol('DOCTOR') ? $this->personaId() : null;
+    }
+
+    /** Para citas: id de paciente = COD_PERSONA si su rol es PACIENTE */
+    public function pacienteId(): ?int
+    {
+        return $this->esRol('PACIENTE') ? $this->personaId() : null;
     }
 }

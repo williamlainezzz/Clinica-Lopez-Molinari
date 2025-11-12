@@ -6,26 +6,27 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 
+// ✅ añade estos use para mapear la policy
+use App\Models\Cita;
+use App\Policies\CitaPolicy;
+
 class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * Si usas policies, mapea aquí tus modelos => policies.
-     * No las necesitamos por ahora.
+     * Mapea modelos => policies.
      * @var array<class-string, class-string>
      */
     protected $policies = [
         // \App\Models\Model::class => \App\Policies\ModelPolicy::class,
+        Cita::class => CitaPolicy::class,
     ];
 
     /**
      * ID del rol que consideramos súper-administrador por defecto.
-     * (se mantiene 1 por compatibilidad, pero ya no dependemos sólo de él)
+     * (se mantiene 1 por compatibilidad)
      */
     private int $ADMIN_ROLE_ID = 1;
 
-    /**
-     * Registra gates/abilities.
-     */
     public function boot(): void
     {
         $this->registerPolicies();
@@ -62,12 +63,12 @@ class AuthServiceProvider extends ServiceProvider
         };
 
         $has = function ($user, string $objeto, string $accion = 'VER'): bool {
-            // Usa helper puede() si está cargado
+            // Usa helper puede() si existe
             if (function_exists('puede')) {
                 return puede($objeto, $accion);
             }
 
-            // Fallback directo a la BD si no está el helper
+            // Fallback directo a la BD
             $rolId  = (int)($user->FK_COD_ROL ?? 0);
             $accion = strtoupper($accion);
             $row = DB::selectOne(
@@ -77,10 +78,9 @@ class AuthServiceProvider extends ServiceProvider
             return $row && (int)$row->ok === 1;
         };
 
-        // ==========================================================
-        // Gate para mostrar el BLOQUE "Seguridad" en el menú
-        // Visible si: es ADMIN o tiene VER en CUALQUIER objeto de seguridad.
-        // ==========================================================
+        // ==============================
+        // Gate para mostrar el bloque Seguridad en menú
+        // ==============================
         Gate::define('seguridad.menu', function ($user) use ($isAdmin, $has) {
             if ($isAdmin($user)) {
                 return true;
@@ -103,27 +103,12 @@ class AuthServiceProvider extends ServiceProvider
             return false;
         });
 
-        // ==========================================================
-        // Gates por pantalla
-        // ==========================================================
-        Gate::define('seguridad.permisos.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
-        Gate::define('seguridad.objetos.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
-        Gate::define('seguridad.roles.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
-        Gate::define('seguridad.bitacora.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BITACORA', 'VER'));
-        Gate::define('seguridad.backups.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_BACKUPS',  'VER'));
-        Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
-
-        // ==========================================================
-        // Personas: visibilidad por rol y/o permisos
-        // ==========================================================
+        // ==============================
+        // Gates por pantalla (Personas)
+        // ==============================
         Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            if ($roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
+            if ($isAdmin($user)) return true;
+            if ($roleIs($user, ['RECEPCIONISTA'])) return true;
 
             $objetos = [
                 'PERSONAS_DOCTORES',
@@ -137,40 +122,25 @@ class AuthServiceProvider extends ServiceProvider
                     return true;
                 }
             }
-
             return false;
         });
 
         Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
-
+            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) return true;
             return $has($user, 'PERSONAS_DOCTORES', 'VER');
         });
 
         Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
-
+            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) return true;
             return $has($user, 'PERSONAS_PACIENTES', 'VER');
         });
 
-        Gate::define('personas.recepcionistas.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
+        Gate::define('personas.recepcionistas.ver', fn ($user) =>
+            $isAdmin($user) || $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER')
+        );
 
-            return $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER');
-        });
-
-        Gate::define('personas.administradores.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_ADMINISTRADORES', 'VER');
-        });
+        Gate::define('personas.administradores.ver', fn ($user) =>
+            $isAdmin($user) || $has($user, 'PERSONAS_ADMINISTRADORES', 'VER')
+        );
     }
 }
