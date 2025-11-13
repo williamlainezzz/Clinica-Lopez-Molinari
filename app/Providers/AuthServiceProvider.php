@@ -44,23 +44,6 @@ class AuthServiceProvider extends ServiceProvider
             return $nom && strtoupper(trim($nom)) === 'ADMIN';
         };
 
-        $roleIs = function ($user, array $roles) {
-            $rolId = (int)($user->FK_COD_ROL ?? 0);
-            if ($rolId === 0) {
-                return false;
-            }
-
-            $nom = DB::table('tbl_rol')->where('COD_ROL', $rolId)->value('NOM_ROL');
-            if (!$nom) {
-                return false;
-            }
-
-            $nom = strtoupper(trim($nom));
-            $roles = array_map(fn ($r) => strtoupper(trim($r)), $roles);
-
-            return in_array($nom, $roles, true);
-        };
-
         $has = function ($user, string $objeto, string $accion = 'VER'): bool {
             // Usa helper puede() si está cargado
             if (function_exists('puede')) {
@@ -116,23 +99,19 @@ class AuthServiceProvider extends ServiceProvider
         // ==========================================================
         // Personas: visibilidad por rol y/o permisos
         // ==========================================================
-        Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $roleIs) {
+        $personasObjetos = [
+            'PERSONAS_DOCTORES',
+            'PERSONAS_PACIENTES',
+            'PERSONAS_RECEPCIONISTAS',
+            'PERSONAS_ADMINISTRADORES',
+        ];
+
+        Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $personasObjetos) {
             if ($isAdmin($user)) {
                 return true;
             }
 
-            if ($roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
-
-            $objetos = [
-                'PERSONAS_DOCTORES',
-                'PERSONAS_PACIENTES',
-                'PERSONAS_RECEPCIONISTAS',
-                'PERSONAS_ADMINISTRADORES',
-            ];
-
-            foreach ($objetos as $obj) {
+            foreach ($personasObjetos as $obj) {
                 if ($has($user, $obj, 'VER')) {
                     return true;
                 }
@@ -141,36 +120,9 @@ class AuthServiceProvider extends ServiceProvider
             return false;
         });
 
-        Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_DOCTORES', 'VER');
-        });
-
-        Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_PACIENTES', 'VER');
-        });
-
-        Gate::define('personas.recepcionistas.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER');
-        });
-
-        Gate::define('personas.administradores.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
-                return true;
-            }
-
-            return $has($user, 'PERSONAS_ADMINISTRADORES', 'VER');
-        });
+        Gate::define('personas.doctores.ver', fn ($user) => $isAdmin($user) || $has($user, 'PERSONAS_DOCTORES', 'VER'));
+        Gate::define('personas.pacientes.ver', fn ($user) => $isAdmin($user) || $has($user, 'PERSONAS_PACIENTES', 'VER'));
+        Gate::define('personas.recepcionistas.ver', fn ($user) => $isAdmin($user) || $has($user, 'PERSONAS_RECEPCIONISTAS', 'VER'));
+        Gate::define('personas.administradores.ver', fn ($user) => $isAdmin($user) || $has($user, 'PERSONAS_ADMINISTRADORES', 'VER'));
     }
 }

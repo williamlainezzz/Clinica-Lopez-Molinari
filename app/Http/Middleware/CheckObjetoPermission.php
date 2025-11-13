@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 class CheckObjetoPermission
@@ -43,8 +44,8 @@ class CheckObjetoPermission
                 return $next($request);
             }
 
-            // 3) Resolver objeto por prefijo de URL (match más largo)
-            $path = '/' . ltrim($request->path(), '/');
+            // 3) Resolver objeto por prefijo de URL (match más largo, case-insensitive)
+            $path = '/' . ltrim(Str::lower($request->path()), '/');
             $objetos = DB::table('tbl_objeto')
                 ->select('COD_OBJETO', 'NOM_OBJETO', 'URL_OBJETO', 'ESTADO_OBJETO')
                 ->get();
@@ -52,9 +53,12 @@ class CheckObjetoPermission
             $match = null;
             $maxLen = -1;
             foreach ($objetos as $o) {
-                $url = rtrim((string) $o->URL_OBJETO, '/');
+                $url = Str::lower((string) $o->URL_OBJETO);
+                $url = '/' . ltrim($url, '/');
+                $url = rtrim($url, '/');
                 if ($url === '') continue;
-                if (strpos($path, $url) === 0 && strlen($url) > $maxLen) {
+
+                if (str_starts_with($path, $url) && strlen($url) > $maxLen) {
                     $match = $o;
                     $maxLen = strlen($url);
                 }

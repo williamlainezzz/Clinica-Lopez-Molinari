@@ -59,7 +59,7 @@ Route::get('/export/citas.csv', function () {
 /* =========================
 |  Personas (controlador)
 ========================= */
-Route::middleware('auth')->prefix('personas')->group(function () {
+Route::middleware(['auth', 'permiso'])->prefix('personas')->group(function () {
     Route::get('/doctores', [PersonaController::class, 'doctores'])
         ->middleware('can:personas.doctores.ver')
         ->name('doctores.index');
@@ -159,13 +159,19 @@ Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(func
     Route::delete('/roles/{id}',   [RolController::class, 'destroy'])
         ->middleware('permiso:ELIMINAR')->name('roles.destroy');
 
-    /* ---- Usuarios (queda solo con auth) ---- */
-    Route::get('/usuarios',              [UsuarioController::class, 'index'])->name('usuarios.index');
-    Route::get('/usuarios/crear',       [UsuarioController::class, 'create'])->name('usuarios.create');
-    Route::post('/usuarios',            [UsuarioController::class, 'store'])->name('usuarios.store');
-    Route::get('/usuarios/{id}/editar', [UsuarioController::class, 'edit'])->name('usuarios.edit');
-    Route::put('/usuarios/{id}',        [UsuarioController::class, 'update'])->name('usuarios.update');
-    Route::delete('/usuarios/{id}',     [UsuarioController::class, 'destroy'])->name('usuarios.destroy');
+    /* ---- Usuarios (objeto: SEGURIDAD_USUARIOS) ---- */
+    Route::get('/usuarios',              [UsuarioController::class, 'index'])
+        ->middleware('permiso:VER')->name('usuarios.index');
+    Route::get('/usuarios/crear',       [UsuarioController::class, 'create'])
+        ->middleware('permiso:CREAR')->name('usuarios.create');
+    Route::post('/usuarios',            [UsuarioController::class, 'store'])
+        ->middleware('permiso:CREAR')->name('usuarios.store');
+    Route::get('/usuarios/{id}/editar', [UsuarioController::class, 'edit'])
+        ->middleware('permiso:EDITAR')->name('usuarios.edit');
+    Route::put('/usuarios/{id}',        [UsuarioController::class, 'update'])
+        ->middleware('permiso:EDITAR')->name('usuarios.update');
+    Route::delete('/usuarios/{id}',     [UsuarioController::class, 'destroy'])
+        ->middleware('permiso:ELIMINAR')->name('usuarios.destroy');
 
     /* ---- Objetos (objeto: SEGURIDAD_OBJETOS) ---- */
     Route::get('/objetos',  [ObjetoController::class,'index'])
