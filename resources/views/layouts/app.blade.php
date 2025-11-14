@@ -13,6 +13,16 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        {{-- Quitar fondo/figura azul heredada de otros estilos --}}
+        <style>
+            body {
+                background-image: none !important;
+                background-color: #f4f6f9 !important; /* estilo tipo AdminLTE */
+                background-repeat: no-repeat;
+                background-size: auto;
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
@@ -29,14 +39,14 @@
 
             <!-- Page Content -->
             <main>
-    @isset($slot)
-        {{-- Usado como componente: <x-app-layout> --}}
-        {{ $slot }}
-    @else
-        {{-- Usado como layout clásico: @extends('layouts.app') --}}
-        @yield('content')
-    @endisset
-</main>
+                @isset($slot)
+                    {{-- Usado como componente: <x-app-layout> --}}
+                    {{ $slot }}
+                @else
+                    {{-- Usado como layout clásico: @extends('layouts.app') --}}
+                    @yield('content')
+                @endisset
+            </main>
         </div>
     </body>
 </html>
