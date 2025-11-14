@@ -88,9 +88,9 @@ class RegisteredUserController extends Controller
                 // 3) Generar username único
                 $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
 
-                // 4) Determinar rol PACIENTE por defecto
+                // 4) Determinar rol PACIENTE por defecto (robusto a espacios y mayúsculas/minúsculas)
                 $rolPacienteId = DB::table('tbl_rol')
-                    ->where('NOM_ROL', 'PACIENTE')
+                    ->whereRaw("UPPER(TRIM(NOM_ROL)) = 'PACIENTE'")
                     ->value('COD_ROL');
 
                 // Si por alguna razón no existe el rol PACIENTE, usamos el menor COD_ROL como respaldo
