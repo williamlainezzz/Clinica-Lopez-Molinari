@@ -191,6 +191,7 @@ class RegisteredUserController extends Controller
         return $user;
     }
 
+
     /**
      * Normaliza una respuesta: trim, minúsculas, sin tildes/acentos.
      * Así el usuario puede escribir "Bogotá" o "bogota" y validará igual.
