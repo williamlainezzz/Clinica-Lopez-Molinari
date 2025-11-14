@@ -2,10 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cita;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AgendaController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function citas(Request $request)
     {
         return $this->render('Citas', $request);
@@ -42,20 +52,22 @@ class AgendaController extends Controller
         $labels = $this->sectionLabels();
         $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
 
-        $doctorPanels      = $this->demoDoctors();
+        $citas = $this->citasForRol($rolSlug, $user);
+        $doctorPanels = $this->buildDoctorPanels($citas);
+        $activeDoctor = $this->resolveActiveDoctor($rolSlug, $doctorPanels, $user);
         $availablePatients = $this->availablePatients();
-        $activeDoctor      = $doctorPanels[0];
-        $patientRecord     = $this->patientRecord($activeDoctor);
-        $timeline          = $this->patientTimeline();
+        $patientRecord = $this->buildPatientRecord($rolSlug, $citas, $activeDoctor, $user);
+        $timeline = $this->buildTimeline($patientRecord);
 
-        $calendarMatrix      = $this->calendarMatrix();
-        $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor, $patientRecord);
-        $calendarEvents      = $calendarEventBundle['byDate'];
-        $eventList           = $calendarEventBundle['list'];
+        $calendarMatrix = $this->calendarMatrix();
+        $calendarEventBundle = $this->buildCalendarEvents($citas);
+        $calendarEvents = $calendarEventBundle['byDate'];
+        $eventList = $calendarEventBundle['list'];
 
-        $stats     = $this->buildStats($rolSlug, $doctorPanels, $availablePatients, $patientRecord, $eventList);
-        $shareLink = url('/registro/paciente?doctor=dr-lopez');
-        $shareCode = 'DR-LOPEZ-2025';
+        $stats = $this->buildStats($rolSlug, $citas, count($availablePatients));
+        $shareSlug = $activeDoctor['slug'] ?? 'agenda';
+        $shareLink = url('/registro/paciente?doctor=' . $shareSlug);
+        $shareCode = strtoupper(Str::slug($shareSlug)) . '-' . now()->format('ymd');
 
         $view = $this->resolveView($rolSlug, $sectionKey);
 
@@ -97,6 +109,299 @@ class AgendaController extends Controller
         };
     }
 
+    private function citasForRol(string $rolSlug, $user): Collection
+    {
+        $personaId = $user->FK_COD_PERSONA ?? null;
+
+        $query = Cita::query()
+            ->with([
+                'doctor.telefonos',
+                'doctor.correos',
+                'paciente.telefonos',
+                'paciente.correos',
+            ])
+            ->orderBy('FEC_CITA')
+            ->orderBy('HORA_CITA');
+
+        switch ($rolSlug) {
+            case 'doctor':
+                if ($personaId) {
+                    $query->where('FK_COD_DOCTOR', $personaId);
+                }
+                break;
+            case 'paciente':
+                if ($personaId) {
+                    $query->where('FK_COD_PACIENTE', $personaId);
+                }
+                break;
+            default:
+                $query->whereDate('FEC_CITA', '>=', now()->subWeeks(2)->toDateString());
+                break;
+        }
+
+        return $query->get();
+    }
+
+    private function buildDoctorPanels(Collection $citas): array
+    {
+        $grouped = $citas->filter(fn ($cita) => $cita->FK_COD_DOCTOR)->groupBy('FK_COD_DOCTOR');
+
+        return $grouped->map(function (Collection $doctorCitas) {
+            $doctor = $doctorCitas->first()->doctor;
+            $contacto = optional($doctor?->telefonos->first())->NUM_TELEFONO
+                ?? optional($doctor?->correos->first())->CORREO
+                ?? 'Sin contacto';
+
+            return [
+                'id' => $doctor?->COD_PERSONA,
+                'slug' => Str::slug($doctor?->nombre_completo ?? 'doctor'),
+                'nombre' => $doctor?->nombre_completo ?? 'Sin doctor asignado',
+                'especialidad' => $doctor?->ESPECIALIDAD ?? 'General',
+                'contacto' => $contacto,
+                'pacientes' => $doctorCitas->map(function (Cita $cita) {
+                    $estado = ucfirst(strtolower($cita->ESTADO_CITA));
+                    return [
+                        'codigo' => $cita->COD_CITA,
+                        'nombre' => optional($cita->paciente)->nombre_completo ?? 'Paciente',
+                        'motivo' => $cita->MOTIVO_CITA,
+                        'fecha'  => $cita->FEC_CITA?->format('Y-m-d') ?? $cita->FEC_CITA,
+                        'hora'   => $cita->hora_label,
+                        'estado' => $estado,
+                        'nota'   => $cita->NOTAS_CITA ?? '',
+                    ];
+                })->values()->all(),
+            ];
+        })->values()->all();
+    }
+
+    private function resolveActiveDoctor(string $rolSlug, array $doctorPanels, $user): array
+    {
+        if ($rolSlug === 'doctor' && $user?->FK_COD_PERSONA) {
+            foreach ($doctorPanels as $panel) {
+                if ($panel['id'] === $user->FK_COD_PERSONA) {
+                    return $panel;
+                }
+            }
+        }
+
+        return $doctorPanels[0] ?? [
+            'id' => null,
+            'slug' => 'doctor',
+            'nombre' => 'Sin doctor',
+            'especialidad' => 'General',
+            'contacto' => 'N/D',
+            'pacientes' => [],
+        ];
+    }
+
+    private function buildPatientRecord(string $rolSlug, Collection $citas, array $activeDoctor, $user): array
+    {
+        $target = match ($rolSlug) {
+            'paciente' => $citas->sortBy('FEC_CITA')->first(),
+            'doctor'   => $citas->sortBy('FEC_CITA')->first(),
+            default    => $citas->sortBy('FEC_CITA')->first(),
+        };
+
+        if (!$target && !empty($activeDoctor['pacientes'])) {
+            $firstPaciente = $activeDoctor['pacientes'][0] ?? null;
+            if ($firstPaciente) {
+                $target = $citas->firstWhere('COD_CITA', $firstPaciente['codigo']);
+            }
+        }
+
+        if (!$target) {
+            return [
+                'profile' => [
+                    'codigo' => null,
+                    'nombre' => 'Sin paciente',
+                    'doctor' => $activeDoctor['nombre'] ?? 'Sin doctor',
+                    'especialidad' => $activeDoctor['especialidad'] ?? 'General',
+                    'estado' => 'Sin citas',
+                    'correo' => 'No registrado',
+                    'telefono' => 'No registrado',
+                    'proxima' => [
+                        'fecha' => now()->toDateString(),
+                        'hora' => '00:00',
+                        'motivo' => 'Sin citas registradas',
+                        'estado' => 'Pendiente',
+                    ],
+                ],
+                'historial' => [],
+            ];
+        }
+
+        $paciente = $target->paciente;
+        $doctor = $target->doctor;
+
+        $historial = Cita::query()
+            ->where('FK_COD_PACIENTE', $paciente?->COD_PERSONA)
+            ->orderByDesc('FEC_CITA')
+            ->take(5)
+            ->get()
+            ->map(function (Cita $cita) {
+                return [
+                    'fecha' => $cita->FEC_CITA?->format('Y-m-d') ?? $cita->FEC_CITA,
+                    'estado' => ucfirst(strtolower($cita->ESTADO_CITA)),
+                    'motivo' => $cita->MOTIVO_CITA,
+                    'detalle' => $cita->NOTAS_CITA ?? 'Sin notas registradas.',
+                ];
+            })->toArray();
+
+        return [
+            'profile' => [
+                'codigo' => $paciente?->COD_PERSONA,
+                'nombre' => $paciente?->nombre_completo ?? 'Paciente',
+                'doctor' => $doctor?->nombre_completo ?? ($activeDoctor['nombre'] ?? 'Sin doctor'),
+                'especialidad' => $doctor?->ESPECIALIDAD ?? ($activeDoctor['especialidad'] ?? 'General'),
+                'estado' => ucfirst(strtolower($target->ESTADO_CITA)),
+                'correo' => optional($paciente?->correos->first())->CORREO ?? 'No registrado',
+                'telefono' => optional($paciente?->telefonos->first())->NUM_TELEFONO ?? 'No registrado',
+                'proxima' => [
+                    'fecha' => $target->FEC_CITA?->format('Y-m-d') ?? $target->FEC_CITA,
+                    'hora' => $target->hora_label,
+                    'motivo' => $target->MOTIVO_CITA,
+                    'estado' => ucfirst(strtolower($target->ESTADO_CITA)),
+                ],
+            ],
+            'historial' => $historial,
+        ];
+    }
+
+    private function buildTimeline(array $patientRecord): array
+    {
+        return collect($patientRecord['historial'] ?? [])->take(3)->map(function ($item) {
+            return [
+                'fecha' => $item['fecha'],
+                'descripcion' => $item['motivo'],
+                'estado' => $item['estado'],
+            ];
+        })->values()->all();
+    }
+
+    private function availablePatients(): array
+    {
+        $rows = DB::table('tbl_cita as c')
+            ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
+            ->where(function ($query) {
+                $query->whereNull('c.FK_COD_DOCTOR')
+                    ->orWhereRaw('UPPER(c.ESTADO_CITA) = ?', ['SOLICITADA']);
+            })
+            ->orderByDesc('c.created_at')
+            ->select([
+                'p.PRIMER_NOMBRE',
+                'p.PRIMER_APELLIDO',
+                'c.MOTIVO_CITA',
+                'c.CANAL',
+                'c.created_at',
+            ])
+            ->limit(5)
+            ->get();
+
+        return $rows->map(function ($row) {
+            $fecha = $row->created_at ? Carbon::parse($row->created_at) : null;
+            return [
+                'nombre' => trim($row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO),
+                'motivo' => $row->MOTIVO_CITA,
+                'preferencia' => $row->CANAL ?? 'Sin preferencia',
+                'ultima' => $fecha ? $fecha->diffForHumans() : 'Reciente',
+            ];
+        })->toArray();
+    }
+
+    private function calendarMatrix(): array
+    {
+        $today = Carbon::today();
+        $start = $today->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY);
+        $end = $today->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
+
+        $matrix = [];
+        $cursor = $start->copy();
+
+        while ($cursor <= $end) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $week[] = [
+                    'label' => $cursor->format('j'),
+                    'date' => $cursor->toDateString(),
+                    'isMuted' => !$cursor->isSameMonth($today),
+                    'isToday' => $cursor->isSameDay($today),
+                ];
+                $cursor->addDay();
+            }
+            $matrix[] = $week;
+        }
+
+        return $matrix;
+    }
+
+    private function buildCalendarEvents(Collection $citas): array
+    {
+        $byDate = [];
+        $list = [];
+
+        foreach ($citas as $cita) {
+            $date = $cita->FEC_CITA?->toDateString() ?? $cita->FEC_CITA;
+            $event = [
+                'id' => $cita->COD_CITA,
+                'fecha' => $date,
+                'hora' => $cita->hora_label,
+                'doctor' => optional($cita->doctor)->nombre_completo,
+                'paciente' => optional($cita->paciente)->nombre_completo,
+                'estado' => ucfirst(strtolower($cita->ESTADO_CITA)),
+                'motivo' => $cita->MOTIVO_CITA,
+            ];
+
+            $byDate[$date][] = $event;
+            $list[] = $event;
+        }
+
+        usort($list, function ($a, $b) {
+            return [$a['fecha'], $a['hora']] <=> [$b['fecha'], $b['hora']];
+        });
+
+        return [
+            'byDate' => $byDate,
+            'list' => array_values($list),
+        ];
+    }
+
+    private function buildStats(string $rolSlug, Collection $citas, int $pendingAssignments): array
+    {
+        $confirmadas = $this->countByEstado($citas, 'CONFIRMADA');
+        $pendientes = $this->countByEstado($citas, 'PENDIENTE');
+        $canceladas = $this->countByEstado($citas, 'CANCELADA');
+        $total = $citas->count();
+
+        if ($rolSlug === 'paciente') {
+            return [
+                ['label' => 'Citas programadas', 'value' => $total],
+                ['label' => 'Confirmadas', 'value' => $confirmadas],
+                ['label' => 'Pendientes', 'value' => $pendientes],
+            ];
+        }
+
+        $stats = [
+            ['label' => 'Citas programadas', 'value' => $total, 'icon' => 'fas fa-calendar-check', 'color' => 'primary'],
+            ['label' => 'Confirmadas', 'value' => $confirmadas, 'icon' => 'fas fa-check-circle', 'color' => 'success'],
+            ['label' => 'Pendientes', 'value' => $pendientes, 'icon' => 'fas fa-clock', 'color' => 'warning'],
+            ['label' => 'Canceladas', 'value' => $canceladas, 'icon' => 'fas fa-exclamation-triangle', 'color' => 'danger'],
+        ];
+
+        if ($pendingAssignments > 0) {
+            $stats[] = ['label' => 'Solicitudes sin doctor', 'value' => $pendingAssignments, 'icon' => 'fas fa-user-clock', 'color' => 'info'];
+        }
+
+        return $stats;
+    }
+
+    private function countByEstado(Collection $citas, string $estado): int
+    {
+        $target = strtoupper($estado);
+        return $citas->filter(function (Cita $cita) use ($target) {
+            return strtoupper($cita->ESTADO_CITA ?? '') === $target;
+        })->count();
+    }
+
     private function sectionLabels(): array
     {
         return [
@@ -121,34 +426,34 @@ class AgendaController extends Controller
                 'citas' => [
                     'pageTitle' => 'Citas · Recepción',
                     'heading'   => 'Ver citas',
-                    'intro'     => 'Confirma, reagenda o cancela según la disponibilidad de doctores.',
+                    'intro'     => 'Coordina doctores, salas y recordatorios para los pacientes.',
                 ],
                 'calendario' => [
                     'pageTitle' => 'Agenda · Recepción',
                     'heading'   => 'Agenda diaria',
-                    'intro'     => 'Calendario consolidado para coordinar salas y recursos.',
+                    'intro'     => 'Controla las citas de hoy por doctor y consultorio.',
                 ],
                 'reportes' => [
-                    'pageTitle' => 'Historial · Recepción',
+                    'pageTitle' => 'Reportes · Recepción',
                     'heading'   => 'Bitácora de citas',
-                    'intro'     => 'Seguimiento de confirmaciones y cancelaciones.',
+                    'intro'     => 'Exporta citas confirmadas, pendientes y canceladas.',
                 ],
             ],
             'doctor' => [
                 'citas' => [
                     'pageTitle' => 'Mis pacientes',
-                    'heading'   => 'Mis pacientes',
-                    'intro'     => 'Asigna pacientes libres, crea enlaces y controla tu panel clínico.',
+                    'heading'   => 'Pacientes asignados',
+                    'intro'     => 'Gestiona tus próximas consultas y notas clínicas.',
                 ],
                 'calendario' => [
                     'pageTitle' => 'Agenda del doctor',
-                    'heading'   => 'Mi agenda',
-                    'intro'     => 'Gestiona tus horarios con el calendario estilo AdminLTE.',
+                    'heading'   => 'Mi calendario',
+                    'intro'     => 'Visualiza tus citas confirmadas dentro del calendario.',
                 ],
                 'reportes' => [
-                    'pageTitle' => 'Seguimiento clínico',
-                    'heading'   => 'Seguimiento clínico',
-                    'intro'     => 'Historial resumido de evolución por paciente.',
+                    'pageTitle' => 'Reportes del doctor',
+                    'heading'   => 'Historial de citas',
+                    'intro'     => 'Consulta indicadores rápidos de productividad clínica.',
                 ],
             ],
             'paciente' => [
@@ -158,355 +463,16 @@ class AgendaController extends Controller
                     'intro'     => 'Consulta tu doctor asignado y la próxima cita.',
                 ],
                 'calendario' => [
-                    'pageTitle' => 'Agenda del paciente',
-                    'heading'   => 'Agenda',
+                    'pageTitle' => 'Mi agenda',
+                    'heading'   => 'Calendario personal',
                     'intro'     => 'Visualiza tus citas confirmadas dentro del calendario.',
                 ],
                 'reportes' => [
                     'pageTitle' => 'Historial de citas',
-                    'heading'   => 'Historial',
-                    'intro'     => 'Todas tus visitas previas con detalles y estado.',
+                    'heading'   => 'Historial de citas',
+                    'intro'     => 'Bitácora básica de tus atenciones en la clínica.',
                 ],
             ],
         ];
-    }
-
-    private function demoDoctors(): array
-    {
-        return [
-            [
-                'codigo'       => 'DOC-102',
-                'nombre'       => 'Dr. Juan López',
-                'especialidad' => 'Odontología Restaurativa',
-                'color'        => '#0d6efd',
-                'contacto'     => 'Ext. 203 · juan.lopez@clinica.test',
-                'pacientes'    => [
-                    [
-                        'codigo'  => 'PAC-2045',
-                        'nombre'  => 'Ana Rivera',
-                        'motivo'  => 'Control semestral',
-                        'estado'  => 'Confirmada',
-                        'fecha'   => '2025-11-12',
-                        'hora'    => '08:30',
-                        'nota'    => 'Traer radiografías previas.',
-                    ],
-                    [
-                        'codigo'  => 'PAC-2051',
-                        'nombre'  => 'Carlos Pérez',
-                        'motivo'  => 'Rehabilitación molar',
-                        'estado'  => 'Pendiente',
-                        'fecha'   => '2025-11-12',
-                        'hora'    => '10:15',
-                        'nota'    => 'Confirmar disponibilidad de laboratorio.',
-                    ],
-                    [
-                        'codigo'  => 'PAC-2060',
-                        'nombre'  => 'María Gómez',
-                        'motivo'  => 'Blanqueamiento',
-                        'estado'  => 'Cancelada',
-                        'fecha'   => '2025-11-13',
-                        'hora'    => '09:45',
-                        'nota'    => 'Reagendar por viaje.',
-                    ],
-                ],
-                'agenda' => [
-                    [
-                        'fecha'     => '2025-11-12',
-                        'hora'      => '08:30',
-                        'paciente'  => 'Ana Rivera',
-                        'estado'    => 'Confirmada',
-                        'motivo'    => 'Control semestral',
-                        'duracion'  => '45 min',
-                        'ubicacion' => 'Consultorio 2',
-                    ],
-                    [
-                        'fecha'     => '2025-11-12',
-                        'hora'      => '10:15',
-                        'paciente'  => 'Carlos Pérez',
-                        'estado'    => 'Pendiente',
-                        'motivo'    => 'Rehabilitación molar',
-                        'duracion'  => '60 min',
-                        'ubicacion' => 'Consultorio 1',
-                    ],
-                    [
-                        'fecha'     => '2025-11-13',
-                        'hora'      => '09:45',
-                        'paciente'  => 'María Gómez',
-                        'estado'    => 'Cancelada',
-                        'motivo'    => 'Blanqueamiento',
-                        'duracion'  => '40 min',
-                        'ubicacion' => 'Consultorio 3',
-                    ],
-                    [
-                        'fecha'     => '2025-11-14',
-                        'hora'      => '11:30',
-                        'paciente'  => 'Pedro Izaguirre',
-                        'estado'    => 'Confirmada',
-                        'motivo'    => 'Implante',
-                        'duracion'  => '90 min',
-                        'ubicacion' => 'Quirófano 1',
-                    ],
-                ],
-            ],
-            [
-                'codigo'       => 'DOC-118',
-                'nombre'       => 'Dra. Laura Molina',
-                'especialidad' => 'Ortodoncia y Estética',
-                'color'        => '#20c997',
-                'contacto'     => 'Ext. 214 · laura.molina@clinica.test',
-                'pacientes'    => [
-                    [
-                        'codigo' => 'PAC-2070',
-                        'nombre' => 'Sofía Aguilar',
-                        'motivo' => 'Ajuste de brackets',
-                        'estado' => 'Confirmada',
-                        'fecha'  => '2025-11-12',
-                        'hora'   => '11:15',
-                        'nota'   => 'Revisar elasticos transparentes.',
-                    ],
-                    [
-                        'codigo' => 'PAC-2091',
-                        'nombre' => 'Diego López',
-                        'motivo' => 'Valoración estética',
-                        'estado' => 'Pendiente',
-                        'fecha'  => '2025-11-13',
-                        'hora'   => '13:00',
-                        'nota'   => 'Enviar presupuesto digital.',
-                    ],
-                ],
-                'agenda' => [
-                    [
-                        'fecha'     => '2025-11-12',
-                        'hora'      => '11:15',
-                        'paciente'  => 'Sofía Aguilar',
-                        'estado'    => 'Confirmada',
-                        'motivo'    => 'Ajuste de brackets',
-                        'duracion'  => '30 min',
-                        'ubicacion' => 'Consultorio 4',
-                    ],
-                    [
-                        'fecha'     => '2025-11-13',
-                        'hora'      => '13:00',
-                        'paciente'  => 'Diego López',
-                        'estado'    => 'Pendiente',
-                        'motivo'    => 'Valoración estética',
-                        'duracion'  => '60 min',
-                        'ubicacion' => 'Consultorio 4',
-                    ],
-                    [
-                        'fecha'     => '2025-11-15',
-                        'hora'      => '09:30',
-                        'paciente'  => 'Claudia Soto',
-                        'estado'    => 'Confirmada',
-                        'motivo'    => 'Colocación de retenedores',
-                        'duracion'  => '50 min',
-                        'ubicacion' => 'Consultorio 5',
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    private function availablePatients(): array
-    {
-        return [
-            [
-                'nombre'      => 'Luis Navas',
-                'motivo'      => 'Primera valoración',
-                'preferencia' => 'Mañana',
-                'ultima'      => '2025-11-08',
-            ],
-            [
-                'nombre'      => 'Gabriela Torres',
-                'motivo'      => 'Dolor agudo',
-                'preferencia' => 'Urgente',
-                'ultima'      => '2025-11-11',
-            ],
-            [
-                'nombre'      => 'Mario Perdomo',
-                'motivo'      => 'Seguimiento ortodoncia',
-                'preferencia' => 'Tarde',
-                'ultima'      => '2025-11-07',
-            ],
-        ];
-    }
-
-    private function patientRecord(array $activeDoctor): array
-    {
-        $proxima = $activeDoctor['pacientes'][0];
-
-        return [
-            'profile' => [
-                'codigo'       => $proxima['codigo'],
-                'nombre'       => $proxima['nombre'],
-                'doctor'       => $activeDoctor['nombre'],
-                'especialidad' => $activeDoctor['especialidad'],
-                'estado'       => 'Activo',
-                'correo'       => 'ana.rivera@correo.test',
-                'telefono'     => '+504 9999-8888',
-                'proxima'      => [
-                    'fecha'  => $proxima['fecha'],
-                    'hora'   => $proxima['hora'],
-                    'motivo' => $proxima['motivo'],
-                    'estado' => $proxima['estado'],
-                ],
-            ],
-            'historial' => $this->patientHistory(),
-        ];
-    }
-
-    private function patientHistory(): array
-    {
-        return [
-            [
-                'fecha'   => '2025-09-20',
-                'estado'  => 'Completada',
-                'motivo'  => 'Limpieza',
-                'doctor'  => 'Dr. Juan López',
-                'detalle' => 'Sin hallazgos relevantes.',
-            ],
-            [
-                'fecha'   => '2025-07-10',
-                'estado'  => 'Completada',
-                'motivo'  => 'Control de caries',
-                'doctor'  => 'Dr. Juan López',
-                'detalle' => 'Aplicación de barniz.',
-            ],
-            [
-                'fecha'   => '2025-05-03',
-                'estado'  => 'Cancelada',
-                'motivo'  => 'Ausencia del paciente',
-                'doctor'  => 'Dr. Juan López',
-                'detalle' => 'Se reprogramó para junio.',
-            ],
-        ];
-    }
-
-    private function patientTimeline(): array
-    {
-        return [
-            ['fecha' => '2025-11-10', 'descripcion' => 'Se envió recordatorio vía correo.', 'estado' => 'Notificado'],
-            ['fecha' => '2025-11-08', 'descripcion' => 'Paciente confirmó asistencia.', 'estado' => 'Confirmado'],
-            ['fecha' => '2025-11-05', 'descripcion' => 'Recepción cargó nueva radiografía.', 'estado' => 'Documentado'],
-        ];
-    }
-
-    private function calendarMatrix(): array
-    {
-        return [
-            [
-                ['label' => '27', 'date' => '2025-10-27', 'isMuted' => true],
-                ['label' => '28', 'date' => '2025-10-28', 'isMuted' => true],
-                ['label' => '29', 'date' => '2025-10-29', 'isMuted' => true],
-                ['label' => '30', 'date' => '2025-10-30', 'isMuted' => true],
-                ['label' => '31', 'date' => '2025-10-31', 'isMuted' => true],
-                ['label' => '1',  'date' => '2025-11-01'],
-                ['label' => '2',  'date' => '2025-11-02'],
-            ],
-            [
-                ['label' => '3',  'date' => '2025-11-03'],
-                ['label' => '4',  'date' => '2025-11-04'],
-                ['label' => '5',  'date' => '2025-11-05'],
-                ['label' => '6',  'date' => '2025-11-06'],
-                ['label' => '7',  'date' => '2025-11-07'],
-                ['label' => '8',  'date' => '2025-11-08'],
-                ['label' => '9',  'date' => '2025-11-09'],
-            ],
-            [
-                ['label' => '10', 'date' => '2025-11-10'],
-                ['label' => '11', 'date' => '2025-11-11'],
-                ['label' => '12', 'date' => '2025-11-12', 'isToday' => true],
-                ['label' => '13', 'date' => '2025-11-13'],
-                ['label' => '14', 'date' => '2025-11-14'],
-                ['label' => '15', 'date' => '2025-11-15'],
-                ['label' => '16', 'date' => '2025-11-16'],
-            ],
-            [
-                ['label' => '17', 'date' => '2025-11-17'],
-                ['label' => '18', 'date' => '2025-11-18'],
-                ['label' => '19', 'date' => '2025-11-19'],
-                ['label' => '20', 'date' => '2025-11-20'],
-                ['label' => '21', 'date' => '2025-11-21'],
-                ['label' => '22', 'date' => '2025-11-22'],
-                ['label' => '23', 'date' => '2025-11-23'],
-            ],
-            [
-                ['label' => '24', 'date' => '2025-11-24'],
-                ['label' => '25', 'date' => '2025-11-25'],
-                ['label' => '26', 'date' => '2025-11-26'],
-                ['label' => '27', 'date' => '2025-11-27'],
-                ['label' => '28', 'date' => '2025-11-28'],
-                ['label' => '29', 'date' => '2025-11-29'],
-                ['label' => '30', 'date' => '2025-11-30'],
-            ],
-            [
-                ['label' => '1', 'date' => '2025-12-01', 'isMuted' => true],
-                ['label' => '2', 'date' => '2025-12-02', 'isMuted' => true],
-                ['label' => '3', 'date' => '2025-12-03', 'isMuted' => true],
-                ['label' => '4', 'date' => '2025-12-04', 'isMuted' => true],
-                ['label' => '5', 'date' => '2025-12-05', 'isMuted' => true],
-                ['label' => '6', 'date' => '2025-12-06', 'isMuted' => true],
-                ['label' => '7', 'date' => '2025-12-07', 'isMuted' => true],
-            ],
-        ];
-    }
-
-    private function buildCalendarEvents(array $doctorPanels, string $rolSlug, array $activeDoctor, array $patientRecord): array
-    {
-        $events = collect($doctorPanels)
-            ->flatMap(function ($doctor) {
-                return collect($doctor['agenda'])->map(function ($event) use ($doctor) {
-                    return array_merge($event, [
-                        'doctor'       => $doctor['nombre'],
-                        'especialidad' => $doctor['especialidad'],
-                        'color'        => $doctor['color'],
-                    ]);
-                });
-            });
-
-        if ($rolSlug === 'doctor') {
-            $events = $events->where('doctor', $activeDoctor['nombre']);
-        }
-
-        if ($rolSlug === 'paciente') {
-            $paciente = $patientRecord['profile']['nombre'];
-            $events   = $events->where('paciente', $paciente);
-        }
-
-        $events = $events->values();
-
-        return [
-            'list'  => $events->all(),
-            'byDate'=> $events->groupBy('fecha')->map(fn($group) => $group->values()->all())->all(),
-        ];
-    }
-
-    private function buildStats(string $rolSlug, array $doctorPanels, array $availablePatients, array $patientRecord, array $eventList): array
-    {
-        $eventsCollection = collect($eventList);
-        $totalCitas       = $eventsCollection->count();
-        $pendientes       = $eventsCollection->where('estado', 'Pendiente')->count();
-        $confirmadas      = $eventsCollection->where('estado', 'Confirmada')->count();
-        $canceladas       = $eventsCollection->where('estado', 'Cancelada')->count();
-        $pacientesActivos = collect($doctorPanels)->sum(fn($doc) => count($doc['pacientes']));
-
-        return match ($rolSlug) {
-            'doctor' => [
-                ['label' => 'Pacientes activos', 'value' => count($doctorPanels[0]['pacientes']), 'icon' => 'fas fa-user-friends', 'color' => 'primary'],
-                ['label' => 'Pendientes por confirmar', 'value' => $pendientes, 'icon' => 'fas fa-hourglass-half', 'color' => 'warning'],
-                ['label' => 'Citas confirmadas', 'value' => $confirmadas, 'icon' => 'fas fa-check-circle', 'color' => 'success'],
-            ],
-            'paciente' => [
-                ['label' => 'Próxima cita', 'value' => $patientRecord['profile']['proxima']['fecha'] . ' · ' . $patientRecord['profile']['proxima']['hora'], 'icon' => 'fas fa-calendar-day', 'color' => 'info'],
-                ['label' => 'Estado', 'value' => $patientRecord['profile']['proxima']['estado'], 'icon' => 'fas fa-heartbeat', 'color' => 'success'],
-                ['label' => 'Historial total', 'value' => count($patientRecord['historial']), 'icon' => 'fas fa-history', 'color' => 'secondary'],
-            ],
-            default => [
-                ['label' => 'Citas programadas', 'value' => $totalCitas, 'icon' => 'fas fa-calendar-check', 'color' => 'primary'],
-                ['label' => 'Pendientes', 'value' => $pendientes, 'icon' => 'fas fa-exclamation-circle', 'color' => 'warning'],
-                ['label' => 'Canceladas', 'value' => $canceladas, 'icon' => 'fas fa-times-circle', 'color' => 'danger'],
-                ['label' => 'Pacientes sin doctor', 'value' => count($availablePatients), 'icon' => 'fas fa-user-clock', 'color' => 'info'],
-            ],
-        };
     }
 }
