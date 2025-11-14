@@ -82,4 +82,34 @@ class Usuario extends Authenticatable
     {
         return $this->belongsTo(Rol::class, 'FK_COD_ROL', 'COD_ROL');
     }
+
+    /**
+     * Verifica si el usuario tiene permiso sobre un objeto / acción
+     * usando la función MySQL fn_tiene_permiso(FK_COD_ROL, OBJETO, ACCION).
+     *
+     * Ejemplo de uso:
+     *   auth()->user()->tienePermiso('SEGURIDAD_USUARIOS', 'VER');
+     */
+    public function tienePermiso(string $objeto, string $accion): bool
+    {
+        // Si quieres que el rol ADMIN (COD_ROL = 1) tenga acceso total:
+        if ((int) $this->FK_COD_ROL === 1) {
+            return true;
+        }
+
+        $row = DB::selectOne(
+            'SELECT fn_tiene_permiso(?, ?, ?) AS ok',
+            [
+                (int) $this->FK_COD_ROL,
+                $objeto,
+                $accion,
+            ]
+        );
+
+        if (!$row) {
+            return false;
+        }
+
+        return (int) $row->ok === 1;
+    }
 }
