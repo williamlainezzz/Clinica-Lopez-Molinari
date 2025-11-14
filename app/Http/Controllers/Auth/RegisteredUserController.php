@@ -76,36 +76,45 @@ class RegisteredUserController extends Controller
 
         try {
             DB::transaction(function () use ($validated, &$usuario) {
-                // 2) Crear PERSONA
-                $persona = Persona::create([
-                    'PRIMER_NOMBRE'    => $validated['PRIMER_NOMBRE'],
-                    'SEGUNDO_NOMBRE'   => $validated['SEGUNDO_NOMBRE'] ?? null,
-                    'PRIMER_APELLIDO'  => $validated['PRIMER_APELLIDO'],
-                    'SEGUNDO_APELLIDO' => $validated['SEGUNDO_APELLIDO'] ?? null,
-                    'TIPO_GENERO'      => $validated['TIPO_GENERO'],
-                ]);
+    // 2) Crear PERSONA
+    $persona = Persona::create([
+        'PRIMER_NOMBRE'    => $validated['PRIMER_NOMBRE'],
+        'SEGUNDO_NOMBRE'   => $validated['SEGUNDO_NOMBRE'] ?? null,
+        'PRIMER_APELLIDO'  => $validated['PRIMER_APELLIDO'],
+        'SEGUNDO_APELLIDO' => $validated['SEGUNDO_APELLIDO'] ?? null,
+        'TIPO_GENERO'      => $validated['TIPO_GENERO'],
+    ]);
 
-                // 3) Generar username único
-                $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
+    // 3) Generar username único
+    $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
 
-                // 4) Rol por defecto: PACIENTE (en la BD PACIENTE = COD_ROL 3)
-                $rolPacienteId = 3;
+    // 4) Buscar el rol PACIENTE en la tabla tbl_rol
+    $rolPacienteId = DB::table('tbl_rol')
+        ->where('NOM_ROL', 'PACIENTE')
+        ->value('COD_ROL');
 
-                // 5) Crear USUARIO con rol PACIENTE por defecto
-                $usuario = Usuario::create([
-                    'USR_USUARIO'    => $usr,
-                    'PWD_USUARIO'    => Hash::make($validated['password']),
-                    'FK_COD_PERSONA' => $persona->COD_PERSONA,
-                    'FK_COD_ROL'     => $rolPacienteId,
-                    'ESTADO_USUARIO' => 1,
-                ]);
+    // Si por alguna razón no existe, caemos a 3 (para no romper)
+    if (!$rolPacienteId) {
+        $rolPacienteId = 3;
+    }
 
-                // 6) Insertar CORREO (ya normalizado por el merge inicial)
-                DB::table('tbl_correo')->insert([
-                    'FK_COD_PERSONA' => $persona->COD_PERSONA,
-                    'CORREO'         => $validated['CORREO'],
-                    'TIPO_CORREO'    => $validated['TIPO_CORREO'] ?? 'PERSONAL',
-                ]);
+    // 5) Crear USUARIO con rol PACIENTE por defecto
+    $usuario = Usuario::create([
+        'USR_USUARIO'    => $usr,
+        'PWD_USUARIO'    => Hash::make($validated['password']),
+        'FK_COD_PERSONA' => $persona->COD_PERSONA,
+        'FK_COD_ROL'     => $rolPacienteId,
+        'ESTADO_USUARIO' => 1,
+    ]);
+
+    // 6) Insertar CORREO (ya normalizado por el merge inicial)
+    DB::table('tbl_correo')->insert([
+        'FK_COD_PERSONA' => $persona->COD_PERSONA,
+        'CORREO'         => $validated['CORREO'],
+        'TIPO_CORREO'    => $validated['TIPO_CORREO'] ?? 'PERSONAL',
+    ]);
+
+    // (a partir de aquí dejas TODO igual: teléfono, dirección, preguntas…)
 
                 // 7) TELÉFONO (si viene)
                 if (!empty($validated['NUM_TELEFONO'])) {
