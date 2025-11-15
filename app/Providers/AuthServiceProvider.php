@@ -117,15 +117,10 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
 
         // ==========================================================
-        // PERSONAS
+        // PERSONAS (controlado SOLO por permisos + ADMIN)
         // ==========================================================
-        Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $roleIs) {
+        Gate::define('personas.menu', function ($user) use ($isAdmin, $has) {
             if ($isAdmin($user)) {
-                return true;
-            }
-
-            // Por ejemplo RECEPCIONISTA ve siempre el menú de personas
-            if ($roleIs($user, ['RECEPCIONISTA'])) {
                 return true;
             }
 
@@ -145,16 +140,16 @@ class AuthServiceProvider extends ServiceProvider
             return false;
         });
 
-        Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
+        Gate::define('personas.doctores.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
                 return true;
             }
 
             return $has($user, 'PERSONAS_DOCTORES', 'VER');
         });
 
-        Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has, $roleIs) {
-            if ($isAdmin($user) || $roleIs($user, ['RECEPCIONISTA'])) {
+        Gate::define('personas.pacientes.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
                 return true;
             }
 
