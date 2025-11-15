@@ -203,10 +203,18 @@ Route::get('/db-check', function () {
 
 /* =======================================================
 |  AGENDA: Citas / Calendario / Reportes (por ROL)
-|  Estas rutas muestran vistas (stubs). La lógica real va luego.
+|  Protegido con gates: agenda.citas.ver, agenda.calendario.ver, agenda.reportes.ver
 ======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
-    Route::get('/citas', [AgendaController::class, 'citas'])->name('agenda.citas');
-    Route::get('/calendario', [AgendaController::class, 'calendario'])->name('agenda.calendario');
-    Route::get('/reportes', [AgendaController::class, 'reportes'])->name('agenda.reportes');
+    Route::get('/citas', [AgendaController::class, 'citas'])
+        ->middleware('can:agenda.citas.ver')
+        ->name('agenda.citas');
+
+    Route::get('/calendario', [AgendaController::class, 'calendario'])
+        ->middleware('can:agenda.calendario.ver')
+        ->name('agenda.calendario');
+
+    Route::get('/reportes', [AgendaController::class, 'reportes'])
+        ->middleware('can:agenda.reportes.ver')
+        ->name('agenda.reportes');
 });
