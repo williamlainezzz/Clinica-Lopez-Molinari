@@ -31,6 +31,8 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         // ------- Helpers locales -------
+
+        // ¿Es admin?
         $isAdmin = function ($user): bool {
             $rolId = (int)($user->FK_COD_ROL ?? 0);
 
@@ -44,6 +46,7 @@ class AuthServiceProvider extends ServiceProvider
             return $nom && strtoupper(trim($nom)) === 'ADMIN';
         };
 
+        // ¿Rol está en una lista?
         $roleIs = function ($user, array $roles) {
             $rolId = (int)($user->FK_COD_ROL ?? 0);
             if ($rolId === 0) {
@@ -61,6 +64,7 @@ class AuthServiceProvider extends ServiceProvider
             return in_array($nom, $roles, true);
         };
 
+        // Verifica permiso usando fn_tiene_permiso o helper puede()
         $has = function ($user, string $objeto, string $accion = 'VER'): bool {
             // Usa helper puede() si está cargado
             if (function_exists('puede')) {
@@ -78,9 +82,10 @@ class AuthServiceProvider extends ServiceProvider
         };
 
         // ==========================================================
-        // Gate para mostrar el BLOQUE "Seguridad" en el menú
-        // Visible si: es ADMIN o tiene VER en CUALQUIER objeto de seguridad.
+        // SEGURIDAD: Bloque en el menú y pantallas
         // ==========================================================
+
+        // Bloque "Seguridad" en el menú lateral
         Gate::define('seguridad.menu', function ($user) use ($isAdmin, $has) {
             if ($isAdmin($user)) {
                 return true;
@@ -103,9 +108,7 @@ class AuthServiceProvider extends ServiceProvider
             return false;
         });
 
-        // ==========================================================
-        // Gates por pantalla
-        // ==========================================================
+        // Gates por pantalla de Seguridad
         Gate::define('seguridad.permisos.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
         Gate::define('seguridad.objetos.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
         Gate::define('seguridad.roles.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
@@ -114,13 +117,15 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
 
         // ==========================================================
-        // Personas: visibilidad por rol y/o permisos
+        // PERSONAS: visibilidad por rol y/o permisos
         // ==========================================================
+
         Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $roleIs) {
             if ($isAdmin($user)) {
                 return true;
             }
 
+            // Recepción ve el menú personas por defecto
             if ($roleIs($user, ['RECEPCIONISTA'])) {
                 return true;
             }
@@ -171,6 +176,58 @@ class AuthServiceProvider extends ServiceProvider
             }
 
             return $has($user, 'PERSONAS_ADMINISTRADORES', 'VER');
+        });
+
+        // ==========================================================
+        // AGENDA / CITAS: menú y pantallas
+        // ==========================================================
+
+        // Bloque "Citas" en el menú lateral
+        Gate::define('agenda.menu', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            $objetos = [
+                'AGENDA_CITAS',
+                'AGENDA_CALENDARIO',
+                'AGENDA_REPORTES',
+            ];
+
+            foreach ($objetos as $obj) {
+                if ($has($user, $obj, 'VER')) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        // Ver listado de citas
+        Gate::define('agenda.citas.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'AGENDA_CITAS', 'VER');
+        });
+
+        // Ver calendario
+        Gate::define('agenda.calendario.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'AGENDA_CALENDARIO', 'VER');
+        });
+
+        // Ver historial / reportes de citas
+        Gate::define('agenda.reportes.ver', function ($user) use ($isAdmin, $has) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $has($user, 'AGENDA_REPORTES', 'VER');
         });
     }
 }

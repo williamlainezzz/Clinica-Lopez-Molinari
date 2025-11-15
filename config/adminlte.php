@@ -209,44 +209,42 @@ return [
             'route' => 'dashboard',
             'icon'  => 'fas fa-tachometer-alt',
         ],
-        
-       // Modulo de citas (menú)
-[
-    'text'  => 'Citas',
-    'icon'  => 'fas fa-calendar-check',
-    'submenu' => [
 
-        // Citas
+        // Módulo de citas (menú)
         [
-            'text'   => 'Ver Citas',
-            'route'  => 'agenda.citas',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/citas*'],
-            // 'can' => 'ver-agenda-citas', // opcional: lo activamos cuando mapeemos Gate
-        ],
+            'text'   => 'Citas',
+            'icon'   => 'fas fa-calendar-check',
+            'can'    => 'agenda.menu',   // ← habilidad general para mostrar el grupo de Citas
+            'submenu' => [
 
-        // Calendario
-        [
-            'text'   => 'Agenda',
-            'route'  => 'agenda.calendario',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/calendario*'],
-            // 'can' => 'ver-agenda-calendario',
-        ],
+                // Citas
+                [
+                    'text'   => 'Ver Citas',
+                    'route'  => 'agenda.citas',
+                    'icon'   => 'far fa-circle',
+                    'active' => ['agenda/citas*'],
+                    'can'    => 'agenda.citas.ver',   // Gate: agenda.citas.ver
+                ],
 
-        // Reportes
-        [
-            'text'   => 'Historial',
-            'route'  => 'agenda.reportes',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/reportes*'],
-            // 'can' => 'ver-agenda-reportes',
-        ],
-    ],
-],
+                // Calendario
+                [
+                    'text'   => 'Agenda',
+                    'route'  => 'agenda.calendario',
+                    'icon'   => 'far fa-circle',
+                    'active' => ['agenda/calendario*'],
+                    'can'    => 'agenda.calendario.ver',   // Gate: agenda.calendario.ver
+                ],
 
-           
-      
+                // Reportes
+                [
+                    'text'   => 'Historial',
+                    'route'  => 'agenda.reportes',
+                    'icon'   => 'far fa-circle',
+                    'active' => ['agenda/reportes*'],
+                    'can'    => 'agenda.reportes.ver',   // Gate: agenda.reportes.ver
+                ],
+            ],
+        ],
 
         // PERSONAS & USUARIOS
         [
@@ -390,109 +388,12 @@ return [
     */
 
     'plugins' => [
-        'Datatables' => [
-            'active' => false,
-            'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js',
-                ],
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css',
-                ],
-            ],
-        ],
-        'Select2' => [
-            'active' => false,
-            'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js',
-                ],
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.css',
-                ],
-            ],
-        ],
-        'Chartjs' => [
-            'active' => false,
-            'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.0/Chart.bundle.min.js',
-                ],
-            ],
-        ],
-        'Sweetalert2' => [
-            'active' => false,
-            'files' => [
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdn.jsdelivr.net/npm/sweetalert2@8',
-                ],
-            ],
-        ],
-        'Pace' => [
-            'active' => false,
-            'files' => [
-                [
-                    'type' => 'css',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/blue/pace-theme-center-radar.min.css',
-                ],
-                [
-                    'type' => 'js',
-                    'asset' => false,
-                    'location' => '//cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js',
-                ],
-            ],
-        ],
+        // ... (igual que lo tenías)
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | IFrame
-    |--------------------------------------------------------------------------
-    */
 
     'iframe' => [
-        'default_tab' => [
-            'url' => null,
-            'title' => null,
-        ],
-        'buttons' => [
-            'close' => true,
-            'close_all' => true,
-            'close_all_other' => true,
-            'scroll_left' => true,
-            'scroll_right' => true,
-            'fullscreen' => true,
-        ],
-        'options' => [
-            'loading_screen' => 1000,
-            'auto_show_new_tab' => true,
-            'use_navbar_items' => true,
-        ],
+        // ... (igual que lo tenías)
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Livewire
-    |--------------------------------------------------------------------------
-    */
 
     'livewire' => false,
 ];
