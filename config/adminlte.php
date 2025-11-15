@@ -210,41 +210,42 @@ return [
             'icon'  => 'fas fa-tachometer-alt',
         ],
 
-        // Módulo de citas (menú)
+        // Modulo de citas (menú)
+[
+    'text'  => 'Citas',
+    'icon'  => 'fas fa-calendar-check',
+    'can'   => 'agenda.menu', // ← NUEVO: controla la visibilidad del grupo
+    'submenu' => [
+
+        // Citas
         [
-            'text'   => 'Citas',
-            'icon'   => 'fas fa-calendar-check',
-            'can'    => 'agenda.menu',   // ← habilidad general para mostrar el grupo de Citas
-            'submenu' => [
-
-                // Citas
-                [
-                    'text'   => 'Ver Citas',
-                    'route'  => 'agenda.citas',
-                    'icon'   => 'far fa-circle',
-                    'active' => ['agenda/citas*'],
-                    'can'    => 'agenda.citas.ver',   // Gate: agenda.citas.ver
-                ],
-
-                // Calendario
-                [
-                    'text'   => 'Agenda',
-                    'route'  => 'agenda.calendario',
-                    'icon'   => 'far fa-circle',
-                    'active' => ['agenda/calendario*'],
-                    'can'    => 'agenda.calendario.ver',   // Gate: agenda.calendario.ver
-                ],
-
-                // Reportes
-                [
-                    'text'   => 'Historial',
-                    'route'  => 'agenda.reportes',
-                    'icon'   => 'far fa-circle',
-                    'active' => ['agenda/reportes*'],
-                    'can'    => 'agenda.reportes.ver',   // Gate: agenda.reportes.ver
-                ],
-            ],
+            'text'   => 'Ver Citas',
+            'route'  => 'agenda.citas',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/citas*'],
+            'can'    => 'agenda.citas.ver', // ← NUEVO
         ],
+
+        // Calendario
+        [
+            'text'   => 'Agenda',
+            'route'  => 'agenda.calendario',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/calendario*'],
+            'can'    => 'agenda.calendario.ver', // ← NUEVO
+        ],
+
+        // Reportes
+        [
+            'text'   => 'Historial',
+            'route'  => 'agenda.reportes',
+            'icon'   => 'far fa-circle',
+            'active' => ['agenda/reportes*'],
+            'can'    => 'agenda.reportes.ver', // ← NUEVO
+        ],
+    ],
+],
+
 
         // PERSONAS & USUARIOS
         [

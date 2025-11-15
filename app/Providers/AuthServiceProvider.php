@@ -11,6 +11,7 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * Si usas policies, mapea aquí tus modelos => policies.
      * No las necesitamos por ahora.
+     *
      * @var array<class-string, class-string>
      */
     protected $policies = [
@@ -19,7 +20,6 @@ class AuthServiceProvider extends ServiceProvider
 
     /**
      * ID del rol que consideramos súper-administrador por defecto.
-     * (se mantiene 1 por compatibilidad, pero ya no dependemos sólo de él)
      */
     private int $ADMIN_ROLE_ID = 1;
 
@@ -32,7 +32,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // ------- Helpers locales -------
 
-        // ¿Es admin?
+        // ¿Es ADMIN?
         $isAdmin = function ($user): bool {
             $rolId = (int)($user->FK_COD_ROL ?? 0);
 
@@ -46,7 +46,7 @@ class AuthServiceProvider extends ServiceProvider
             return $nom && strtoupper(trim($nom)) === 'ADMIN';
         };
 
-        // ¿Rol está en una lista?
+        // ¿El rol está en un conjunto de nombres?
         $roleIs = function ($user, array $roles) {
             $rolId = (int)($user->FK_COD_ROL ?? 0);
             if ($rolId === 0) {
@@ -64,28 +64,28 @@ class AuthServiceProvider extends ServiceProvider
             return in_array($nom, $roles, true);
         };
 
-        // Verifica permiso usando fn_tiene_permiso o helper puede()
+        // Verificación de permiso contra fn_tiene_permiso / helper puede()
         $has = function ($user, string $objeto, string $accion = 'VER'): bool {
-            // Usa helper puede() si está cargado
+            // Usa helper puede() si está disponible
             if (function_exists('puede')) {
                 return puede($objeto, $accion);
             }
 
-            // Fallback directo a la BD si no está el helper
+            // Fallback directo a la BD
             $rolId  = (int)($user->FK_COD_ROL ?? 0);
             $accion = strtoupper($accion);
+
             $row = DB::selectOne(
                 "SELECT fn_tiene_permiso(?, ?, ?) AS ok",
                 [$rolId, $objeto, $accion]
             );
+
             return $row && (int)$row->ok === 1;
         };
 
         // ==========================================================
-        // SEGURIDAD: Bloque en el menú y pantallas
+        // SEGURIDAD
         // ==========================================================
-
-        // Bloque "Seguridad" en el menú lateral
         Gate::define('seguridad.menu', function ($user) use ($isAdmin, $has) {
             if ($isAdmin($user)) {
                 return true;
@@ -105,10 +105,10 @@ class AuthServiceProvider extends ServiceProvider
                     return true;
                 }
             }
+
             return false;
         });
 
-        // Gates por pantalla de Seguridad
         Gate::define('seguridad.permisos.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_PERMISOS', 'VER'));
         Gate::define('seguridad.objetos.ver',  fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_OBJETOS',  'VER'));
         Gate::define('seguridad.roles.ver',    fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_ROLES',    'VER'));
@@ -117,15 +117,14 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('seguridad.usuarios.ver', fn ($user) => $isAdmin($user) || $has($user, 'SEGURIDAD_USUARIOS', 'VER'));
 
         // ==========================================================
-        // PERSONAS: visibilidad por rol y/o permisos
+        // PERSONAS
         // ==========================================================
-
         Gate::define('personas.menu', function ($user) use ($isAdmin, $has, $roleIs) {
             if ($isAdmin($user)) {
                 return true;
             }
 
-            // Recepción ve el menú personas por defecto
+            // Por ejemplo RECEPCIONISTA ve siempre el menú de personas
             if ($roleIs($user, ['RECEPCIONISTA'])) {
                 return true;
             }
@@ -179,12 +178,14 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         // ==========================================================
-        // AGENDA / CITAS: menú y pantallas
+        // AGENDA / CITAS
         // ==========================================================
-
-        // Bloque "Citas" en el menú lateral
-        Gate::define('agenda.menu', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
+        // Menú "Citas" visible si:
+        //  - Es ADMIN, o
+        //  - Rol DOCTOR / PACIENTE / RECEPCIONISTA, o
+        //  - Tiene VER en cualquier objeto de agenda
+        Gate::define('agenda.menu', function ($user) use ($isAdmin, $has, $roleIs) {
+            if ($isAdmin($user) || $roleIs($user, ['DOCTOR', 'PACIENTE', 'RECEPCIONISTA'])) {
                 return true;
             }
 
@@ -203,27 +204,27 @@ class AuthServiceProvider extends ServiceProvider
             return false;
         });
 
-        // Ver listado de citas
-        Gate::define('agenda.citas.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
+        // Ver Citas
+        Gate::define('agenda.citas.ver', function ($user) use ($isAdmin, $has, $roleIs) {
+            if ($isAdmin($user) || $roleIs($user, ['DOCTOR', 'PACIENTE', 'RECEPCIONISTA'])) {
                 return true;
             }
 
             return $has($user, 'AGENDA_CITAS', 'VER');
         });
 
-        // Ver calendario
-        Gate::define('agenda.calendario.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
+        // Calendario
+        Gate::define('agenda.calendario.ver', function ($user) use ($isAdmin, $has, $roleIs) {
+            if ($isAdmin($user) || $roleIs($user, ['DOCTOR', 'RECEPCIONISTA'])) {
                 return true;
             }
 
             return $has($user, 'AGENDA_CALENDARIO', 'VER');
         });
 
-        // Ver historial / reportes de citas
-        Gate::define('agenda.reportes.ver', function ($user) use ($isAdmin, $has) {
-            if ($isAdmin($user)) {
+        // Historial / Reportes de agenda
+        Gate::define('agenda.reportes.ver', function ($user) use ($isAdmin, $has, $roleIs) {
+            if ($isAdmin($user) || $roleIs($user, ['DOCTOR', 'RECEPCIONISTA'])) {
                 return true;
             }
 
