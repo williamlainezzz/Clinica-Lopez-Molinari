@@ -2,13 +2,13 @@
 @include('modulo-citas.shared._calendar_styles')
 @include('modulo-citas.shared._calendar_scripts')
 
-@section('title', $pageTitle)
+@section('title', $pageTitle ?? 'Agenda · Administración')
 
 @section('content_header')
     <div class="d-flex flex-wrap justify-content-between align-items-start">
         <div class="mb-2">
-            <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading) }}</h1>
-            <p class="text-muted mb-0">{{ $intro }}</p>
+            <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading ?? 'Agenda') }}</h1>
+            <p class="text-muted mb-0">{{ $intro ?? '' }}</p>
         </div>
         <div class="btn-group mt-2 mt-md-0">
             <button class="btn btn-outline-primary"><i class="fas fa-plus"></i> Agendar bloque</button>
@@ -47,13 +47,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($calendarMatrix as $week)
+                                @foreach(($calendarMatrix ?? []) as $week)
                                     <tr>
                                         @foreach($week as $day)
                                             @php
-                                                $dateKey = $day['date'];
-                                                $eventsOfDay = $calendarEvents[$dateKey] ?? [];
-                                                $classes = 'agenda-calendar__day';
+                                                $dateKey     = $day['date']  ?? null;
+                                                $eventsOfDay = $dateKey ? ($calendarEvents[$dateKey] ?? []) : [];
+                                                $classes     = 'agenda-calendar__day';
                                                 if (!empty($day['isMuted'])) {
                                                     $classes .= ' is-muted';
                                                 }
@@ -62,10 +62,11 @@
                                                 }
                                             @endphp
                                             <td class="{{ $classes }}">
-                                                <div class="agenda-calendar__day-number">{{ $day['label'] }}</div>
+                                                <div class="agenda-calendar__day-number">{{ $day['label'] ?? '' }}</div>
                                                 @foreach($eventsOfDay as $event)
                                                     @php
-                                                        $pillClass = match($event['estado']) {
+                                                        $estado = $event['estado'] ?? 'Pendiente';
+                                                        $pillClass = match($estado) {
                                                             'Confirmada' => 'bg-success',
                                                             'Pendiente'  => 'bg-warning text-dark',
                                                             'Cancelada'  => 'bg-danger',
@@ -76,7 +77,8 @@
                                                           data-toggle="modal"
                                                           data-target="#modalEventoAgenda"
                                                           data-event='@json($event)'>
-                                                        {{ $event['hora'] }} · {{ \Illuminate\Support\Str::limit($event['paciente'], 14) }}
+                                                        {{ substr($event['hora'] ?? '00:00', 0, 5) }}
+                                                        · {{ \Illuminate\Support\Str::limit($event['paciente'] ?? 'Paciente', 14) }}
                                                     </span>
                                                 @endforeach
                                             </td>
@@ -86,27 +88,44 @@
                             </tbody>
                         </table>
                     </div>
+
+                    @if(empty($calendarMatrix ?? []))
+                        <p class="text-center text-muted mt-3 mb-0">
+                            No hay datos para mostrar en el calendario.
+                        </p>
+                    @endif
                 </div>
             </div>
         </div>
+
         <div class="col-lg-4 mb-4">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Próximas citas</h3>
                 </div>
                 <div class="list-group list-group-flush">
-                    @foreach(array_slice($eventList, 0, 6) as $event)
+                    @foreach((($eventList ?? collect()) instanceof \Illuminate\Support\Collection ? ($eventList ?? collect())->take(6) : collect($eventList ?? [])->take(6)) as $event)
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between">
-                                <strong>{{ $event['paciente'] }}</strong>
-                                <span class="text-muted">{{ $event['hora'] }}</span>
+                                <strong>{{ $event['paciente'] ?? 'Paciente' }}</strong>
+                                <span class="text-muted">{{ substr($event['hora'] ?? '00:00', 0, 5) }}</span>
                             </div>
-                            <small class="text-muted">{{ $event['fecha'] }} · {{ $event['doctor'] }}</small>
+                            <small class="text-muted">
+                                {{ $event['fecha'] ?? '' }} · {{ $event['doctor'] ?? '' }}
+                            </small>
                             <div>
-                                <span class="badge badge-pill badge-light text-capitalize">{{ strtolower($event['motivo']) }}</span>
+                                <span class="badge badge-pill badge-light text-capitalize">
+                                    {{ strtolower($event['motivo'] ?? 'Motivo') }}
+                                </span>
                             </div>
                         </div>
                     @endforeach
+
+                    @if((($eventList ?? collect()) instanceof \Illuminate\Support\Collection ? ($eventList ?? collect())->count() : count($eventList ?? [])) === 0)
+                        <div class="list-group-item text-muted text-center">
+                            No hay citas próximas.
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -124,6 +143,7 @@
         </div>
     </div>
 
+    {{-- Modal detalle de evento --}}
     <div class="modal fade" id="modalEventoAgenda" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
