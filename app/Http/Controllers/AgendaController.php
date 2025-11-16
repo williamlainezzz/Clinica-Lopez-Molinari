@@ -499,46 +499,53 @@ class AgendaController extends Controller
      *  PACIENTES SIN DOCTOR (widget)
      * =======================================================*/
     private function availablePatientsFromDb(): array
-    {
-        try {
-            if (
-                !DB::getSchemaBuilder()->hasTable('tbl_usuario') ||
-                !DB::getSchemaBuilder()->hasTable('tbl_rol') ||
-                !DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente')
-            ) {
-                return [];
-            }
-
-            $rows = DB::table('tbl_usuario as u')
-                ->join('tbl_rol as r', 'u.FK_COD_ROL', '=', 'r.COD_ROL')
-                ->join('tbl_persona as p', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
-                ->leftJoin('tbl_doctor_paciente as dp', function ($join) {
-                    $join->on('dp.FK_COD_PACIENTE', '=', 'p.COD_PERSONA')
-                         ->where('dp.ACTIVO', '=', 1);
-                })
-                ->where('r.NOM_ROL', 'PACIENTE')
-                ->whereNull('dp.COD_DP')
-                ->orderBy('p.PRIMER_NOMBRE')
-                ->orderBy('p.PRIMER_APELLIDO')
-                ->limit(20)
-                ->get();
-
-            if ($rows->isEmpty()) {
-                return [];
-            }
-
-            return $rows->map(function ($row) {
-                return [
-                    'nombre'      => $row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO,
-                    'motivo'      => 'Pendiente de asignar doctor',
-                    'preferencia' => null,
-                    'ultima'      => null,
-                ];
-            })->all();
-        } catch (\Throwable $e) {
+{
+    try {
+        if (
+            !DB::getSchemaBuilder()->hasTable('tbl_usuario') ||
+            !DB::getSchemaBuilder()->hasTable('tbl_rol') ||
+            !DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente')
+        ) {
             return [];
         }
+
+        $rows = DB::table('tbl_usuario as u')
+            ->join('tbl_rol as r', 'u.FK_COD_ROL', '=', 'r.COD_ROL')
+            ->join('tbl_persona as p', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+            ->leftJoin('tbl_doctor_paciente as dp', function ($join) {
+                $join->on('dp.FK_COD_PACIENTE', '=', 'p.COD_PERSONA')
+                     ->where('dp.ACTIVO', '=', 1);
+            })
+            ->where('r.NOM_ROL', 'PACIENTE')          // solo usuarios con rol PACIENTE
+            ->whereNull('dp.COD_DP')                  // que no estén asignados a ningún doctor
+            ->orderBy('p.PRIMER_NOMBRE')
+            ->orderBy('p.PRIMER_APELLIDO')
+            ->limit(20)
+            ->select([
+                'p.COD_PERSONA',
+                'p.PRIMER_NOMBRE',
+                'p.PRIMER_APELLIDO',
+            ])
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        return $rows->map(function ($row) {
+            return [
+                'persona_id' => (int) $row->COD_PERSONA,                               // << IMPORTANTE
+                'nombre'     => $row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO,
+                'motivo'     => 'Pendiente de asignar doctor',
+                'preferencia'=> null,
+                'ultima'     => null,
+            ];
+        })->all();
+    } catch (\Throwable $e) {
+        return [];
     }
+}
+
 
     /* =========================================================
      *  DATOS DEMO (por si BD no está lista)
@@ -731,6 +738,40 @@ class AgendaController extends Controller
             'historial' => $this->patientHistory(),
         ];
     }
+
+    /**
+ * Asigna un paciente (persona_id) al doctor logueado en tbl_doctor_paciente.
+ */
+public function asignarPaciente(Request $request, int $pacientePersonaId)
+{
+    $user = auth()->user();
+
+    if (!$user || !$user->FK_COD_PERSONA) {
+        return back()->with('error', 'No se pudo identificar al doctor actual.');
+    }
+
+    $doctorPersonaId = (int) $user->FK_COD_PERSONA;
+
+    try {
+        // Gracias al UNIQUE (FK_COD_DOCTOR, FK_COD_PACIENTE) esto evita duplicados
+        DB::table('tbl_doctor_paciente')->updateOrInsert(
+            [
+                'FK_COD_DOCTOR'   => $doctorPersonaId,
+                'FK_COD_PACIENTE' => $pacientePersonaId,
+            ],
+            [
+                'ACTIVO'         => 1,
+                'FEC_ASIGNACION' => now(),   // usa la hora del server
+            ]
+        );
+
+        return back()->with('success', 'Paciente asignado correctamente a tu panel.');
+    } catch (\Throwable $e) {
+        return back()->with('error', 'No se pudo asignar el paciente.');
+    }
+}
+
+
 
     private function patientHistory(): array
     {

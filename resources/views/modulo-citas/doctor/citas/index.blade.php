@@ -302,7 +302,16 @@
                                     </small>
                                 @endif
                                 <div class="mt-2">
-                                    <button class="btn btn-sm btn-outline-success">Asignar</button>
+                                    @if(!empty($patient['persona_id']))
+                                        <form method="POST" action="{{ route('agenda.pacientes.asignar', $patient['persona_id']) }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                Asignar
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted small">Sin ID de paciente</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
