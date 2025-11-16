@@ -23,107 +23,105 @@ class AgendaController extends Controller
     }
 
     private function render(string $section, Request $request)
-{
-    $user    = auth()->user();
-    $rolName = strtoupper(optional($user->rol)->NOM_ROL ?? 'ADMIN');
-    $rolSlug = $this->mapRol($rolName);
+    {
+        $user    = auth()->user();
+        $rolName = strtoupper(optional($user->rol)->NOM_ROL ?? 'ADMIN');
+        $rolSlug = $this->mapRol($rolName);
 
-    // sección actual (citas / calendario / reportes)
-    $sectionKey = match (strtoupper($section)) {
-        'CALENDARIO' => 'calendario',
-        'REPORTES'   => 'reportes',
-        default      => 'citas',
-    };
+        // sección actual (citas / calendario / reportes)
+        $sectionKey = match (strtoupper($section)) {
+            'CALENDARIO' => 'calendario',
+            'REPORTES'   => 'reportes',
+            default      => 'citas',
+        };
 
-    $routeName = match ($sectionKey) {
-        'calendario' => 'agenda.calendario',
-        'reportes'   => 'agenda.reportes',
-        default      => 'agenda.citas',
-    };
+        $routeName = match ($sectionKey) {
+            'calendario' => 'agenda.calendario',
+            'reportes'   => 'agenda.reportes',
+            default      => 'agenda.citas',
+        };
 
-    $labels   = $this->sectionLabels();
-    $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
+        $labels   = $this->sectionLabels();
+        $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
 
-    // -----------------------------
-    // Valores "demo" por defecto
-    // (los seguimos usando en otros roles/secciones de momento)
-    // -----------------------------
-    $doctorPanels      = $this->demoDoctors();
-    $availablePatients = $this->availablePatients();
-    $activeDoctor      = $doctorPanels[0] ?? null;
-    $patientRecord     = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
-    $timeline          = $this->patientTimeline();
-    $calendarMatrix    = $this->calendarMatrix();
-    $calendarEvents    = [];
-    $eventList         = collect();
-    $stats             = [];
+        // -----------------------------
+        // Valores "demo" por defecto
+        // (los seguimos usando en otros roles/secciones de momento)
+        // -----------------------------
+        $doctorPanels      = $this->demoDoctors();
+        $availablePatients = $this->availablePatients();
+        $activeDoctor      = $doctorPanels[0] ?? null;
+        $patientRecord     = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
+        $timeline          = $this->patientTimeline();
+        $calendarMatrix    = $this->calendarMatrix();
+        $calendarEvents    = [];
+        $eventList         = collect();
+        $stats             = [];
 
-    // ==========================================================
-    // NUEVO: para ADMIN en sección "citas" usamos datos reales
-    // ==========================================================
-    if ($sectionKey === 'citas' && $rolSlug === 'admin') {
-        $personaId = (int) ($user->FK_COD_PERSONA ?? 0);
+        // ==========================================================
+        // NUEVO: para ADMIN en sección "citas" usamos datos reales
+        // ==========================================================
+        if ($sectionKey === 'citas' && $rolSlug === 'admin') {
+            $personaId = (int) ($user->FK_COD_PERSONA ?? 0);
 
-        // Traemos las citas de la BD según el helper que ya tienes
-        $citas = $this->fetchCitasFromDatabase($rolSlug, $personaId);
+            // Traemos las citas de la BD según el helper que ya tienes
+            $citas = $this->fetchCitasFromDatabase($rolSlug, $personaId);
 
-        // Convertimos esa colección en el formato que espera la vista
-        $doctorPanels      = $this->buildDoctorPanelsFromCitas($citas);
-        $availablePatients = []; // Más adelante llenamos "pacientes sin doctor", de momento lo dejamos vacío
+            // Convertimos esa colección en el formato que espera la vista
+            $doctorPanels      = $this->buildDoctorPanelsFromCitas($citas);
+            $availablePatients = []; // Más adelante llenamos "pacientes sin doctor", de momento lo dejamos vacío
 
-        // Lista plana solo para las tarjetas de estadísticas
-        $eventList = $citas->map(function ($c) {
-            return [
-                'estado' => strtoupper($c->estado_nombre ?? ''),
-            ];
-        });
+            // Lista plana solo para las tarjetas de estadísticas
+            $eventList = $citas->map(function ($c) {
+                return [
+                    'estado' => strtoupper($c->estado_nombre ?? ''),
+                ];
+            });
 
-        // Reusamos tu buildStats, pasándole lo que necesita
-        $stats = $this->buildStats(
-            $rolSlug,
-            $doctorPanels,
-            $availablePatients,
-            [],                    // patientRecord no se usa en rama admin
-            $eventList->all()
-        );
-    } else {
-        // Resto de roles / secciones siguen usando la lógica demo
-        $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor, $patientRecord);
-        $calendarEvents      = $calendarEventBundle['byDate'];
-        $eventList           = collect($calendarEventBundle['list']);
-        $stats               = $this->buildStats(
-            $rolSlug,
-            $doctorPanels,
-            $availablePatients,
-            $patientRecord,
-            $eventList->all()
-        );
+            // Reusamos tu buildStats, pasándole lo que necesita
+            $stats = $this->buildStats(
+                $rolSlug,
+                $doctorPanels,
+                $availablePatients,
+                [],                    // patientRecord no se usa en rama admin
+                $eventList->all()
+            );
+        } else {
+            // Resto de roles / secciones siguen usando la lógica demo
+            $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor, $patientRecord);
+            $calendarEvents      = $calendarEventBundle['byDate'];
+            $eventList           = collect($calendarEventBundle['list']);
+            $stats               = $this->buildStats(
+                $rolSlug,
+                $doctorPanels,
+                $availablePatients,
+                $patientRecord,
+                $eventList->all()
+            );
+        }
+
+        $view = $this->resolveView($rolSlug, $sectionKey);
+
+        return view($view, [
+            'pageTitle'         => $labelSet['pageTitle'],
+            'heading'           => $labelSet['heading'],
+            'intro'             => $labelSet['intro'],
+            'routeName'         => $routeName,
+            'sectionKey'        => $sectionKey,
+            'rolSlug'           => $rolSlug,
+            'doctorPanels'      => $doctorPanels,
+            'availablePatients' => $availablePatients,
+            'activeDoctor'      => $activeDoctor,
+            'patientRecord'     => $patientRecord,
+            'timeline'          => $timeline,
+            'calendarMatrix'    => $calendarMatrix,
+            'calendarEvents'    => $calendarEvents,
+            'eventList'         => $eventList,
+            'stats'             => $stats,
+            'shareLink'         => url('/registro/paciente?doctor=dr-lopez'),
+            'shareCode'         => 'DR-LOPEZ-2025',
+        ]);
     }
-
-    $view = $this->resolveView($rolSlug, $sectionKey);
-
-    return view($view, [
-        'pageTitle'         => $labelSet['pageTitle'],
-        'heading'           => $labelSet['heading'],
-        'intro'             => $labelSet['intro'],
-        'routeName'         => $routeName,
-        'sectionKey'        => $sectionKey,
-        'rolSlug'           => $rolSlug,
-        'doctorPanels'      => $doctorPanels,
-        'availablePatients' => $availablePatients,
-        'activeDoctor'      => $activeDoctor,
-        'patientRecord'     => $patientRecord,
-        'timeline'          => $timeline,
-        'calendarMatrix'    => $calendarMatrix,
-        'calendarEvents'    => $calendarEvents,
-        'eventList'         => $eventList,
-        'stats'             => $stats,
-        'shareLink'         => url('/registro/paciente?doctor=dr-lopez'),
-        'shareCode'         => 'DR-LOPEZ-2025',
-    ]);
-}
-
-
 
     private function resolveView(string $rolSlug, string $sectionKey): string
     {
@@ -223,6 +221,81 @@ class AgendaController extends Controller
     }
 
     /* =========================================================
+     *  WRAPPERS PARA DEMO + BD (CORRECCIÓN DEL ERROR)
+     * =======================================================*/
+
+    /**
+     * Obtiene los paneles de doctores que usa el módulo.
+     * Intenta usar datos reales de BD y, si no hay, cae a los datos demo estáticos.
+     */
+    private function demoDoctors(): array
+    {
+        $user    = auth()->user();
+        $rolName = strtoupper(optional($user->rol)->NOM_ROL ?? 'ADMIN');
+        $rolSlug = $this->mapRol($rolName);
+
+        // Intentamos armar los paneles con datos reales
+        $panels = $this->loadDoctorPanelsFromDb($rolSlug, $user);
+
+        if (!empty($panels)) {
+            return $panels;
+        }
+
+        // Si la BD no tiene citas todavía, devolvemos los datos de ejemplo
+        return $this->demoDoctorsStatic();
+    }
+
+    /**
+     * Wrapper para el widget de "Pacientes sin doctor asignado".
+     * Intenta usar la BD y, si no hay resultados, devuelve algunos pacientes demo.
+     */
+    private function availablePatients(): array
+    {
+        $fromDb = $this->availablePatientsFromDb();
+
+        if (!empty($fromDb)) {
+            return $fromDb;
+        }
+
+        // Fallback estático sencillo
+        return [
+            [
+                'codigo'      => 'PAC-0001',
+                'nombre'      => 'Paciente demo 1',
+                'motivo'      => 'Pendiente de asignar doctor',
+                'estado'      => 'Pendiente',
+                'preferencia' => null,
+                'ultima'      => null,
+            ],
+            [
+                'codigo'      => 'PAC-0002',
+                'nombre'      => 'Paciente demo 2',
+                'motivo'      => 'Pendiente de asignar doctor',
+                'estado'      => 'Pendiente',
+                'preferencia' => null,
+                'ultima'      => null,
+            ],
+            [
+                'codigo'      => 'PAC-0003',
+                'nombre'      => 'Paciente demo 3',
+                'motivo'      => 'Pendiente de asignar doctor',
+                'estado'      => 'Pendiente',
+                'preferencia' => null,
+                'ultima'      => null,
+            ],
+        ];
+    }
+
+    /**
+     * Wrapper para construir la ficha del paciente según el doctor activo.
+     * De momento usa la lógica basada en los paneles (patientRecordFromPanels).
+     */
+    private function patientRecord(array $activeDoctor): array
+    {
+        return $this->patientRecordFromPanels($activeDoctor);
+    }
+
+    /* =========================================================
      *  CARGA DESDE BD: DOCTORES + PACIENTES + AGENDA
      * =======================================================*/
     private function loadDoctorPanelsFromDb(string $rolSlug, $user): array
@@ -277,88 +350,87 @@ class AgendaController extends Controller
     }
 
     private function buildDoctorsFromCitas($citas): array
-{
-    // Agrupamos todas las citas por doctor
-    $byDoctor   = $citas->groupBy('doctor_persona_id');
-    $doctorIds  = $byDoctor->keys()->all();
+    {
+        // Agrupamos todas las citas por doctor
+        $byDoctor   = $citas->groupBy('doctor_persona_id');
+        $doctorIds  = $byDoctor->keys()->all();
 
-    // Buscamos usuarios (login) de esos doctores
-    $doctorUsers = DB::table('tbl_usuario')
-        ->whereIn('FK_COD_PERSONA', $doctorIds)
-        ->pluck('USR_USUARIO', 'FK_COD_PERSONA');
+        // Buscamos usuarios (login) de esos doctores
+        $doctorUsers = DB::table('tbl_usuario')
+            ->whereIn('FK_COD_PERSONA', $doctorIds)
+            ->pluck('USR_USUARIO', 'FK_COD_PERSONA');
 
-    $colors       = ['#0d6efd', '#20c997', '#6610f2', '#fd7e14'];
-    $doctorPanels = [];
+        $colors       = ['#0d6efd', '#20c997', '#6610f2', '#fd7e14'];
+        $doctorPanels = [];
 
-    foreach ($byDoctor as $doctorPersonaId => $rows) {
-        $rows  = $rows->sortBy(['FEC_CITA', 'HOR_CITA']);
-        $first = $rows->first();
+        foreach ($byDoctor as $doctorPersonaId => $rows) {
+            $rows  = $rows->sortBy(['FEC_CITA', 'HOR_CITA']);
+            $first = $rows->first();
 
-        $color    = $colors[count($doctorPanels) % count($colors)];
-        $codigo   = 'DOC-' . str_pad($doctorPersonaId, 4, '0', STR_PAD_LEFT);
-        $usuario  = $doctorUsers[$doctorPersonaId] ?? 'N/D';
-        $contacto = "Usuario: {$usuario}";
+            $color    = $colors[count($doctorPanels) % count($colors)];
+            $codigo   = 'DOC-' . str_pad($doctorPersonaId, 4, '0', STR_PAD_LEFT);
+            $usuario  = $doctorUsers[$doctorPersonaId] ?? 'N/D';
+            $contacto = "Usuario: {$usuario}";
 
-        // -------- helper para normalizar el estado --------
-        $normalizeEstado = function ($nombreEstado = null) {
-            if (!$nombreEstado) {
-                return 'Pendiente';
-            }
-            $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
-            // Por si viniera "En_curso" o "NO_SHOW" en el futuro
-            $nombreEstado = str_replace('_', ' ', $nombreEstado);
-            return $nombreEstado;
-        };
+            // -------- helper para normalizar el estado --------
+            $normalizeEstado = function ($nombreEstado = null) {
+                if (!$nombreEstado) {
+                    return 'Pendiente';
+                }
+                $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
+                // Por si viniera "En_curso" o "NO_SHOW" en el futuro
+                $nombreEstado = str_replace('_', ' ', $nombreEstado);
+                return $nombreEstado;
+            };
 
-        // Resumen por paciente (para la tabla principal)
-        $pacientes = $rows
-            ->groupBy('paciente_persona_id')
-            ->map(function ($pRows) use ($normalizeEstado) {
-                $pRows = $pRows->sortBy(['FEC_CITA', 'HOR_CITA']);
-                $first = $pRows->first();
+            // Resumen por paciente (para la tabla principal)
+            $pacientes = $rows
+                ->groupBy('paciente_persona_id')
+                ->map(function ($pRows) use ($normalizeEstado) {
+                    $pRows = $pRows->sortBy(['FEC_CITA', 'HOR_CITA']);
+                    $first = $pRows->first();
 
+                    return [
+                        'id'      => $first->COD_CITA,  // <-- ID REAL DE LA CITA
+                        'codigo'  => 'PAC-' . str_pad($first->paciente_persona_id, 4, '0', STR_PAD_LEFT),
+                        'nombre'  => $first->paciente_nombre,
+                        'motivo'  => $first->MOT_CITA,
+                        'estado'  => $normalizeEstado($first->estado_nombre),
+                        'fecha'   => $first->FEC_CITA,
+                        'hora'    => $first->HOR_CITA,
+                        'nota'    => $first->OBSERVACIONES,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            // Agenda completa del doctor (para el calendario)
+            $agenda = $rows->map(function ($row) use ($normalizeEstado) {
                 return [
-                    'id'      => $first->COD_CITA,  // <-- ID REAL DE LA CITA
-                    'codigo'  => 'PAC-' . str_pad($first->paciente_persona_id, 4, '0', STR_PAD_LEFT),
-                    'nombre'  => $first->paciente_nombre,
-                    'motivo'  => $first->MOT_CITA,
-                    'estado'  => $normalizeEstado($first->estado_nombre),
-                    'fecha'   => $first->FEC_CITA,
-                    'hora'    => $first->HOR_CITA,
-                    'nota'    => $first->OBSERVACIONES,
+                    'id'        => $row->COD_CITA,  // <-- ID REAL DE LA CITA
+                    'fecha'     => $row->FEC_CITA,
+                    'hora'      => $row->HOR_CITA,
+                    'paciente'  => $row->paciente_nombre,
+                    'estado'    => $normalizeEstado($row->estado_nombre),
+                    'motivo'    => $row->MOT_CITA,
+                    'duracion'  => null, // luego podemos calcular con HOR_FIN si quieres
+                    'ubicacion' => 'Consultorio',
                 ];
-            })
-            ->values()
-            ->all();
+            })->values()->all();
 
-        // Agenda completa del doctor (para el calendario)
-        $agenda = $rows->map(function ($row) use ($normalizeEstado) {
-            return [
-                'id'        => $row->COD_CITA,  // <-- ID REAL DE LA CITA
-                'fecha'     => $row->FEC_CITA,
-                'hora'      => $row->HOR_CITA,
-                'paciente'  => $row->paciente_nombre,
-                'estado'    => $normalizeEstado($row->estado_nombre),
-                'motivo'    => $row->MOT_CITA,
-                'duracion'  => null, // luego podemos calcular con HOR_FIN si quieres
-                'ubicacion' => 'Consultorio',
+            $doctorPanels[] = [
+                'codigo'       => $codigo,
+                'nombre'       => $first->doctor_nombre,
+                'especialidad' => 'Odontología',
+                'color'        => $color,
+                'contacto'     => $contacto,
+                'pacientes'    => $pacientes,
+                'agenda'       => $agenda,
             ];
-        })->values()->all();
+        }
 
-        $doctorPanels[] = [
-            'codigo'       => $codigo,
-            'nombre'       => $first->doctor_nombre,
-            'especialidad' => 'Odontología',
-            'color'        => $color,
-            'contacto'     => $contacto,
-            'pacientes'    => $pacientes,
-            'agenda'       => $agenda,
-        ];
+        return $doctorPanels;
     }
-
-    return $doctorPanels;
-}
-
 
     /* =========================================================
      *  PACIENTES SIN DOCTOR (widget)
@@ -547,55 +619,55 @@ class AgendaController extends Controller
     }
 
     /**
- * Versión simplificada: toma el primer paciente del doctor activo
- * (para ADMIN / RECEPCIÓN / DOCTOR cuando no estamos viendo un paciente específico).
- */
-private function patientRecordFromPanels(array $activeDoctor): array
-{
-    $pacientes = $activeDoctor['pacientes'] ?? [];
+     * Versión simplificada: toma el primer paciente del doctor activo
+     * (para ADMIN / RECEPCIÓN / DOCTOR cuando no estamos viendo un paciente específico).
+     */
+    private function patientRecordFromPanels(array $activeDoctor): array
+    {
+        $pacientes = $activeDoctor['pacientes'] ?? [];
 
-    if (empty($pacientes)) {
+        if (empty($pacientes)) {
+            return [
+                'profile' => [
+                    'codigo'       => null,
+                    'nombre'       => 'Sin pacientes',
+                    'doctor'       => $activeDoctor['nombre'] ?? null,
+                    'especialidad' => $activeDoctor['especialidad'] ?? 'Odontología',
+                    'estado'       => 'Sin citas',
+                    'correo'       => null,
+                    'telefono'     => null,
+                    'proxima'      => [
+                        'fecha'  => null,
+                        'hora'   => null,
+                        'motivo' => null,
+                        'estado' => null,
+                    ],
+                ],
+                'historial' => [],
+            ];
+        }
+
+        $proxima = $pacientes[0];
+
         return [
             'profile' => [
-                'codigo'       => null,
-                'nombre'       => 'Sin pacientes',
+                'codigo'       => $proxima['codigo'] ?? null,
+                'nombre'       => $proxima['nombre'] ?? null,
                 'doctor'       => $activeDoctor['nombre'] ?? null,
                 'especialidad' => $activeDoctor['especialidad'] ?? 'Odontología',
-                'estado'       => 'Sin citas',
-                'correo'       => null,
-                'telefono'     => null,
+                'estado'       => 'Activo',
+                'correo'       => 'ana.rivera@correo.test', // luego lo sacamos de BD si quieres
+                'telefono'     => '+504 9999-8888',
                 'proxima'      => [
-                    'fecha'  => null,
-                    'hora'   => null,
-                    'motivo' => null,
-                    'estado' => null,
+                    'fecha'  => $proxima['fecha']  ?? null,
+                    'hora'   => $proxima['hora']   ?? null,
+                    'motivo' => $proxima['motivo'] ?? null,
+                    'estado' => $proxima['estado'] ?? null,
                 ],
             ],
-            'historial' => [],
+            'historial' => $this->patientHistory(),
         ];
     }
-
-    $proxima = $pacientes[0];
-
-    return [
-        'profile' => [
-            'codigo'       => $proxima['codigo'] ?? null,
-            'nombre'       => $proxima['nombre'] ?? null,
-            'doctor'       => $activeDoctor['nombre'] ?? null,
-            'especialidad' => $activeDoctor['especialidad'] ?? 'Odontología',
-            'estado'       => 'Activo',
-            'correo'       => 'ana.rivera@correo.test', // luego lo sacamos de BD si quieres
-            'telefono'     => '+504 9999-8888',
-            'proxima'      => [
-                'fecha'  => $proxima['fecha']  ?? null,
-                'hora'   => $proxima['hora']   ?? null,
-                'motivo' => $proxima['motivo'] ?? null,
-                'estado' => $proxima['estado'] ?? null,
-            ],
-        ],
-        'historial' => $this->patientHistory(),
-    ];
-}
 
     private function patientHistory(): array
     {
@@ -767,292 +839,289 @@ private function patientRecordFromPanels(array $activeDoctor): array
                 ],
             ],
             default => [
-                ['label' => 'Citas programadas',   'value' => $totalCitas,                 'icon' => 'fas fa-calendar-check',     'color' => 'primary'],
-                ['label' => 'Pendientes',          'value' => $pendientes,                 'icon' => 'fas fa-exclamation-circle', 'color' => 'warning'],
-                ['label' => 'Canceladas',          'value' => $canceladas,                 'icon' => 'fas fa-times-circle',       'color' => 'danger'],
-                ['label' => 'Pacientes sin doctor','value' => count($availablePatients ?? []), 'icon' => 'fas fa-user-clock',    'color' => 'info'],
+                ['label' => 'Citas programadas',   'value' => $totalCitas,                     'icon' => 'fas fa-calendar-check',     'color' => 'primary'],
+                ['label' => 'Pendientes',          'value' => $pendientes,                     'icon' => 'fas fa-exclamation-circle', 'color' => 'warning'],
+                ['label' => 'Canceladas',          'value' => $canceladas,                     'icon' => 'fas fa-times-circle',       'color' => 'danger'],
+                ['label' => 'Pacientes sin doctor','value' => count($availablePatients ?? []), 'icon' => 'fas fa-user-clock',         'color' => 'info'],
             ],
         };
     }
 
     /**
- * Trae las citas reales desde la BD, filtrando según el rol.
- */
-private function fetchCitasFromDatabase(string $rolSlug, int $personaId)
-{
-    $query = DB::table('tbl_cita as c')
-        ->join('tbl_persona as d', 'd.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
-        ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
-        ->leftJoin('tbl_estado_cita as e', 'e.COD_ESTADO', '=', 'c.ESTADO_CITA')
-        ->select(
-            'c.COD_CITA',
-            'c.FK_COD_DOCTOR   as doctor_persona_id',
-            'c.FK_COD_PACIENTE as paciente_persona_id',
-            'c.FEC_CITA',
-            'c.HOR_CITA',
-            'c.HOR_FIN',
-            'c.MOT_CITA',
-            'c.OBSERVACIONES',
-            'c.ESTADO_CITA',
-            'e.NOM_ESTADO      as estado_nombre',
-            DB::raw("CONCAT(d.PRIMER_NOMBRE, ' ', d.PRIMER_APELLIDO) as doctor_nombre"),
-            DB::raw("CONCAT(p.PRIMER_NOMBRE, ' ', p.PRIMER_APELLIDO) as paciente_nombre")
-        );
+     * Trae las citas reales desde la BD, filtrando según el rol.
+     */
+    private function fetchCitasFromDatabase(string $rolSlug, int $personaId)
+    {
+        $query = DB::table('tbl_cita as c')
+            ->join('tbl_persona as d', 'd.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
+            ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
+            ->leftJoin('tbl_estado_cita as e', 'e.COD_ESTADO', '=', 'c.ESTADO_CITA')
+            ->select(
+                'c.COD_CITA',
+                'c.FK_COD_DOCTOR   as doctor_persona_id',
+                'c.FK_COD_PACIENTE as paciente_persona_id',
+                'c.FEC_CITA',
+                'c.HOR_CITA',
+                'c.HOR_FIN',
+                'c.MOT_CITA',
+                'c.OBSERVACIONES',
+                'c.ESTADO_CITA',
+                'e.NOM_ESTADO      as estado_nombre',
+                DB::raw("CONCAT(d.PRIMER_NOMBRE, ' ', d.PRIMER_APELLIDO) as doctor_nombre"),
+                DB::raw("CONCAT(p.PRIMER_NOMBRE, ' ', p.PRIMER_APELLIDO) as paciente_nombre")
+            );
 
-    // Filtros por rol
-    if ($rolSlug === 'doctor' && $personaId > 0) {
-        $query->where('c.FK_COD_DOCTOR', $personaId);
-    } elseif ($rolSlug === 'paciente' && $personaId > 0) {
-        $query->where('c.FK_COD_PACIENTE', $personaId);
-    }
-    // ADMIN y RECEPCIONISTA ven todas las citas
+        // Filtros por rol
+        if ($rolSlug === 'doctor' && $personaId > 0) {
+            $query->where('c.FK_COD_DOCTOR', $personaId);
+        } elseif ($rolSlug === 'paciente' && $personaId > 0) {
+            $query->where('c.FK_COD_PACIENTE', $personaId);
+        }
+        // ADMIN y RECEPCIONISTA ven todas las citas
 
-    return $query
-        ->orderBy('c.FEC_CITA')
-        ->orderBy('c.HOR_CITA')
-        ->get();
-}
-
-/**
- * Convierte la colección de citas de BD en el formato que usa la vista:
- *  - doctorPanels[ ] con:
- *      - nombre del doctor
- *      - lista de pacientes/citas
- */
-private function buildDoctorPanelsFromCitas($citas): array
-{
-    if ($citas->isEmpty()) {
-        return [];
+        return $query
+            ->orderBy('c.FEC_CITA')
+            ->orderBy('c.HOR_CITA')
+            ->get();
     }
 
-    return $citas
-        ->groupBy('doctor_persona_id')
-        ->map(function ($rows) {
-            $first = $rows->first();
+    /**
+     * Convierte la colección de citas de BD en el formato que usa la vista:
+     *  - doctorPanels[ ] con:
+     *      - nombre del doctor
+     *      - lista de pacientes/citas
+     */
+    private function buildDoctorPanelsFromCitas($citas): array
+    {
+        if ($citas->isEmpty()) {
+            return [];
+        }
 
+        return $citas
+            ->groupBy('doctor_persona_id')
+            ->map(function ($rows) {
+                $first = $rows->first();
+
+                return [
+                    'doctor_persona_id' => $first->doctor_persona_id,
+                    'nombre'            => $first->doctor_nombre ?? 'Doctor sin nombre',
+                    // De momento usamos texto genérico; luego podemos sacarlo de otra tabla
+                    'especialidad'      => 'Odontología',
+                    'contacto'          => '',
+
+                    'pacientes' => $rows->map(function ($row) {
+                        $estadoNombre = strtoupper($row->estado_nombre ?? '');
+
+                        return [
+                            'cita_id' => $row->COD_CITA,
+                            'nombre'  => $row->paciente_nombre,
+                            'motivo'  => $row->MOT_CITA,
+                            'fecha'   => $row->FEC_CITA,
+                            'hora'    => substr($row->HOR_CITA, 0, 5),
+                            'estado'  => $estadoNombre,          // PENDIENTE / CONFIRMADA / CANCELADA ...
+                            'nota'    => $row->OBSERVACIONES,
+                        ];
+                    })->all(),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Construye la ficha + historial del paciente basado en sus citas reales.
+     */
+    private function buildPatientRecordFromDb(int $pacientePersonaId, $citas): array
+    {
+        // Nos quedamos solo con las citas de ese paciente (por si la colección viene global)
+        $misCitas = collect($citas)->where('paciente_persona_id', $pacientePersonaId);
+
+        if ($misCitas->isEmpty()) {
+            // Si no tiene citas aún, devolvemos algo básico
             return [
-                'doctor_persona_id' => $first->doctor_persona_id,
-                'nombre'            => $first->doctor_nombre ?? 'Doctor sin nombre',
-                // De momento usamos texto genérico; luego podemos sacarlo de otra tabla
-                'especialidad'      => 'Odontología',
-                'contacto'          => '',
-
-                'pacientes' => $rows->map(function ($row) {
-                    $estadoNombre = strtoupper($row->estado_nombre ?? '');
-
-                    return [
-                        'cita_id' => $row->COD_CITA,
-                        'nombre'  => $row->paciente_nombre,
-                        'motivo'  => $row->MOT_CITA,
-                        'fecha'   => $row->FEC_CITA,
-                        'hora'    => substr($row->HOR_CITA, 0, 5),
-                        'estado'  => $estadoNombre,          // PENDIENTE / CONFIRMADA / CANCELADA ...
-                        'nota'    => $row->OBSERVACIONES,
-                    ];
-                })->all(),
-            ];
-        })
-        ->values()
-        ->all();
-}
-
-
-/**
- * Construye la ficha + historial del paciente basado en sus citas reales.
- */
-private function buildPatientRecordFromDb(int $pacientePersonaId, $citas): array
-{
-    // Nos quedamos solo con las citas de ese paciente (por si la colección viene global)
-    $misCitas = collect($citas)->where('paciente_persona_id', $pacientePersonaId);
-
-    if ($misCitas->isEmpty()) {
-        // Si no tiene citas aún, devolvemos algo básico
-        return [
-            'profile' => [
-                'codigo'       => 'PAC-' . str_pad($pacientePersonaId, 4, '0', STR_PAD_LEFT),
-                'nombre'       => 'Paciente',
-                'doctor'       => 'Sin asignar',
-                'especialidad' => 'Odontología',
-                'estado'       => 'Sin citas',
-                'correo'       => null,
-                'telefono'     => null,
-                'proxima'      => [
-                    'fecha'  => null,
-                    'hora'   => null,
-                    'motivo' => null,
-                    'estado' => null,
+                'profile' => [
+                    'codigo'       => 'PAC-' . str_pad($pacientePersonaId, 4, '0', STR_PAD_LEFT),
+                    'nombre'       => 'Paciente',
+                    'doctor'       => 'Sin asignar',
+                    'especialidad' => 'Odontología',
+                    'estado'       => 'Sin citas',
+                    'correo'       => null,
+                    'telefono'     => null,
+                    'proxima'      => [
+                        'fecha'  => null,
+                        'hora'   => null,
+                        'motivo' => null,
+                        'estado' => null,
+                    ],
                 ],
+                'historial' => [],
+            ];
+        }
+
+        // Próxima cita = la más cercana en fecha/hora
+        $proxima = $misCitas
+            ->sortBy(['FEC_CITA', 'HOR_CITA'])
+            ->first();
+
+        $normalizeEstado = function ($nombreEstado = null) {
+            if (!$nombreEstado) {
+                return 'Pendiente';
+            }
+            $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
+            return str_replace('_', ' ', $nombreEstado);
+        };
+
+        $profile = [
+            'codigo'       => 'PAC-' . str_pad($pacientePersonaId, 4, '0', STR_PAD_LEFT),
+            'nombre'       => $proxima->paciente_nombre,
+            'doctor'       => $proxima->doctor_nombre,
+            'especialidad' => 'Odontología',
+            'estado'       => 'Activo',
+            'correo'       => null,
+            'telefono'     => null,
+            'proxima'      => [
+                'fecha'  => $proxima->FEC_CITA,
+                'hora'   => $proxima->HOR_CITA,
+                'motivo' => $proxima->MOT_CITA,
+                'estado' => $normalizeEstado($proxima->estado_nombre),
             ],
-            'historial' => [],
+        ];
+
+        // Historial = todas las citas del paciente
+        $historial = $misCitas
+            ->sortByDesc('FEC_CITA')
+            ->map(function ($cita) use ($normalizeEstado) {
+                return [
+                    'fecha'   => $cita->FEC_CITA,
+                    'estado'  => $normalizeEstado($cita->estado_nombre),
+                    'motivo'  => $cita->MOT_CITA,
+                    'doctor'  => $cita->doctor_nombre,
+                    'detalle' => $cita->OBSERVACIONES,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return [
+            'profile'   => $profile,
+            'historial' => $historial,
         ];
     }
 
-    // Próxima cita = la más cercana en fecha/hora
-    $proxima = $misCitas
-        ->sortBy(['FEC_CITA', 'HOR_CITA'])
-        ->first();
+    /**
+     * Marca una cita como CONFIRMADA.
+     */
+    public function confirmar(Request $request, int $id)
+    {
+        $ok = $this->updateEstadoCita($id, 'CONFIRMADA');
 
-    $normalizeEstado = function ($nombreEstado = null) {
-        if (!$nombreEstado) {
-            return 'Pendiente';
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok]);
         }
-        $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
-        return str_replace('_', ' ', $nombreEstado);
-    };
 
-    $profile = [
-        'codigo'       => 'PAC-' . str_pad($pacientePersonaId, 4, '0', STR_PAD_LEFT),
-        'nombre'       => $proxima->paciente_nombre,
-        'doctor'       => $proxima->doctor_nombre,
-        'especialidad' => 'Odontología',
-        'estado'       => 'Activo',
-        'correo'       => null,
-        'telefono'     => null,
-        'proxima'      => [
-            'fecha'  => $proxima->FEC_CITA,
-            'hora'   => $proxima->HOR_CITA,
-            'motivo' => $proxima->MOT_CITA,
-            'estado' => $normalizeEstado($proxima->estado_nombre),
-        ],
-    ];
-
-    // Historial = todas las citas del paciente
-    $historial = $misCitas
-        ->sortByDesc('FEC_CITA')
-        ->map(function ($cita) use ($normalizeEstado) {
-            return [
-                'fecha'   => $cita->FEC_CITA,
-                'estado'  => $normalizeEstado($cita->estado_nombre),
-                'motivo'  => $cita->MOT_CITA,
-                'doctor'  => $cita->doctor_nombre,
-                'detalle' => $cita->OBSERVACIONES,
-            ];
-        })
-        ->values()
-        ->all();
-
-    return [
-        'profile'   => $profile,
-        'historial' => $historial,
-    ];
-}
-
-/**
- * Marca una cita como CONFIRMADA.
- */
-public function confirmar(Request $request, int $id)
-{
-    $ok = $this->updateEstadoCita($id, 'CONFIRMADA');
-
-    if ($request->expectsJson()) {
-        return response()->json(['ok' => $ok]);
+        return back()->with(
+            $ok ? 'success' : 'error',
+            $ok ? 'La cita se confirmó correctamente.' : 'No se pudo confirmar la cita.'
+        );
     }
 
-    return back()->with(
-        $ok ? 'success' : 'error',
-        $ok ? 'La cita se confirmó correctamente.' : 'No se pudo confirmar la cita.'
-    );
-}
+    /**
+     * Marca una cita como CANCELADA.
+     */
+    public function cancelar(Request $request, int $id)
+    {
+        $ok = $this->updateEstadoCita($id, 'CANCELADA');
 
-/**
- * Marca una cita como CANCELADA.
- */
-public function cancelar(Request $request, int $id)
-{
-    $ok = $this->updateEstadoCita($id, 'CANCELADA');
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok]);
+        }
 
-    if ($request->expectsJson()) {
-        return response()->json(['ok' => $ok]);
+        return back()->with(
+            $ok ? 'success' : 'error',
+            $ok ? 'La cita se canceló correctamente.' : 'No se pudo cancelar la cita.'
+        );
     }
 
-    return back()->with(
-        $ok ? 'success' : 'error',
-        $ok ? 'La cita se canceló correctamente.' : 'No se pudo cancelar la cita.'
-    );
-}
+    /**
+     * Reprograma una cita (cambia fecha/hora y la deja como PENDIENTE).
+     * Campos esperados:
+     *  - fecha       (YYYY-MM-DD)
+     *  - hora_inicio (HH:MM)
+     *  - hora_fin    (HH:MM) [opcional]
+     */
+    public function reprogramar(Request $request, int $id)
+    {
+        $request->validate([
+            'fecha'       => ['required', 'date'],
+            'hora_inicio' => ['required'],
+            'hora_fin'    => ['nullable'],
+        ]);
 
-/**
- * Reprograma una cita (cambia fecha/hora y la deja como PENDIENTE).
- * Campos esperados:
- *  - fecha       (YYYY-MM-DD)
- *  - hora_inicio (HH:MM)
- *  - hora_fin    (HH:MM) [opcional]
- */
-public function reprogramar(Request $request, int $id)
-{
-    $request->validate([
-        'fecha'       => ['required', 'date'],
-        'hora_inicio' => ['required'],
-        'hora_fin'    => ['nullable'],
-    ]);
+        $ok = $this->updateEstadoCita(
+            $id,
+            'PENDIENTE',
+            $request->input('fecha'),
+            $request->input('hora_inicio'),
+            $request->input('hora_fin')
+        );
 
-    $ok = $this->updateEstadoCita(
-        $id,
-        'PENDIENTE',
-        $request->input('fecha'),
-        $request->input('hora_inicio'),
-        $request->input('hora_fin')
-    );
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => $ok]);
+        }
 
-    if ($request->expectsJson()) {
-        return response()->json(['ok' => $ok]);
+        return back()->with(
+            $ok ? 'success' : 'error',
+            $ok ? 'La cita se reprogramó correctamente.' : 'No se pudo reprogramar la cita.'
+        );
     }
 
-    return back()->with(
-        $ok ? 'success' : 'error',
-        $ok ? 'La cita se reprogramó correctamente.' : 'No se pudo reprogramar la cita.'
-    );
-}
+    /**
+     * Devuelve el COD_ESTADO dado el nombre (PENDIENTE, CONFIRMADA, etc.)
+     */
+    private function findEstadoId(string $nombre): ?int
+    {
+        $row = DB::table('tbl_estado_cita')
+            ->whereRaw('UPPER(TRIM(NOM_ESTADO)) = ?', [strtoupper(trim($nombre))])
+            ->first();
 
-
-/**
- * Devuelve el COD_ESTADO dado el nombre (PENDIENTE, CONFIRMADA, etc.)
- */
-private function findEstadoId(string $nombre): ?int
-{
-    $row = DB::table('tbl_estado_cita')
-        ->whereRaw('UPPER(TRIM(NOM_ESTADO)) = ?', [strtoupper(trim($nombre))])
-        ->first();
-
-    return $row ? (int)$row->COD_ESTADO : null;
-}
-
-/**
- * Aplica cambio de estado (y opcionalmente fecha/hora) a una cita.
- */
-private function updateEstadoCita(
-    int $codCita,
-    string $estadoNombre,
-    ?string $nuevaFecha = null,
-    ?string $nuevaHoraInicio = null,
-    ?string $nuevaHoraFin = null
-): bool {
-    $estadoId = $this->findEstadoId($estadoNombre);
-
-    if (!$estadoId) {
-        return false;
+        return $row ? (int)$row->COD_ESTADO : null;
     }
 
-    $data = [
-        'ESTADO_CITA' => $estadoId,
-        'USUARIO_MOD' => auth()->id(),
-    ];
+    /**
+     * Aplica cambio de estado (y opcionalmente fecha/hora) a una cita.
+     */
+    private function updateEstadoCita(
+        int $codCita,
+        string $estadoNombre,
+        ?string $nuevaFecha = null,
+        ?string $nuevaHoraInicio = null,
+        ?string $nuevaHoraFin = null
+    ): bool {
+        $estadoId = $this->findEstadoId($estadoNombre);
 
-    if ($nuevaFecha !== null) {
-        $data['FEC_CITA'] = $nuevaFecha;
+        if (!$estadoId) {
+            return false;
+        }
+
+        $data = [
+            'ESTADO_CITA' => $estadoId,
+            'USUARIO_MOD' => auth()->id(),
+        ];
+
+        if ($nuevaFecha !== null) {
+            $data['FEC_CITA'] = $nuevaFecha;
+        }
+
+        if ($nuevaHoraInicio !== null) {
+            $data['HOR_CITA'] = $nuevaHoraInicio;
+        }
+
+        if ($nuevaHoraFin !== null) {
+            $data['HOR_FIN'] = $nuevaHoraFin;
+        }
+
+        return DB::table('tbl_cita')
+            ->where('COD_CITA', $codCita)
+            ->update($data) > 0;
     }
-
-    if ($nuevaHoraInicio !== null) {
-        $data['HOR_CITA'] = $nuevaHoraInicio;
-    }
-
-    if ($nuevaHoraFin !== null) {
-        $data['HOR_FIN'] = $nuevaHoraFin;
-    }
-
-    return DB::table('tbl_cita')
-        ->where('COD_CITA', $codCita)
-        ->update($data) > 0;
-}
-
 }
