@@ -218,8 +218,19 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
         ->middleware('can:agenda.reportes.ver')
         ->name('agenda.reportes');
 
-     // Acciones sobre citas (luego las usaremos con botones o AJAX)
-    Route::post('/citas/{id}/confirmar',  [AgendaController::class, 'confirmar'])->name('agenda.citas.confirmar');
-    Route::post('/citas/{id}/cancelar',   [AgendaController::class, 'cancelar'])->name('agenda.citas.cancelar');
-    Route::post('/citas/{id}/reprogramar',[AgendaController::class, 'reprogramar'])->name('agenda.citas.reprogramar');
+    // Acciones sobre citas
+    Route::post('/citas/{id}/confirmar',  [AgendaController::class, 'confirmar'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.confirmar');
+
+    Route::post('/citas/{id}/cancelar',   [AgendaController::class, 'cancelar'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.cancelar');
+
+    Route::post('/citas/{id}/reprogramar',[AgendaController::class, 'reprogramar'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.reprogramar');
 });

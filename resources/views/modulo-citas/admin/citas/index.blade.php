@@ -22,7 +22,7 @@
 @section('content')
     {{-- Tarjetas de resumen --}}
     <div class="row">
-        @foreach($stats as $stat)
+        @foreach(($stats ?? []) as $stat)
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-body d-flex align-items-center">
@@ -42,12 +42,12 @@
     <div class="row">
         {{-- Panel principal: doctores y sus citas --}}
         <div class="col-xl-8">
-            @forelse($doctorPanels as $doctor)
+            @forelse(($doctorPanels ?? []) as $doctor)
                 @php
-                    $doctorNombre      = $doctor['nombre']        ?? 'Doctor sin nombre';
-                    $doctorEspecialidad= $doctor['especialidad']  ?? 'Odontología';
-                    $doctorContacto    = $doctor['contacto']      ?? '';
-                    $citasDoctor       = $doctor['pacientes']     ?? [];
+                    $doctorNombre       = $doctor['nombre']       ?? 'Doctor sin nombre';
+                    $doctorEspecialidad = $doctor['especialidad'] ?? 'Odontología';
+                    $doctorContacto     = $doctor['contacto']     ?? '';
+                    $citasDoctor        = $doctor['pacientes']    ?? [];
                 @endphp
 
                 <div class="card border-0 shadow-sm mb-4">
@@ -89,11 +89,20 @@
                                                 default      => 'secondary',
                                             };
 
-                                            $estadoLabel = $estadoRaw !== '' ? $estadoRaw : 'SIN ESTADO';
-                                            $citaId      = $paciente['id']    ?? null;
-                                            $fecha       = $paciente['fecha'] ?? '';
-                                            $hora        = $paciente['hora']  ?? '';
-                                            $nota        = $paciente['nota']  ?? '';
+                                            // Etiqueta bonita independientemente de cómo venga de BD
+                                            $estadoLabel = match ($estadoUpper) {
+                                                'CONFIRMADA' => 'Confirmada',
+                                                'PENDIENTE'  => 'Pendiente',
+                                                'CANCELADA'  => 'Cancelada',
+                                                default      => ($estadoRaw !== '' ? $estadoRaw : 'Sin estado'),
+                                            };
+
+                                            // ID real de la cita (con soporte a dos posibles claves)
+                                            $citaId = $paciente['cita_id'] ?? ($paciente['id'] ?? null);
+
+                                            $fecha = $paciente['fecha'] ?? '';
+                                            $hora  = $paciente['hora']  ?? '';
+                                            $nota  = $paciente['nota']  ?? '';
                                         @endphp
 
                                         <tr>
@@ -180,7 +189,7 @@
                     <h3 class="h6 mb-0">Pacientes sin doctor asignado</h3>
                 </div>
                 <div class="card-body">
-                    @forelse($availablePatients as $patient)
+                    @forelse(($availablePatients ?? []) as $patient)
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h5 class="mb-1">{{ $patient['nombre'] ?? 'Paciente' }}</h5>
@@ -248,7 +257,7 @@
                         <div class="form-group col-md-6">
                             <label class="form-label">Doctor</label>
                             <select class="form-control">
-                                @foreach($doctorPanels as $doctor)
+                                @foreach(($doctorPanels ?? []) as $doctor)
                                     <option>{{ $doctor['nombre'] ?? 'Doctor' }}</option>
                                 @endforeach
                             </select>
@@ -320,16 +329,16 @@
 <script>
     // Cuando se abre el modal de reprogramación, cargamos datos de la cita
     $('#modalReprogramar').on('show.bs.modal', function (event) {
-        var button   = $(event.relatedTarget); // Botón que abrió el modal
-        var citaId   = button.data('cita-id');
-        var fecha    = button.data('fecha') || '';
-        var hora     = button.data('hora')  || '';
+        var button = $(event.relatedTarget); // Botón que abrió el modal
+        var citaId = button.data('cita-id');
+        var fecha  = button.data('fecha') || '';
+        var hora   = button.data('hora')  || '';
 
-        var modal    = $(this);
-        var form     = modal.find('#formReprogramar');
+        var modal = $(this);
+        var form  = modal.find('#formReprogramar');
 
         // Ruta base /agenda/citas
-        var baseUrl  = "{{ url('/agenda/citas') }}";
+        var baseUrl = "{{ url('/agenda/citas') }}";
         form.attr('action', baseUrl + '/' + citaId + '/reprogramar');
 
         // Rellenar campos
