@@ -9,13 +9,18 @@
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
         <div class="btn-group mt-2 mt-md-0">
-            <button class="btn btn-primary"><i class="fas fa-user-plus"></i> Registrar paciente</button>
-            <button class="btn btn-outline-secondary"><i class="fas fa-qrcode"></i> Generar QR</button>
+            <button class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Registrar paciente
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-qrcode"></i> Generar QR
+            </button>
         </div>
     </div>
 @endsection
 
 @section('content')
+    {{-- Tarjetas de resumen --}}
     <div class="row mb-4">
         @foreach($stats as $stat)
             <div class="col-md-4 mb-3">
@@ -34,7 +39,15 @@
         @endforeach
     </div>
 
+    @php
+        // Por seguridad, si no hay doctor activo o no tiene pacientes, usamos arreglo vacío
+        $citasPacientes = is_array($activeDoctor ?? null)
+            ? ($activeDoctor['pacientes'] ?? [])
+            : [];
+    @endphp
+
     <div class="row">
+        {{-- PANEL PRINCIPAL: Pacientes asignados --}}
         <div class="col-lg-8 mb-4">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -56,7 +69,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach(($activeDoctor['pacientes'] ?? []) as $paciente)
+                            @forelse($citasPacientes as $paciente)
                                 @php
                                     $estadoRaw   = $paciente['estado'] ?? '';
                                     $estadoUpper = strtoupper(trim($estadoRaw));
@@ -81,10 +94,16 @@
                                     $hora   = $paciente['hora']     ?? '';
                                 @endphp
                                 <tr>
-                                    <td class="font-weight-bold">{{ $paciente['nombre'] ?? 'Paciente sin nombre' }}</td>
+                                    <td class="font-weight-bold">
+                                        {{ $paciente['nombre'] ?? 'Paciente sin nombre' }}
+                                    </td>
                                     <td>{{ $paciente['motivo'] ?? '' }}</td>
                                     <td>{{ $fecha }} @if($hora) · {{ $hora }} @endif</td>
-                                    <td><span class="badge badge-{{ $badge }}">{{ $estadoLabel }}</span></td>
+                                    <td>
+                                        <span class="badge badge-{{ $badge }}">
+                                            {{ $estadoLabel }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
                                             <button class="btn btn-outline-info">Ver ficha</button>
@@ -128,48 +147,71 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">
+                                        No tienes pacientes con citas registradas todavía.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            {{-- NOTAS RÁPIDAS (solo si hay pacientes) --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Notas rápidas</h3>
                 </div>
                 <div class="card-body">
-                    <form>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Paciente</label>
-                                <select class="form-control">
-                                    @foreach($activeDoctor['pacientes'] as $paciente)
-                                        <option>{{ $paciente['nombre'] }}</option>
-                                    @endforeach
-                                </select>
+                    @if(count($citasPacientes) === 0)
+                        <p class="text-muted mb-0">
+                            Aún no hay pacientes con citas; primero registra o asigna pacientes.
+                        </p>
+                    @else
+                        <form>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Paciente</label>
+                                    <select class="form-control">
+                                        @foreach($citasPacientes as $paciente)
+                                            <option>{{ $paciente['nombre'] ?? 'Paciente' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Tipo de nota</label>
+                                    <select class="form-control">
+                                        <option>Seguimiento</option>
+                                        <option>Recordatorio</option>
+                                        <option>Indicaciones</option>
+                                        <option>Laboratorio</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-12">
+                                    <label>Nota</label>
+                                    <textarea class="form-control" rows="2" placeholder="Observaciones clínicas"></textarea>
+                                </div>
                             </div>
-                            <div class="form-group col-md-6">
-                                <label>Tipo de nota</label>
-                                <select class="form-control">
-                                    <option>Seguimiento</option>
-                                    <option>Recordatorio</option>
-                                    <option>Indicaciones</option>
-                                    <option>Laboratorio</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-12">
-                                <label>Nota</label>
-                                <textarea class="form-control" rows="2" placeholder="Observaciones clínicas"></textarea>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary">Guardar</button>
-                    </form>
+                            <button class="btn btn-primary">Guardar</button>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>
 
+        {{-- PANEL LATERAL: Doctor, ficha del paciente y pacientes en espera --}}
         <div class="col-lg-4 mb-4">
+            @php
+                $doctorNombre       = data_get($activeDoctor ?? [], 'nombre', 'Doctor sin asignar');
+                $doctorEspecialidad = data_get($activeDoctor ?? [], 'especialidad', 'Odontología');
+                $doctorContacto     = data_get($activeDoctor ?? [], 'contacto', '');
+                $profile            = data_get($patientRecord ?? [], 'profile', []);
+                $proxima            = data_get($profile, 'proxima', []);
+            @endphp
+
+            {{-- Tarjeta doctor --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body d-flex align-items-center">
                     <div class="mr-3">
@@ -178,41 +220,57 @@
                         </div>
                     </div>
                     <div>
-                        <h5 class="mb-1">{{ $activeDoctor['nombre'] }}</h5>
-                        <p class="mb-0 text-muted">{{ $activeDoctor['especialidad'] }}</p>
-                        <small class="text-muted">{{ $activeDoctor['contacto'] }}</small>
+                        <h5 class="mb-1">{{ $doctorNombre }}</h5>
+                        <p class="mb-0 text-muted">{{ $doctorEspecialidad }}</p>
+                        @if($doctorContacto)
+                            <small class="text-muted">{{ $doctorContacto }}</small>
+                        @endif
                     </div>
                 </div>
             </div>
 
+            {{-- Ficha del paciente destacado --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Ficha del paciente</h3>
                 </div>
                 <div class="card-body">
-                    <h5 class="mb-1">{{ $patientRecord['profile']['nombre'] }}</h5>
-                    <p class="text-muted mb-1">
-                        <i class="fas fa-user-md mr-1"></i> {{ $patientRecord['profile']['doctor'] }}
-                    </p>
-                    <p class="text-muted mb-2">
-                        <i class="fas fa-calendar-alt mr-1"></i>
-                        Próxima cita:
-                        {{ $patientRecord['profile']['proxima']['fecha'] }}
-                        ·
-                        {{ $patientRecord['profile']['proxima']['hora'] }}
-                    </p>
-                    <p class="mb-0">
-                        <span class="badge badge-info">{{ $patientRecord['profile']['proxima']['estado'] }}</span>
-                    </p>
+                    <h5 class="mb-1">{{ $profile['nombre'] ?? 'Sin pacientes seleccionados' }}</h5>
+
+                    @if(!empty($profile))
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-user-md mr-1"></i>
+                            {{ $profile['doctor'] ?? $doctorNombre }}
+                        </p>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-calendar-alt mr-1"></i>
+                            Próxima cita:
+                            {{ $proxima['fecha'] ?? '—' }}
+                            ·
+                            {{ $proxima['hora'] ?? '—' }}
+                        </p>
+                        <p class="mb-0">
+                            <span class="badge badge-info">
+                                {{ $proxima['estado'] ?? 'Sin estado' }}
+                            </span>
+                        </p>
+                    @else
+                        <p class="text-muted mb-0">
+                            Aún no se ha destacado ningún paciente.
+                        </p>
+                    @endif
                 </div>
             </div>
 
+            {{-- Compartir formulario --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Compartir formulario</h3>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted">Comparte el enlace para que un paciente se registre y quede asignado automáticamente.</p>
+                    <p class="text-muted">
+                        Comparte el enlace para que un paciente se registre y quede asignado automáticamente.
+                    </p>
                     <div class="bg-light p-3 rounded mb-2">
                         <small class="text-uppercase text-muted">Link</small>
                         <p class="mb-0">{{ $shareLink }}</p>
@@ -225,26 +283,37 @@
                 </div>
             </div>
 
+            {{-- Pacientes en espera --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Pacientes en espera</h3>
                 </div>
                 <div class="card-body">
-                    @foreach($availablePatients as $patient)
+                    @forelse($availablePatients as $patient)
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <h5 class="mb-1">{{ $patient['nombre'] }}</h5>
-                                <p class="mb-1 text-muted">{{ $patient['motivo'] }}</p>
-                                <small class="text-muted">Preferencia: {{ $patient['preferencia'] }}</small>
+                                <h5 class="mb-1">{{ $patient['nombre'] ?? 'Paciente' }}</h5>
+                                <p class="mb-1 text-muted">
+                                    {{ $patient['motivo'] ?? 'Motivo no especificado' }}
+                                </p>
+                                @if(!empty($patient['preferencia']))
+                                    <small class="text-muted">
+                                        Preferencia: {{ $patient['preferencia'] }}
+                                    </small>
+                                @endif
                                 <div class="mt-2">
                                     <button class="btn btn-sm btn-outline-success">Asignar</button>
                                 </div>
                             </div>
-                            @if(!$loop->last)
-                                <hr>
-                            @endif
                         </div>
-                    @endforeach
+                        @if(!$loop->last)
+                            <hr>
+                        @endif
+                    @empty
+                        <p class="text-muted mb-0">
+                            No hay pacientes en espera de asignación.
+                        </p>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -263,8 +332,8 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted mb-3">
-                        Ajusta la nueva fecha y hora para la cita seleccionada. El estado se dejará como
-                        <strong>PENDIENTE</strong>.
+                        Ajusta la nueva fecha y hora para la cita seleccionada.
+                        El estado se dejará como <strong>PENDIENTE</strong>.
                     </p>
 
                     <div class="form-group">
