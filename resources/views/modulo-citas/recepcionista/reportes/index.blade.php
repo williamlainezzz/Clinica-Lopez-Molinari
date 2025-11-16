@@ -8,15 +8,20 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading) }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0"><i class="fas fa-download"></i> Exportar bitácora</button>
+        <button class="btn btn-outline-primary mt-2 mt-md-0">
+            <i class="fas fa-download"></i> Exportar bitácora
+        </button>
     </div>
 @endsection
 
 @section('content')
     @php
-        $eventCollection = collect($eventList);
-        $porEstado = $eventCollection->groupBy('estado')->map->count();
+        $eventCollection = collect($eventList ?? []);
+        $porEstado       = $eventCollection->groupBy('estado')->map->count();
+        $timelineSafe    = collect($timeline ?? []);
     @endphp
+
+    {{-- Tarjetas de resumen --}}
     <div class="row mb-4">
         @foreach($stats as $stat)
             <div class="col-md-3 col-sm-6 mb-3">
@@ -35,6 +40,7 @@
         @endforeach
     </div>
 
+    {{-- Resumen por estado --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-header bg-white">
             <h3 class="h6 mb-0">Estados registrados</h3>
@@ -48,33 +54,46 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($porEstado as $estado => $cantidad)
+                    @forelse($porEstado as $estado => $cantidad)
                         <tr>
                             <td>{{ $estado }}</td>
                             <td class="text-right font-weight-bold">{{ $cantidad }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="2" class="text-center text-muted">
+                                No hay estados registrados en este período.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 
+    {{-- Timeline de últimas acciones --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white">
             <h3 class="h6 mb-0">Últimas acciones</h3>
         </div>
         <div class="card-body">
-            <ul class="list-unstyled mb-0">
-                @foreach($timeline as $item)
-                    <li class="mb-3">
-                        <div class="d-flex justify-content-between">
-                            <strong>{{ $item['descripcion'] }}</strong>
-                            <span class="badge badge-light">{{ $item['estado'] }}</span>
-                        </div>
-                        <small class="text-muted">{{ $item['fecha'] }}</small>
-                    </li>
-                @endforeach
-            </ul>
+            @if($timelineSafe->isEmpty())
+                <p class="text-muted mb-0">
+                    Aún no se han registrado acciones en la bitácora de citas.
+                </p>
+            @else
+                <ul class="list-unstyled mb-0">
+                    @foreach($timelineSafe as $item)
+                        <li class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ $item['descripcion'] ?? 'Acción' }}</strong>
+                                <span class="badge badge-light">{{ $item['estado'] ?? '' }}</span>
+                            </div>
+                            <small class="text-muted">{{ $item['fecha'] ?? '' }}</small>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         </div>
     </div>
 @endsection

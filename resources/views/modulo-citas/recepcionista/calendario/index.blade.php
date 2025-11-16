@@ -11,13 +11,23 @@
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
         <div class="btn-group mt-2 mt-md-0">
-            <button class="btn btn-outline-primary"><i class="fas fa-plus"></i> Nueva cita</button>
-            <button class="btn btn-outline-secondary"><i class="fas fa-file-export"></i> Exportar</button>
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> Nueva cita
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-file-export"></i> Exportar
+            </button>
         </div>
     </div>
 @endsection
 
 @section('content')
+    @php
+        $calendarMatrixSafe = is_iterable($calendarMatrix ?? []) ? $calendarMatrix : [];
+        $calendarEventsSafe = is_array($calendarEvents ?? null) ? $calendarEvents : [];
+        $eventListSafe      = collect($eventList ?? [])->take(6);
+    @endphp
+
     <div class="row">
         <div class="col-lg-8 mb-4">
             <div class="card border-0 shadow-sm">
@@ -33,75 +43,93 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table agenda-calendar mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Lun</th>
-                                    <th>Mar</th>
-                                    <th>Mié</th>
-                                    <th>Jue</th>
-                                    <th>Vie</th>
-                                    <th>Sáb</th>
-                                    <th>Dom</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($calendarMatrix as $week)
+                    @if(empty($calendarMatrixSafe))
+                        <p class="text-muted mb-0">
+                            No hay citas registradas en el calendario.
+                        </p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table agenda-calendar mb-0">
+                                <thead>
                                     <tr>
-                                        @foreach($week as $day)
-                                            @php
-                                                $dateKey = $day['date'];
-                                                $eventsOfDay = $calendarEvents[$dateKey] ?? [];
-                                                $classes = 'agenda-calendar__day';
-                                                if (!empty($day['isMuted'])) {
-                                                    $classes .= ' is-muted';
-                                                }
-                                                if (!empty($day['isToday'])) {
-                                                    $classes .= ' is-today';
-                                                }
-                                            @endphp
-                                            <td class="{{ $classes }}">
-                                                <div class="agenda-calendar__day-number">{{ $day['label'] }}</div>
-                                                @foreach($eventsOfDay as $event)
-                                                    @php
-                                                        $pillClass = match($event['estado']) {
-                                                            'Confirmada' => 'bg-success',
-                                                            'Pendiente'  => 'bg-warning text-dark',
-                                                            'Cancelada'  => 'bg-danger',
-                                                            default      => 'bg-secondary',
-                                                        };
-                                                    @endphp
-                                                    <span class="agenda-calendar__pill {{ $pillClass }} js-event-pill"
-                                                          data-toggle="modal"
-                                                          data-target="#modalEventoAgenda"
-                                                          data-event='@json($event)'>
-                                                        {{ $event['hora'] }} · {{ \Illuminate\Support\Str::limit($event['paciente'], 14) }}
-                                                    </span>
-                                                @endforeach
-                                            </td>
-                                        @endforeach
+                                        <th>Lun</th>
+                                        <th>Mar</th>
+                                        <th>Mié</th>
+                                        <th>Jue</th>
+                                        <th>Vie</th>
+                                        <th>Sáb</th>
+                                        <th>Dom</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @foreach($calendarMatrixSafe as $week)
+                                        <tr>
+                                            @foreach($week as $day)
+                                                @php
+                                                    $dateKey     = $day['date'];
+                                                    $eventsOfDay = $calendarEventsSafe[$dateKey] ?? [];
+                                                    $classes     = 'agenda-calendar__day';
+                                                    if (!empty($day['isMuted'])) {
+                                                        $classes .= ' is-muted';
+                                                    }
+                                                    if (!empty($day['isToday'])) {
+                                                        $classes .= ' is-today';
+                                                    }
+                                                @endphp
+                                                <td class="{{ $classes }}">
+                                                    <div class="agenda-calendar__day-number">{{ $day['label'] }}</div>
+                                                    @foreach($eventsOfDay as $event)
+                                                        @php
+                                                            $estado    = $event['estado'] ?? '';
+                                                            $pillClass = match($estado) {
+                                                                'Confirmada' => 'bg-success',
+                                                                'Pendiente'  => 'bg-warning text-dark',
+                                                                'Cancelada'  => 'bg-danger',
+                                                                default      => 'bg-secondary',
+                                                            };
+                                                        @endphp
+                                                        <span class="agenda-calendar__pill {{ $pillClass }} js-event-pill"
+                                                              data-toggle="modal"
+                                                              data-target="#modalEventoAgenda"
+                                                              data-event='@json($event)'>
+                                                            {{ $event['hora'] ?? '' }}
+                                                            ·
+                                                            {{ \Illuminate\Support\Str::limit($event['paciente'] ?? 'Paciente', 14) }}
+                                                        </span>
+                                                    @endforeach
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
+
         <div class="col-lg-4 mb-4">
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Próximas citas</h3>
                 </div>
                 <div class="list-group list-group-flush">
-                    @foreach(array_slice($eventList, 0, 6) as $event)
+                    @forelse($eventListSafe as $event)
                         <div class="list-group-item">
-                            <strong>{{ $event['paciente'] }}</strong>
-                            <div class="text-muted small">{{ $event['fecha'] }} · {{ $event['hora'] }}</div>
-                            <span class="badge badge-light">{{ $event['doctor'] }}</span>
+                            <strong>{{ $event['paciente'] ?? 'Paciente' }}</strong>
+                            <div class="text-muted small">
+                                {{ $event['fecha'] ?? '' }} · {{ $event['hora'] ?? '' }}
+                            </div>
+                            @if(!empty($event['doctor']))
+                                <span class="badge badge-light">{{ $event['doctor'] }}</span>
+                            @endif
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="list-group-item text-muted">
+                            No hay citas próximas registradas.
+                        </div>
+                    @endforelse
                 </div>
             </div>
             <div class="card border-0 shadow-sm">
@@ -114,6 +142,7 @@
         </div>
     </div>
 
+    {{-- Modal detalle de cita (llenado por _calendar_scripts) --}}
     <div class="modal fade" id="modalEventoAgenda" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
