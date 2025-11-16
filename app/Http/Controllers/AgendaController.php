@@ -23,105 +23,168 @@ class AgendaController extends Controller
     }
 
     private function render(string $section, Request $request)
-    {
-        $user    = auth()->user();
-        $rolName = strtoupper(optional($user->rol)->NOM_ROL ?? 'ADMIN');
-        $rolSlug = $this->mapRol($rolName);
+{
+    $user    = auth()->user();
+    $rolName = strtoupper(optional($user->rol)->NOM_ROL ?? 'ADMIN');
+    $rolSlug = $this->mapRol($rolName);
 
-        // sección actual (citas / calendario / reportes)
-        $sectionKey = match (strtoupper($section)) {
-            'CALENDARIO' => 'calendario',
-            'REPORTES'   => 'reportes',
-            default      => 'citas',
-        };
+    // sección actual (citas / calendario / reportes)
+    $sectionKey = match (strtoupper($section)) {
+        'CALENDARIO' => 'calendario',
+        'REPORTES'   => 'reportes',
+        default      => 'citas',
+    };
 
-        $routeName = match ($sectionKey) {
-            'calendario' => 'agenda.calendario',
-            'reportes'   => 'agenda.reportes',
-            default      => 'agenda.citas',
-        };
+    $routeName = match ($sectionKey) {
+        'calendario' => 'agenda.calendario',
+        'reportes'   => 'agenda.reportes',
+        default      => 'agenda.citas',
+    };
 
-        $labels   = $this->sectionLabels();
-        $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
+    $labels   = $this->sectionLabels();
+    $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
 
-        // -----------------------------
-        // Valores "demo" por defecto
-        // (los seguimos usando en otros roles/secciones de momento)
-        // -----------------------------
-        $doctorPanels      = $this->demoDoctors();
-        $availablePatients = $this->availablePatients();
-        $activeDoctor      = $doctorPanels[0] ?? null;
-        $patientRecord     = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
-        $timeline          = $this->patientTimeline();
-        $calendarMatrix    = $this->calendarMatrix();
-        $calendarEvents    = [];
-        $eventList         = collect();
-        $stats             = [];
+    // -----------------------------
+    // Valores "demo" por defecto
+    // -----------------------------
+    $doctorPanels      = $this->demoDoctors();
+    $availablePatients = $this->availablePatients();
+    $activeDoctor      = $doctorPanels[0] ?? null;
+    $patientRecord     = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
+    $timeline          = $this->patientTimeline();
+    $calendarMatrix    = $this->calendarMatrix();
+    $calendarEvents    = [];
+    $eventList         = collect();
+    $stats             = [];
 
-        // ==========================================================
-        // NUEVO: para ADMIN en sección "citas" usamos datos reales
-        // ==========================================================
-        if ($sectionKey === 'citas' && $rolSlug === 'admin') {
-            $personaId = (int) ($user->FK_COD_PERSONA ?? 0);
+    // ==========================================================
+    // DOCTOR: usar datos REALES de BD para todas las secciones
+    // ==========================================================
+    if ($rolSlug === 'doctor') {
+        // Limpiamos los datos de ejemplo; si algo falla, la vista mostrará "sin citas"
+        $doctorPanels      = [];
+        $availablePatients = [];
+        $activeDoctor      = null;
+        $patientRecord     = null;
 
-            // Traemos las citas de la BD según el helper que ya tienes
+        $personaId = (int) ($user->FK_COD_PERSONA ?? optional($user->persona)->COD_PERSONA ?? 0);
+
+        if ($personaId > 0) {
+            // Citas reales SOLO de este doctor
             $citas = $this->fetchCitasFromDatabase($rolSlug, $personaId);
 
-            // Convertimos esa colección en el formato que espera la vista
-            $doctorPanels      = $this->buildDoctorPanelsFromCitas($citas);
-            $availablePatients = []; // Más adelante llenamos "pacientes sin doctor", de momento lo dejamos vacío
+            if ($citas->isNotEmpty()) {
+                // Paneles (pacientes + agenda) construidos desde la BD
+                $doctorPanels = $this->buildDoctorsFromCitas($citas);
+                $activeDoctor = $doctorPanels[0] ?? null;
 
-            // Lista plana solo para las tarjetas de estadísticas
-            $eventList = $citas->map(function ($c) {
-                return [
-                    'estado' => strtoupper($c->estado_nombre ?? ''),
+                // Paciente destacado = el de la cita más cercana
+                $primerCita        = $citas->sortBy(['FEC_CITA', 'HOR_CITA'])->first();
+                $pacientePersonaId = (int) ($primerCita->paciente_persona_id ?? 0);
+
+                if ($pacientePersonaId > 0) {
+                    $patientRecord = $this->buildPatientRecordFromDb($pacientePersonaId, $citas);
+                } elseif ($activeDoctor) {
+                    // Fallback: ficha simple basada en el panel
+                    $patientRecord = $this->patientRecordFromPanels($activeDoctor);
+                }
+
+                // Pacientes sin doctor (widget lateral)
+                $availablePatients = $this->availablePatientsFromDb();
+            } else {
+                // Sin citas aún: ficha vacía para no romper la vista
+                $patientRecord = [
+                    'profile' => [
+                        'codigo'       => null,
+                        'nombre'       => 'Sin pacientes',
+                        'doctor'       => $user->name ?? 'Doctor',
+                        'especialidad' => 'Odontología',
+                        'estado'       => 'Sin citas',
+                        'correo'       => null,
+                        'telefono'     => null,
+                        'proxima'      => [
+                            'fecha'  => null,
+                            'hora'   => null,
+                            'motivo' => null,
+                            'estado' => null,
+                        ],
+                    ],
+                    'historial' => [],
                 ];
-            });
-
-            // Reusamos tu buildStats, pasándole lo que necesita
-            $stats = $this->buildStats(
-                $rolSlug,
-                $doctorPanels,
-                $availablePatients,
-                [],                    // patientRecord no se usa en rama admin
-                $eventList->all()
-            );
-        } else {
-            // Resto de roles / secciones siguen usando la lógica demo
-            $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor, $patientRecord);
-            $calendarEvents      = $calendarEventBundle['byDate'];
-            $eventList           = collect($calendarEventBundle['list']);
-            $stats               = $this->buildStats(
-                $rolSlug,
-                $doctorPanels,
-                $availablePatients,
-                $patientRecord,
-                $eventList->all()
-            );
+            }
         }
-
-        $view = $this->resolveView($rolSlug, $sectionKey);
-
-        return view($view, [
-            'pageTitle'         => $labelSet['pageTitle'],
-            'heading'           => $labelSet['heading'],
-            'intro'             => $labelSet['intro'],
-            'routeName'         => $routeName,
-            'sectionKey'        => $sectionKey,
-            'rolSlug'           => $rolSlug,
-            'doctorPanels'      => $doctorPanels,
-            'availablePatients' => $availablePatients,
-            'activeDoctor'      => $activeDoctor,
-            'patientRecord'     => $patientRecord,
-            'timeline'          => $timeline,
-            'calendarMatrix'    => $calendarMatrix,
-            'calendarEvents'    => $calendarEvents,
-            'eventList'         => $eventList,
-            'stats'             => $stats,
-            'shareLink'         => url('/registro/paciente?doctor=dr-lopez'),
-            'shareCode'         => 'DR-LOPEZ-2025',
-        ]);
     }
+
+    // ==========================================================
+    // ADMIN en sección "citas": datos reales de BD (ya tenías esto)
+    // ==========================================================
+    if ($sectionKey === 'citas' && $rolSlug === 'admin') {
+        $personaId = (int) ($user->FK_COD_PERSONA ?? 0);
+
+        // Traemos todas las citas de la BD
+        $citas = $this->fetchCitasFromDatabase($rolSlug, $personaId);
+
+        // Convertimos esa colección en el formato que espera la vista
+        $doctorPanels      = $this->buildDoctorPanelsFromCitas($citas);
+        $availablePatients = []; // Más adelante llenamos "pacientes sin doctor"
+
+        // Lista plana solo para las tarjetas de estadísticas
+        $eventList = $citas->map(function ($c) {
+            $estado = strtoupper(trim($c->estado_nombre ?? ''));
+            return [
+                'estado' => match ($estado) {
+                    'CONFIRMADA' => 'Confirmada',
+                    'CANCELADA'  => 'Cancelada',
+                    default      => 'Pendiente',
+                },
+            ];
+        });
+
+        // Reusamos buildStats
+        $stats = $this->buildStats(
+            $rolSlug,
+            $doctorPanels,
+            $availablePatients,
+            [],                    // patientRecord no se usa en rama admin
+            $eventList->all()
+        );
+    } else {
+        // Resto de roles / secciones: usamos los paneles (demo o reales) para calendario y estadísticas
+        $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor ?? [], $patientRecord ?? []);
+        $calendarEvents      = $calendarEventBundle['byDate'];
+        $eventList           = collect($calendarEventBundle['list']);
+        $stats               = $this->buildStats(
+            $rolSlug,
+            $doctorPanels,
+            $availablePatients,
+            $patientRecord ?? [],
+            $eventList->all()
+        );
+    }
+
+    $view = $this->resolveView($rolSlug, $sectionKey);
+
+    return view($view, [
+        'pageTitle'         => $labelSet['pageTitle'],
+        'heading'           => $labelSet['heading'],
+        'intro'             => $labelSet['intro'],
+        'routeName'         => $routeName,
+        'sectionKey'        => $sectionKey,
+        'rolSlug'           => $rolSlug,
+        'doctorPanels'      => $doctorPanels,
+        'availablePatients' => $availablePatients,
+        'activeDoctor'      => $activeDoctor,
+        'patientRecord'     => $patientRecord,
+        'timeline'          => $timeline,
+        'calendarMatrix'    => $calendarMatrix,
+        'calendarEvents'    => $calendarEvents,
+        'eventList'         => $eventList,
+        'stats'             => $stats,
+        'shareLink'         => url('/registro/paciente?doctor=dr-lopez'),
+        'shareCode'         => 'DR-LOPEZ-2025',
+    ]);
+}
+
 
     private function resolveView(string $rolSlug, string $sectionKey): string
     {
