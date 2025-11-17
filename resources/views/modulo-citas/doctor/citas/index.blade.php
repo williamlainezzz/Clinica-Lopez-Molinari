@@ -9,8 +9,11 @@
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
         <div class="btn-group mt-2 mt-md-0">
-            <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearCitaDoctor">
+            <button class="btn btn-primary btn-crear-cita" data-toggle="modal" data-target="#modalCrearCitaDoctor">
                 <i class="fas fa-plus"></i> Crear cita
+            </button>
+            <button class="btn btn-outline-primary" data-toggle="modal" data-target="#modalListaPacientes">
+                <i class="fas fa-users"></i> Ver mis pacientes
             </button>
             <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalCodigoRegistro">
                 <i class="fas fa-qrcode"></i> Registrar paciente
@@ -168,9 +171,12 @@
                     @if(!empty($shareLink))
                         <p class="text-muted small">Comparte este enlace para que nuevos pacientes se registren contigo.</p>
                         <div class="bg-light rounded p-2 mb-2">
-                            <small class="text-monospace">{{ $shareLink }}</small>
+                            <a href="{{ $shareLink }}" target="_blank" class="text-monospace d-block">{{ $shareLink }}</a>
                         </div>
-                        <div class="text-muted small">Código: <strong>{{ $shareCode }}</strong></div>
+                        <div class="text-muted small mb-2">Código: <strong>{{ $shareCode }}</strong></div>
+                        <a href="{{ $shareLink }}" target="_blank" class="btn btn-sm btn-outline-primary btn-block">
+                            Abrir formulario de registro
+                        </a>
                     @else
                         <p class="text-muted mb-0">No se pudo generar un enlace de registro.</p>
                     @endif
@@ -202,6 +208,53 @@
                         <dt class="col-sm-4">Notas</dt>
                         <dd class="col-sm-8" data-field="nota">-</dd>
                     </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Lista de pacientes --}}
+    <div class="modal fade" id="modalListaPacientes" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pacientes asignados</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @if($assignedPatients->isEmpty())
+                        <p class="text-muted mb-0">Aún no tienes pacientes asignados.</p>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>Código</th>
+                                        <th class="text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($assignedPatients as $paciente)
+                                        <tr>
+                                            <td>{{ $paciente['nombre'] }}</td>
+                                            <td>{{ $paciente['codigo'] }}</td>
+                                            <td class="text-right">
+                                                <button class="btn btn-sm btn-outline-primary btn-crear-cita"
+                                                        data-toggle="modal"
+                                                        data-target="#modalCrearCitaDoctor"
+                                                        data-paciente="{{ $paciente['persona_id'] }}">
+                                                    <i class="fas fa-calendar-plus"></i> Crear cita
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -314,6 +367,9 @@
                              alt="QR registro" class="mb-3">
                         <p class="text-muted small">Escanea o comparte este enlace:</p>
                         <div class="bg-light rounded p-2 text-monospace mb-2">{{ $shareLink }}</div>
+                        <a href="{{ $shareLink }}" target="_blank" class="btn btn-sm btn-outline-primary btn-block mb-2">
+                            Abrir registro ahora
+                        </a>
                         <p class="text-muted mb-0">Código de referencia: <strong>{{ $shareCode }}</strong></p>
                     @else
                         <p class="text-muted mb-0">No se pudo generar el enlace de registro.</p>

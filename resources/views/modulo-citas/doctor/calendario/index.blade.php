@@ -38,6 +38,7 @@
                 'nombre'     => $p['nombre'],
                 'codigo'     => $p['codigo'],
             ])->values();
+        $agendaDownloadEvents = collect($eventList ?? [])->values();
     @endphp
     <div class="row">
         <div class="col-lg-8 mb-4">
@@ -137,9 +138,9 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
                     <h6 class="text-uppercase text-muted">Mi agenda</h6>
-                    <a href="{{ route('export.citas.csv') }}" class="btn btn-outline-secondary btn-block">
+                    <button type="button" class="btn btn-outline-secondary btn-block" id="btnDescargarAgendaDoctor">
                         <i class="fas fa-file-download"></i> Descargar mi agenda
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -171,9 +172,19 @@
                         <dd class="col-sm-8" data-field="nota">-</dd>
                     </dl>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer flex-wrap">
+                    <form method="POST" id="formEliminarCitaDoctor" class="mr-auto">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </form>
                     <button class="btn btn-outline-secondary" id="btnReprogramarDesdeDetalle">
                         <i class="fas fa-sync"></i> Reprogramar
+                    </button>
+                    <button class="btn btn-primary" id="btnEditarEventoDoctor">
+                        <i class="fas fa-pen"></i> Editar
                     </button>
                     <button class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
                 </div>
@@ -273,32 +284,105 @@
             </form>
         </div>
     </div>
+
+    {{-- Modal editar cita --}}
+    <div class="modal fade" id="modalEditarCitaDoctor" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" class="modal-content" id="formEditarCitaDoctor">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="doctor_persona_id" value="{{ $doctorPersonaId }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar cita</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Paciente</label>
+                        <select name="paciente_persona_id" class="form-control" required>
+                            <option value="">Seleccione un paciente...</option>
+                            @foreach($misPacientesAsignados as $paciente)
+                                <option value="{{ $paciente['persona_id'] }}">{{ $paciente['nombre'] }} ({{ $paciente['codigo'] }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Fecha</label>
+                            <input type="date" name="fecha" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Hora inicio</label>
+                            <input type="time" name="hora_inicio" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Hora fin</label>
+                            <input type="time" name="hora_fin" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Motivo</label>
+                        <input type="text" name="motivo" class="form-control" maxlength="255" required>
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Observaciones</label>
+                        <textarea name="observaciones" class="form-control" rows="2" maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @section('js')
 <script>
     (function () {
         const pacientes = @json($misPacientesAsignados);
+        const agendaExport = @json($agendaDownloadEvents);
         const baseUrl = "{{ url('/agenda/citas') }}";
         let eventoActual = null;
+        let pacientePreseleccionado = '';
 
-        function renderPacientes(term = '') {
+        function renderPacientes(term = '', selected = '') {
             const select = $('#modalCrearCitaDoctor select[name="paciente_persona_id"]');
             select.empty();
+            const list = pacientes.filter(p => p.nombre.toLowerCase().includes(term.toLowerCase()));
+            if (!list.length) {
+                select.append('<option value="">Sin pacientes asignados</option>');
+                return;
+            }
             select.append('<option value="">Seleccione un paciente...</option>');
-            pacientes
-                .filter(p => p.nombre.toLowerCase().includes(term.toLowerCase()))
-                .forEach(p => {
-                    select.append('<option value="' + p.persona_id + '">' + p.nombre + ' (' + p.codigo + ')</option>');
-                });
+            list.forEach(p => {
+                const option = $('<option></option>').val(p.persona_id).text(p.nombre + ' (' + p.codigo + ')');
+                if (String(p.persona_id) === String(selected || '')) {
+                    option.attr('selected', true);
+                }
+                select.append(option);
+            });
         }
 
         $('#filtroPacientesDoctor').on('input', function () {
-            renderPacientes($(this).val() || '');
+            const currentSelected = $('#modalCrearCitaDoctor select[name="paciente_persona_id"]').val();
+            renderPacientes($(this).val() || '', currentSelected);
         });
 
-        $('#modalCrearCitaDoctor').on('show.bs.modal', function () {
-            renderPacientes('');
+        $('#modalCrearCitaDoctor').on('show.bs.modal', function (event) {
+            const button = $(event.relatedTarget);
+            pacientePreseleccionado = button ? (button.data('paciente') || '') : '';
+            $('#filtroPacientesDoctor').val('');
+            renderPacientes('', pacientePreseleccionado);
+        });
+
+        $('#modalCrearCitaDoctor').on('shown.bs.modal', function () {
+            if (pacientePreseleccionado) {
+                $(this).find('select[name="paciente_persona_id"]').val(pacientePreseleccionado);
+            }
         });
 
         $('.agenda-calendar').on('click', '.js-event-pill', function () {
@@ -311,6 +395,7 @@
             modal.find('[data-field="hora"]').text(data.hora || '');
             modal.find('[data-field="estado"]').text(data.estado || '');
             modal.find('[data-field="nota"]').text(data.nota || 'Sin notas');
+            modal.find('#formEliminarCitaDoctor').attr('action', baseUrl + '/' + (data.id || 0));
         });
 
         $('#btnReprogramarDesdeDetalle').on('click', function () {
@@ -331,6 +416,69 @@
         $('#modalReprogramarDoctor').on('hidden.bs.modal', function () {
             $('#modalDetalleCitaDoctor').modal('show');
         });
+
+        $('#btnEditarEventoDoctor').on('click', function () {
+            if (!eventoActual) {
+                return;
+            }
+            const modal = $('#modalEditarCitaDoctor');
+            const form = modal.find('#formEditarCitaDoctor');
+            form.attr('action', baseUrl + '/' + (eventoActual.id || 0));
+            form.find('select[name="paciente_persona_id"]').val(eventoActual.paciente_persona_id || '');
+            form.find('input[name="fecha"]').val(eventoActual.fecha || '');
+            form.find('input[name="hora_inicio"]').val((eventoActual.hora || '').substring(0,5));
+            const horaFin = eventoActual.hora_fin || eventoActual.hor_fin || '';
+            form.find('input[name="hora_fin"]').val(horaFin ? horaFin.substring(0,5) : '');
+            form.find('input[name="motivo"]').val(eventoActual.motivo || '');
+            form.find('textarea[name="observaciones"]').val(eventoActual.nota || '');
+            $('#modalDetalleCitaDoctor').modal('hide');
+            modal.modal('show');
+        });
+
+        $('#modalEditarCitaDoctor').on('hidden.bs.modal', function () {
+            if (eventoActual) {
+                $('#modalDetalleCitaDoctor').modal('show');
+            }
+        });
+
+        const btnExport = document.getElementById('btnDescargarAgendaDoctor');
+        if (btnExport) {
+            btnExport.addEventListener('click', function () {
+                if (!agendaExport.length) {
+                    alert('No hay citas para exportar.');
+                    return;
+                }
+                const rows = agendaExport.map(item => ({
+                    Fecha: item.fecha || '',
+                    Hora: item.hora || '',
+                    Paciente: item.paciente || '',
+                    Motivo: item.motivo || '',
+                    Estado: item.estado || '',
+                    Notas: item.nota || ''
+                }));
+                downloadCsv('agenda-doctor.csv', rows);
+            });
+        }
+
+        function downloadCsv(filename, rows) {
+            if (!rows.length) {
+                return;
+            }
+            const headers = Object.keys(rows[0]);
+            const lines = [headers.join(',')].concat(rows.map(row => headers.map(key => wrapCsvValue(row[key])).join(',')));
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function wrapCsvValue(value) {
+            const str = (value ?? '').toString().replace(/"/g, '""');
+            return '"' + str + '"';
+        }
     })();
 </script>
 @endsection

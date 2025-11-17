@@ -8,7 +8,7 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading) }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0">
+        <button class="btn btn-outline-primary mt-2 mt-md-0" id="btnExportarBitacora">
             <i class="fas fa-download"></i> Exportar bitácora
         </button>
     </div>
@@ -52,4 +52,47 @@
         </div>
     </div>
 
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        const timeline = @json($timelineSafe->values());
+        const btn = document.getElementById('btnExportarBitacora');
+        if (!btn) {
+            return;
+        }
+
+        btn.addEventListener('click', function () {
+            if (!timeline.length) {
+                alert('No hay movimientos para exportar.');
+                return;
+            }
+            const rows = timeline.map(item => ({
+                Fecha: item.fecha || '',
+                Evento: item.descripcion || '',
+                Estado: item.estado || ''
+            }));
+            downloadCsv('bitacora-recepcion.csv', rows);
+        });
+
+        function downloadCsv(filename, rows) {
+            if (!rows.length) return;
+            const headers = Object.keys(rows[0]);
+            const lines = [headers.join(',')].concat(rows.map(row => headers.map(h => wrap(row[h])).join(',')));
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function wrap(value) {
+            const str = (value ?? '').toString().replace(/"/g, '""');
+            return '"' + str + '"';
+        }
+    })();
+</script>
 @endsection

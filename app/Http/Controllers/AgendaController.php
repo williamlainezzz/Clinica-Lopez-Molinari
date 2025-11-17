@@ -361,7 +361,7 @@ class AgendaController extends Controller
                 'calendario' => [
                     'pageTitle' => 'Agenda · Recepción',
                     'heading'   => 'Agenda diaria',
-                    'intro'     => 'Calendario consolidado para coordinar salas y recursos.',
+                    'intro'     => 'Agenda colaborativa para coordinar citas y recursos de la clínica.',
                 ],
                 'reportes' => [
                     'pageTitle' => 'Historial · Recepción',

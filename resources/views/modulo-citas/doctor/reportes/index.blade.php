@@ -8,7 +8,9 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ $heading }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0"><i class="fas fa-file-medical"></i> Descargar resumen clínico</button>
+        <button class="btn btn-outline-primary mt-2 mt-md-0" id="btnDescargarResumenClinico">
+            <i class="fas fa-file-medical"></i> Descargar resumen clínico
+        </button>
     </div>
 @endsection
 
@@ -82,4 +84,52 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        const profile = @json($patientRecord['profile'] ?? []);
+        const history = @json($patientRecord['historial'] ?? []);
+
+        const btn = document.getElementById('btnDescargarResumenClinico');
+        if (!btn) {
+            return;
+        }
+
+        btn.addEventListener('click', function () {
+            const lines = [];
+            lines.push('Resumen clínico');
+            lines.push('Paciente: ' + (profile.nombre || '')); 
+            lines.push('Código: ' + (profile.codigo || ''));
+            lines.push('Doctor asignado: ' + (profile.doctor || ''));
+            lines.push('Correo: ' + (profile.correo || ''));
+            lines.push('Teléfono: ' + (profile.telefono || ''));
+            const proxima = profile.proxima || {};
+            lines.push('Próxima cita: ' + ((proxima.fecha || '') + (proxima.hora ? ' · ' + proxima.hora : '')));
+            lines.push('Motivo próximo: ' + (proxima.motivo || ''));
+            lines.push('Estado próximo: ' + (proxima.estado || ''));
+            lines.push('');
+            lines.push('Historial:');
+            if (!history.length) {
+                lines.push('  - Sin registros');
+            } else {
+                history.forEach(item => {
+                    lines.push(`  - ${item.fecha || ''} · ${item.motivo || ''} (${item.estado || ''})`);
+                    if (item.detalle) {
+                        lines.push('      Notas: ' + item.detalle);
+                    }
+                });
+            }
+
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'resumen-clinico-' + (profile.codigo || 'paciente') + '.txt');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    })();
+</script>
 @endsection

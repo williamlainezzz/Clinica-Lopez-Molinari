@@ -8,7 +8,7 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading) }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0">
+        <button class="btn btn-outline-primary mt-2 mt-md-0" id="btnExportarReporteMensual">
             <i class="fas fa-download"></i> Exportar reporte mensual
         </button>
     </div>
@@ -121,4 +121,50 @@
             </table>
         </div>
     </div>
+@endsection
+
+@section('js')
+<script>
+    (function () {
+        const eventos = @json(($eventCollection ?? collect())->values());
+        const btn = document.getElementById('btnExportarReporteMensual');
+        if (!btn) {
+            return;
+        }
+
+        btn.addEventListener('click', function () {
+            if (!eventos.length) {
+                alert('No hay datos para exportar.');
+                return;
+            }
+            const rows = eventos.map(item => ({
+                Fecha: item.fecha || '',
+                Hora: item.hora || '',
+                Doctor: item.doctor || '',
+                Paciente: item.paciente || '',
+                Motivo: item.motivo || '',
+                Estado: item.estado || ''
+            }));
+            downloadCsv('reporte-mensual-citas.csv', rows);
+        });
+
+        function downloadCsv(filename, rows) {
+            if (!rows.length) return;
+            const headers = Object.keys(rows[0]);
+            const lines = [headers.join(',')].concat(rows.map(row => headers.map(h => wrap(row[h])).join(',')));
+            const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function wrap(value) {
+            const str = (value ?? '').toString().replace(/"/g, '""');
+            return '"' + str + '"';
+        }
+    })();
+</script>
 @endsection
