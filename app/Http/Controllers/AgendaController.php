@@ -66,6 +66,9 @@ class AgendaController extends Controller
         $eventList      = collect();
         $stats          = [];
 
+        // Lista global de doctores (para combos en recepción/admin)
+        $doctorsList = $this->doctorsFromDb();
+
         // ==========================================================
         // DOCTOR: usar datos REALES de BD para todas las secciones
         // ==========================================================
@@ -224,12 +227,13 @@ class AgendaController extends Controller
             'stats'             => $stats,
             'shareLink'         => $shareLink,
             'shareCode'         => $shareCode,
+            'doctorsList'       => $doctorsList,
         ]);
     }
 
     private function resolveView(string $rolSlug, string $sectionKey): string
     {
-        // Ejemplo: modulo-citas.admin.citas.index
+        // Ejemplo: modulo-citas.{$rolSlug}.{$sectionKey}.index
         $view = "modulo-citas.{$rolSlug}.{$sectionKey}.index";
 
         return view()->exists($view)
@@ -544,6 +548,51 @@ class AgendaController extends Controller
         }
     }
 
+    /**
+     * Lista de doctores (persona_id + nombre + usuario) desde la BD.
+     * Se usa en recepción/admin para asignar pacientes.
+     */
+    private function doctorsFromDb(): array
+    {
+        try {
+            if (
+                !DB::getSchemaBuilder()->hasTable('tbl_usuario') ||
+                !DB::getSchemaBuilder()->hasTable('tbl_rol')     ||
+                !DB::getSchemaBuilder()->hasTable('tbl_persona')
+            ) {
+                return [];
+            }
+
+            $rows = DB::table('tbl_usuario as u')
+                ->join('tbl_rol as r', 'u.FK_COD_ROL', '=', 'r.COD_ROL')
+                ->join('tbl_persona as p', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+                ->where('r.NOM_ROL', 'DOCTOR')
+                ->orderBy('p.PRIMER_NOMBRE')
+                ->orderBy('p.PRIMER_APELLIDO')
+                ->select([
+                    'p.COD_PERSONA',
+                    'p.PRIMER_NOMBRE',
+                    'p.PRIMER_APELLIDO',
+                    'u.USR_USUARIO',
+                ])
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return [];
+            }
+
+            return $rows->map(function ($row) {
+                return [
+                    'persona_id' => (int) $row->COD_PERSONA,
+                    'nombre'     => $row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO,
+                    'usuario'    => $row->USR_USUARIO,
+                ];
+            })->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
     /* =========================================================
      *  DATOS DEMO (por si BD no está lista)
      * =======================================================*/
@@ -762,6 +811,40 @@ class AgendaController extends Controller
             );
 
             return back()->with('success', 'Paciente asignado correctamente a tu panel.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'No se pudo asignar el paciente.');
+        }
+    }
+
+    /**
+     * Asigna un paciente (persona_id) al doctor seleccionado desde RECEPCIÓN/ADMIN.
+     * Espera en el request:
+     *  - doctor_persona_id
+     *  - paciente_persona_id
+     */
+    public function asignarPacienteRecepcion(Request $request)
+    {
+        $request->validate([
+            'doctor_persona_id'   => ['required', 'integer'],
+            'paciente_persona_id' => ['required', 'integer'],
+        ]);
+
+        $doctorPersonaId   = (int) $request->input('doctor_persona_id');
+        $pacientePersonaId = (int) $request->input('paciente_persona_id');
+
+        try {
+            DB::table('tbl_doctor_paciente')->updateOrInsert(
+                [
+                    'FK_COD_DOCTOR'   => $doctorPersonaId,
+                    'FK_COD_PACIENTE' => $pacientePersonaId,
+                ],
+                [
+                    'ACTIVO'         => 1,
+                    'FEC_ASIGNACION' => now(),
+                ]
+            );
+
+            return back()->with('success', 'Paciente asignado correctamente al doctor seleccionado.');
         } catch (\Throwable $e) {
             return back()->with('error', 'No se pudo asignar el paciente.');
         }
@@ -1099,7 +1182,7 @@ class AgendaController extends Controller
     }
 
     /* =========================================================
-     *  ACCIONES SOBRE CITAS (fase 2, ya listas en el controlador)
+     *  ACCIONES SOBRE CITAS
      * =======================================================*/
 
     public function confirmar(Request $request, int $id)
@@ -1169,7 +1252,7 @@ class AgendaController extends Controller
             ->whereRaw('UPPER(TRIM(NOM_ESTADO)) = ?', [strtoupper(trim($nombre))])
             ->first();
 
-        return $row ? (int) $row->COD_ESTADO : null;
+        return $row ? (int)$row->COD_ESTADO : null;
     }
 
     private function updateEstadoCita(

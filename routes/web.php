@@ -206,6 +206,8 @@ Route::get('/db-check', function () {
 |  Protegido con gates: agenda.citas.ver, agenda.calendario.ver, agenda.reportes.ver
 ======================================================= */
 Route::middleware(['auth'])->prefix('agenda')->group(function () {
+
+    // Vistas principales
     Route::get('/citas', [AgendaController::class, 'citas'])
         ->middleware('can:agenda.citas.ver')
         ->name('agenda.citas');
@@ -233,28 +235,15 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
         ->middleware('can:agenda.citas.ver')
         ->whereNumber('id')
         ->name('agenda.citas.reprogramar');
-});
 
-// NUEVO: Ruta para asignar paciente al doctor logueado
-Route::middleware(['auth'])->prefix('agenda')->group(function () {
-    Route::get('/citas', [AgendaController::class, 'citas'])
+    // Asignar paciente al doctor logueado (vista DOCTOR)
+    Route::post('/pacientes/{paciente}/asignar', [AgendaController::class, 'asignarPaciente'])
         ->middleware('can:agenda.citas.ver')
-        ->name('agenda.citas');
-
-    Route::get('/calendario', [AgendaController::class, 'calendario'])
-        ->middleware('can:agenda.calendario.ver')
-        ->name('agenda.calendario');
-
-    Route::get('/reportes', [AgendaController::class, 'reportes'])
-        ->middleware('can:agenda.reportes.ver')
-        ->name('agenda.reportes');
-
-    // Acciones sobre citas
-    Route::post('/citas/{id}/confirmar',  [AgendaController::class, 'confirmar'])->name('agenda.citas.confirmar');
-    Route::post('/citas/{id}/cancelar',   [AgendaController::class, 'cancelar'])->name('agenda.citas.cancelar');
-    Route::post('/citas/{id}/reprogramar',[AgendaController::class, 'reprogramar'])->name('agenda.citas.reprogramar');
-
-    // NUEVO: asignar paciente al doctor logueado
-    Route::post('/pacientes/{persona}/asignar', [AgendaController::class, 'asignarPaciente'])
+        ->whereNumber('paciente')
         ->name('agenda.pacientes.asignar');
+
+    // Asignar paciente desde RECEPCIÓN / ADMIN a un doctor elegido
+    Route::post('/pacientes/asignar-desde-recepcion', [AgendaController::class, 'asignarPacienteRecepcion'])
+        ->middleware('can:agenda.citas.ver')
+        ->name('agenda.pacientes.asignarDesdeRecepcion');
 });

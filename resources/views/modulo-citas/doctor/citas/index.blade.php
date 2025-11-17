@@ -9,10 +9,19 @@
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
         <div class="btn-group mt-2 mt-md-0">
-            <button class="btn btn-primary">
-                <i class="fas fa-user-plus"></i> Registrar paciente
-            </button>
-            <button class="btn btn-outline-secondary">
+            {{-- Botón para enviar al paciente al formulario de registro (link dinámico) --}}
+            @if(!empty($shareLink))
+                <a href="{{ $shareLink }}" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Registrar paciente
+                </a>
+            @else
+                <button class="btn btn-primary" type="button" disabled>
+                    <i class="fas fa-user-plus"></i> Registrar paciente
+                </button>
+            @endif
+
+            {{-- Botón placeholder para QR (luego conectamos con el generador real) --}}
+            <button class="btn btn-outline-secondary" type="button">
                 <i class="fas fa-qrcode"></i> Generar QR
             </button>
         </div>
@@ -279,11 +288,13 @@
                         <small class="text-uppercase text-muted">Código QR</small>
                         <p class="mb-0">{{ $shareCode }}</p>
                     </div>
-                    <button class="btn btn-outline-primary btn-block">Copiar enlace</button>
+                    <button class="btn btn-outline-primary btn-block" type="button">
+                        Copiar enlace
+                    </button>
                 </div>
             </div>
 
-            {{-- Pacientes en espera --}}
+            {{-- Pacientes en espera (SIN doctor) --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Pacientes en espera</h3>
@@ -303,7 +314,8 @@
                                 @endif
                                 <div class="mt-2">
                                     @if(!empty($patient['persona_id']))
-                                        <form method="POST" action="{{ route('agenda.pacientes.asignar', $patient['persona_id']) }}">
+                                        <form method="POST"
+                                              action="{{ route('agenda.pacientes.asignar', $patient['persona_id']) }}">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-outline-success">
                                                 Asignar
