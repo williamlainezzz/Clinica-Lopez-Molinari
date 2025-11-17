@@ -132,9 +132,6 @@
                     <button class="btn btn-outline-primary btn-block mb-2" data-toggle="modal" data-target="#modalCrearCitaCalendario">
                         <i class="fas fa-calendar-plus"></i> Nueva cita
                     </button>
-                    <a href="{{ route('export.citas.csv') }}" class="btn btn-outline-secondary btn-block">
-                        <i class="fas fa-download"></i> Descargar agenda
-                    </a>
                 </div>
             </div>
         </div>

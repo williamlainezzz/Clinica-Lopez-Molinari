@@ -28,12 +28,16 @@ use App\Models\Usuario;
 
 // --- AGENDA: Citas / Calendario / Reportes ---
 use App\Http\Controllers\AgendaController;
+use App\Http\Controllers\RegistroPacienteController;
 
 /* =========================
 |  Público / Dashboard
 ========================= */
 Route::get('/', fn() => view('welcome'))->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+
+Route::middleware('guest')->get('/registro/paciente', [RegistroPacienteController::class, 'create'])
+    ->name('registro.paciente');
 
 require __DIR__ . '/auth.php';
 

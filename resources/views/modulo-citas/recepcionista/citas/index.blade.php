@@ -66,70 +66,20 @@
                     </div>
                 </div>
                 <template id="recep-doctor-{{ $doctorId }}">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Paciente</th>
-                                    <th>Motivo</th>
-                                    <th>Fecha / Hora</th>
-                                    <th>Estado</th>
-                                    <th class="text-right">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($doctor['pacientes'] ?? [] as $paciente)
-                                    @php
-                                        $estadoRaw = strtoupper($paciente['estado'] ?? '');
-                                        $badge = match ($estadoRaw) {
-                                            'CONFIRMADA' => 'success',
-                                            'CANCELADA'  => 'danger',
-                                            'PENDIENTE'  => 'warning',
-                                            default      => 'secondary',
-                                        };
-                                        $estadoLabel = $paciente['estado'] ?? 'Sin estado';
-                                        $citaId = $paciente['cita_id'] ?? ($paciente['id'] ?? null);
-                                    @endphp
-                                    <tr>
-                                        <td class="font-weight-bold">{{ $paciente['nombre'] ?? 'Paciente' }}</td>
-                                        <td>{{ $paciente['motivo'] ?? 'N/D' }}</td>
-                                        <td>{{ $paciente['fecha'] ?? '' }} @if(!empty($paciente['hora'])) · {{ $paciente['hora'] }} @endif</td>
-                                        <td><span class="badge badge-{{ $badge }}">{{ $estadoLabel }}</span></td>
-                                        <td class="text-right">
-                                            @if($citaId)
-                                                <div class="btn-group btn-group-sm">
-                                                    <form method="POST" action="{{ route('agenda.citas.confirmar', $citaId) }}" class="d-inline">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-outline-success"
-                                                                @if($estadoRaw === 'CONFIRMADA') disabled @endif>
-                                                            <i class="fas fa-check"></i>
-                                                        </button>
-                                                    </form>
-                                                    <form method="POST" action="{{ route('agenda.citas.cancelar', $citaId) }}" class="d-inline">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-outline-danger"
-                                                                @if($estadoRaw === 'CANCELADA') disabled @endif>
-                                                            <i class="fas fa-times"></i>
-                                                        </button>
-                                                    </form>
-                                                    <button type="button" class="btn btn-outline-warning text-dark btn-open-reprogramar"
-                                                            data-toggle="modal" data-target="#modalReprogramarRecepcion"
-                                                            data-cita-id="{{ $citaId }}"
-                                                            data-fecha="{{ $paciente['fecha'] ?? '' }}"
-                                                            data-hora="{{ $paciente['hora'] ?? '' }}">
-                                                        <i class="fas fa-sync"></i>
-                                                    </button>
-                                                </div>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted">Sin pacientes asignados.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                    <div class="row">
+                        @forelse($doctor['pacientes'] ?? [] as $paciente)
+                            <div class="col-md-6 mb-3">
+                                <div class="border rounded p-3 h-100">
+                                    <p class="font-weight-bold mb-1">{{ $paciente['nombre'] ?? 'Paciente' }}</p>
+                                    <p class="text-muted mb-2">Código: {{ $paciente['codigo'] ?? 'N/D' }}</p>
+                                    <p class="text-muted small mb-0">Asignado al Dr. {{ $doctor['nombre'] ?? '' }}</p>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12">
+                                <p class="text-muted mb-0">Sin pacientes asignados.</p>
+                            </div>
+                        @endforelse
                     </div>
                 </template>
             @empty
