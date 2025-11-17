@@ -245,5 +245,5 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
     // Asignar paciente desde RECEPCIÓN / ADMIN a un doctor elegido
     Route::post('/pacientes/asignar-desde-recepcion', [AgendaController::class, 'asignarPacienteRecepcion'])
         ->middleware('can:agenda.citas.ver')
-        ->name('agenda.pacientes.asignarDesdeRecepcion');
+        ->name('agenda.pacientes.asignar_recepcion');
 });

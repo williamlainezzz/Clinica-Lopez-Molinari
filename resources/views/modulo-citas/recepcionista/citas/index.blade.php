@@ -12,15 +12,14 @@
             <a href="{{ route('agenda.calendario') }}" class="btn btn-outline-primary">
                 <i class="fas fa-calendar-alt"></i> Ver calendario
             </a>
-            <a href="{{ route('agenda.reportes') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-chart-line"></i> Reportes
+            <a href="{{ route('export.citas.csv') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-file-download"></i> Reportes
             </a>
         </div>
     </div>
 @endsection
 
 @section('content')
-
     {{-- Tarjetas de resumen --}}
     <div class="row mb-4">
         @foreach($stats as $stat)
@@ -32,9 +31,7 @@
                         </span>
                         <div>
                             <p class="text-muted text-uppercase small mb-1">{{ $stat['label'] }}</p>
-                            <h3 class="mb-0 font-weight-bold">
-                                {{ $stat['value'] === '' ? '—' : $stat['value'] }}
-                            </h3>
+                            <h3 class="mb-0 font-weight-bold">{{ $stat['value'] }}</h3>
                         </div>
                     </div>
                 </div>
@@ -42,17 +39,31 @@
         @endforeach
     </div>
 
+    @php
+        // Aplanamos doctorPanels → filas de tabla
+        $rows = collect($doctorPanels ?? [])->flatMap(function ($doctor) {
+            return collect($doctor['pacientes'] ?? [])->map(function ($pac) use ($doctor) {
+                return [
+                    'doctor'   => $doctor['nombre'] ?? 'Sin nombre',
+                    'paciente' => $pac['nombre'] ?? 'Paciente',
+                    'motivo'   => $pac['motivo'] ?? '',
+                    'fecha'    => $pac['fecha'] ?? '',
+                    'hora'     => $pac['hora'] ?? '',
+                    'estado'   => $pac['estado'] ?? '',
+                    'cita_id'  => $pac['cita_id'] ?? ($pac['id'] ?? null),
+                ];
+            });
+        })->values();
+    @endphp
+
     <div class="row">
-        {{-- PANEL PRINCIPAL: Citas por doctor --}}
+        {{-- PANEL PRINCIPAL: Citas programadas --}}
         <div class="col-lg-8 mb-4">
             <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="h5 mb-0">Citas programadas</h3>
-                        <small class="text-muted">Supervisa y gestiona citas por doctor y paciente.</small>
-                    </div>
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">Citas programadas</h3>
+                    <small class="text-muted">Supervisa y gestiona citas por doctor y paciente.</small>
                 </div>
-
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead>
@@ -62,64 +73,48 @@
                                 <th>Motivo</th>
                                 <th>Fecha / Hora</th>
                                 <th>Estado</th>
-                                <th style="width: 210px;">Acciones</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php
-                                // Aplanamos doctorPanels a una tabla de citas
-                                $rows = collect($doctorPanels ?? [])->flatMap(function ($doc) {
-                                    return collect($doc['pacientes'] ?? [])->map(function ($p) use ($doc) {
-                                        return [
-                                            'doctor'   => $doc['nombre'] ?? 'Doctor',
-                                            'paciente' => $p['nombre'] ?? 'Paciente',
-                                            'motivo'   => $p['motivo'] ?? '',
-                                            'fecha'    => $p['fecha'] ?? '',
-                                            'hora'     => $p['hora'] ?? '',
-                                            'estado'   => strtoupper(trim($p['estado'] ?? '')),
-                                            'cita_id'  => $p['cita_id'] ?? ($p['id'] ?? null),
-                                        ];
-                                    });
-                                });
-                            @endphp
-
                             @forelse($rows as $row)
                                 @php
-                                    $estadoUpper = $row['estado'] ?: '';
+                                    $estadoRaw   = $row['estado'] ?? '';
+                                    $estadoUpper = strtoupper(trim($estadoRaw));
+
                                     $badge = match ($estadoUpper) {
                                         'CONFIRMADA' => 'success',
-                                        'PENDIENTE'  => 'warning',
                                         'CANCELADA'  => 'danger',
+                                        'PENDIENTE'  => 'warning',
                                         default      => 'secondary',
                                     };
 
                                     $estadoLabel = match ($estadoUpper) {
                                         'CONFIRMADA' => 'Confirmada',
-                                        'PENDIENTE'  => 'Pendiente',
                                         'CANCELADA'  => 'Cancelada',
-                                        default      => ($row['estado'] !== '' ? $row['estado'] : 'Sin estado'),
+                                        'PENDIENTE'  => 'Pendiente',
+                                        default      => ($estadoRaw !== '' ? $estadoRaw : 'Sin estado'),
                                     };
+
+                                    $citaId = $row['cita_id'] ?? null;
                                 @endphp
                                 <tr>
                                     <td class="font-weight-bold">{{ $row['doctor'] }}</td>
                                     <td>{{ $row['paciente'] }}</td>
                                     <td>{{ $row['motivo'] }}</td>
-                                    <td>
-                                        {{ $row['fecha'] }}
-                                        @if($row['hora']) · {{ $row['hora'] }} @endif
-                                    </td>
+                                    <td>{{ $row['fecha'] }} @if($row['hora']) · {{ $row['hora'] }} @endif</td>
                                     <td>
                                         <span class="badge badge-{{ $badge }}">
                                             {{ $estadoLabel }}
                                         </span>
                                     </td>
                                     <td>
-                                        @if($row['cita_id'])
+                                        @if($citaId)
                                             <div class="btn-group btn-group-sm">
                                                 {{-- Confirmar --}}
                                                 <form method="POST"
-                                                      action="{{ route('agenda.citas.confirmar', $row['cita_id']) }}"
-                                                      class="d-inline">
+                                                    action="{{ route('agenda.citas.confirmar', $citaId) }}"
+                                                    class="d-inline">
                                                     @csrf
                                                     <button type="submit"
                                                             class="btn btn-outline-success"
@@ -130,8 +125,8 @@
 
                                                 {{-- Cancelar --}}
                                                 <form method="POST"
-                                                      action="{{ route('agenda.citas.cancelar', $row['cita_id']) }}"
-                                                      class="d-inline">
+                                                    action="{{ route('agenda.citas.cancelar', $citaId) }}"
+                                                    class="d-inline">
                                                     @csrf
                                                     <button type="submit"
                                                             class="btn btn-outline-danger"
@@ -145,14 +140,12 @@
                                                         class="btn btn-outline-warning text-dark btn-open-reprogramar"
                                                         data-toggle="modal"
                                                         data-target="#modalReprogramar"
-                                                        data-cita-id="{{ $row['cita_id'] }}"
+                                                        data-cita-id="{{ $citaId }}"
                                                         data-fecha="{{ $row['fecha'] }}"
                                                         data-hora="{{ $row['hora'] }}">
                                                     Reprogramar
                                                 </button>
                                             </div>
-                                        @else
-                                            <span class="text-muted small">Sin ID</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -169,12 +162,15 @@
             </div>
         </div>
 
-        {{-- PANEL LATERAL: Pacientes sin doctor / Asignación --}}
+        {{-- PANEL LATERAL: Pacientes sin doctor + Tips --}}
         <div class="col-lg-4 mb-4">
+            {{-- Pacientes sin doctor --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h3 class="h6 mb-0">Pacientes sin doctor</h3>
-                    <small class="text-muted">Asignar a un doctor</small>
+                    <div>
+                        <h3 class="h6 mb-0">Pacientes sin doctor</h3>
+                        <small class="text-muted">Asigna un doctor a cada paciente.</small>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if(empty($availablePatients))
@@ -182,51 +178,69 @@
                             No hay pacientes en espera de asignación.
                         </p>
                     @else
-                        @foreach($availablePatients as $patient)
-                            <div class="mb-3 pb-3 @if(!$loop->last) border-bottom @endif">
-                                <h5 class="mb-1">{{ $patient['nombre'] ?? 'Paciente' }}</h5>
-                                <p class="mb-1 text-muted">
-                                    {{ $patient['motivo'] ?? 'Pendiente de asignar doctor' }}
-                                </p>
+                        @if(empty($doctorsList))
+                            <p class="text-muted mb-0">
+                                Hay pacientes sin doctor, pero aún no hay doctores registrados.
+                            </p>
+                        @else
+                            @foreach($availablePatients as $patient)
+                                <div class="mb-3">
+                                    <h5 class="mb-1">{{ $patient['nombre'] ?? 'Paciente' }}</h5>
+                                    <p class="mb-1 text-muted">
+                                        {{ $patient['motivo'] ?? 'Pendiente de asignar doctor' }}
+                                    </p>
 
-                                <form method="POST"
-                                      action="{{ route('agenda.pacientes.asignarDesdeRecepcion') }}"
-                                      class="form-inline">
-                                    @csrf
-                                    <input type="hidden" name="paciente_persona_id" value="{{ $patient['persona_id'] ?? '' }}">
+                                    <form method="POST"
+                                          action="{{ route('agenda.pacientes.asignar_recepcion') }}">
+                                        @csrf
 
-                                    <div class="form-group mb-2 mr-2 flex-grow-1" style="min-width: 180px;">
-                                        <select name="doctor_persona_id" class="form-control form-control-sm w-100" required>
-                                            <option value="">Seleccione doctor…</option>
-                                            @foreach($doctorsList as $doctor)
-                                                <option value="{{ $doctor['persona_id'] }}">
-                                                    {{ $doctor['nombre'] }} ({{ $doctor['usuario'] }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+                                        {{-- Paciente a asignar --}}
+                                        <input type="hidden" name="paciente_persona_id"
+                                               value="{{ $patient['persona_id'] }}">
 
-                                    <button type="submit" class="btn btn-sm btn-outline-success mb-2">
-                                        Asignar
-                                    </button>
-                                </form>
-                            </div>
-                        @endforeach
+                                        {{-- Doctor destino --}}
+                                        <div class="form-group mb-2">
+                                            <label class="small mb-1">Doctor</label>
+                                            <select name="doctor_persona_id"
+                                                    class="form-control form-control-sm"
+                                                    required>
+                                                <option value="">Seleccione un doctor...</option>
+                                                @foreach($doctorsList as $doc)
+                                                    <option value="{{ $doc['persona_id'] }}">
+                                                        {{ $doc['nombre'] }}
+                                                        ({{ $doc['usuario'] }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-success">
+                                            Asignar
+                                        </button>
+                                    </form>
+                                </div>
+
+                                @if(!$loop->last)
+                                    <hr>
+                                @endif
+                            @endforeach
+                        @endif
                     @endif
                 </div>
             </div>
 
-            {{-- Info rápida --}}
+            {{-- Tips de uso --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white">
                     <h3 class="h6 mb-0">Tips de uso</h3>
                 </div>
-                <div class="card-body text-muted small">
-                    <ul class="mb-0 pl-3">
+                <div class="card-body">
+                    <ul class="small mb-0">
                         <li>Usa <strong>Confirmar</strong> cuando el paciente confirme por llamada o WhatsApp.</li>
                         <li>Usa <strong>Cancelar</strong> solo si la cita definitivamente no se realizará.</li>
-                        <li>Con <strong>Reprogramar</strong> ajustas la fecha y hora, el sistema deja la cita como <em>PENDIENTE</em>.</li>
-                        <li>Desde este panel también puedes <strong>asignar pacientes a doctores</strong> sin entrar al módulo de seguridad.</li>
+                        <li>Con <strong>Reprogramar</strong> ajustas fecha y hora; la cita queda como <em>PENDIENTE</em>.</li>
+                        <li>Desde este panel puedes asignar pacientes nuevos a cualquier doctor disponible.</li>
                     </ul>
                 </div>
             </div>
@@ -276,7 +290,7 @@
 
 @section('js')
 <script>
-    // Modal de reprogramación, igual que en la vista de doctor
+    // Reutilizamos el mismo JS que en doctor para abrir el modal de reprogramar
     $('#modalReprogramar').on('show.bs.modal', function (event) {
         var button   = $(event.relatedTarget);
         var citaId   = button.data('cita-id');
