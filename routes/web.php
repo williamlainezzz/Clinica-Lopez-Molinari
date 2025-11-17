@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 // Auth / Reset / 2FA
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\TwoFactorEmailController;
 
 // Seguridad (controladores reales)
@@ -34,6 +35,10 @@ use App\Http\Controllers\AgendaController;
 ========================= */
 Route::get('/', fn() => view('welcome'))->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+
+Route::get('/registro/paciente', [RegisteredUserController::class, 'createPatient'])
+    ->middleware('guest')
+    ->name('registro.paciente');
 
 require __DIR__ . '/auth.php';
 
@@ -221,6 +226,20 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
         ->name('agenda.reportes');
 
     // Acciones sobre citas
+    Route::post('/citas', [AgendaController::class, 'store'])
+        ->middleware('can:agenda.citas.ver')
+        ->name('agenda.citas.store');
+
+    Route::put('/citas/{id}', [AgendaController::class, 'update'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.update');
+
+    Route::delete('/citas/{id}', [AgendaController::class, 'destroy'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.destroy');
+
     Route::post('/citas/{id}/confirmar',  [AgendaController::class, 'confirmar'])
         ->middleware('can:agenda.citas.ver')
         ->whereNumber('id')
@@ -246,4 +265,24 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
     Route::post('/pacientes/asignar-desde-recepcion', [AgendaController::class, 'asignarPacienteRecepcion'])
         ->middleware('can:agenda.citas.ver')
         ->name('agenda.pacientes.asignar_recepcion');
+
+    // Exportaciones por rol
+    Route::get('/export/doctor', [AgendaController::class, 'exportDoctorAgenda'])
+        ->middleware('can:agenda.calendario.ver')
+        ->name('agenda.export.doctor');
+
+    Route::get('/export/doctor/resumen', [AgendaController::class, 'exportDoctorResumen'])
+        ->middleware('can:agenda.reportes.ver')
+        ->name('agenda.export.doctor_resumen');
+
+    Route::get('/export/paciente/historial', [AgendaController::class, 'exportPatientHistory'])
+        ->name('agenda.export.paciente_historial');
+
+    Route::get('/export/recepcionista/bitacora', [AgendaController::class, 'exportReceptionBitacora'])
+        ->middleware('can:agenda.reportes.ver')
+        ->name('agenda.export.recepcionista_bitacora');
+
+    Route::get('/export/admin/mensual', [AgendaController::class, 'exportAdminMonthly'])
+        ->middleware('can:agenda.reportes.ver')
+        ->name('agenda.export.admin_mensual');
 });

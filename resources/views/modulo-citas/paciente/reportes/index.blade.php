@@ -8,7 +8,9 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ $heading }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0"><i class="fas fa-file-download"></i> Descargar historial</button>
+        <a href="{{ route('agenda.export.paciente_historial') }}" class="btn btn-outline-primary mt-2 mt-md-0" target="_blank">
+            <i class="fas fa-file-download"></i> Descargar historial
+        </a>
     </div>
 @endsection
 
@@ -26,15 +28,28 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($patientRecord['historial'] as $item)
+                    @forelse($patientRecord['historial'] ?? [] as $item)
+                        @php
+                            $estado = strtoupper($item['estado'] ?? '');
+                            $badge = match ($estado) {
+                                'CONFIRMADA' => 'success',
+                                'COMPLETADA' => 'primary',
+                                'CANCELADA'  => 'danger',
+                                default      => 'secondary',
+                            };
+                        @endphp
                         <tr>
                             <td>{{ $item['fecha'] }}</td>
                             <td>{{ $item['doctor'] }}</td>
                             <td>{{ $item['motivo'] }}</td>
-                            <td><span class="badge badge-secondary">{{ $item['estado'] }}</span></td>
-                            <td>{{ $item['detalle'] }}</td>
+                            <td><span class="badge badge-{{ $badge }}">{{ $item['estado'] }}</span></td>
+                            <td>{{ $item['detalle'] ?? 'Sin detalle' }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Aún no tienes citas registradas.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

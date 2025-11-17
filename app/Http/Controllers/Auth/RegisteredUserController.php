@@ -25,6 +25,34 @@ class RegisteredUserController extends Controller
         return view('auth.register');
     }
 
+    public function createPatient(Request $request)
+    {
+        $doctorPersonaId = $this->resolveDoctorPersonaId($request);
+        $doctorDisplay   = null;
+
+        if ($doctorPersonaId && DB::getSchemaBuilder()->hasTable('tbl_persona')) {
+            $doctorDisplay = DB::table('tbl_persona')
+                ->where('COD_PERSONA', $doctorPersonaId)
+                ->selectRaw("CONCAT(PRIMER_NOMBRE,' ',PRIMER_APELLIDO) as nombre")
+                ->value('nombre');
+        }
+
+        $preguntas = [];
+        if (DB::getSchemaBuilder()->hasTable('tbl_pregunta_seguridad')) {
+            $preguntas = DB::table('tbl_pregunta_seguridad')
+                ->where('ESTADO', 1)
+                ->orderBy('TEXTO_PREGUNTA')
+                ->get();
+        }
+
+        return view('registro.paciente', [
+            'doctorPersonaId' => $doctorPersonaId,
+            'doctorUsername'  => $request->query('doctor'),
+            'doctorDisplay'   => $doctorDisplay,
+            'preguntasSeg'    => $preguntas,
+        ]);
+    }
+
     /**
      * Registra un nuevo usuario en la BD real:
      * 1) Crea tbl_persona
@@ -73,9 +101,10 @@ class RegisteredUserController extends Controller
         ]);
 
         $usuario = null;
+        $doctorPersonaId = $this->resolveDoctorPersonaId($request);
 
         try {
-            DB::transaction(function () use ($validated, &$usuario) {
+            DB::transaction(function () use ($validated, &$usuario, $doctorPersonaId) {
     // 2) Crear PERSONA
     $persona = Persona::create([
         'PRIMER_NOMBRE'    => $validated['PRIMER_NOMBRE'],
@@ -159,6 +188,19 @@ class RegisteredUserController extends Controller
                         'RESPUESTA_HASH'  => Hash::make($ans2),
                     ],
                 ]);
+
+                if ($doctorPersonaId && DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente')) {
+                    DB::table('tbl_doctor_paciente')->updateOrInsert(
+                        [
+                            'FK_COD_DOCTOR'   => $doctorPersonaId,
+                            'FK_COD_PACIENTE' => $persona->COD_PERSONA,
+                        ],
+                        [
+                            'ACTIVO'         => 1,
+                            'FEC_ASIGNACION' => now(),
+                        ]
+                    );
+                }
             });
         } catch (\Illuminate\Database\QueryException $e) {
             // Violación de UNIQUE (correo ya existe)
@@ -176,6 +218,27 @@ class RegisteredUserController extends Controller
         session()->flash('username_generado', $usuario->USR_USUARIO);
 
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    private function resolveDoctorPersonaId(Request $request): ?int
+    {
+        $username = trim((string) ($request->query('doctor') ?? $request->input('doctor') ?? ''));
+
+        if ($username !== '') {
+            $doctorPersonaId = DB::table('tbl_usuario as u')
+                ->join('tbl_rol as r', 'u.FK_COD_ROL', '=', 'r.COD_ROL')
+                ->whereRaw('UPPER(u.USR_USUARIO) = ?', [strtoupper($username)])
+                ->whereRaw('UPPER(r.NOM_ROL) LIKE ?', ['%DOCTOR%'])
+                ->value('FK_COD_PERSONA');
+
+            if ($doctorPersonaId) {
+                return (int) $doctorPersonaId;
+            }
+        }
+
+        $doctorId = (int) ($request->query('doctor_id') ?? $request->input('doctor_id') ?? 0);
+
+        return $doctorId > 0 ? $doctorId : null;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -48,6 +49,9 @@ class AgendaController extends Controller
         $labels   = $this->sectionLabels();
         $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
 
+        $calendarContext = $this->buildCalendarContext($request);
+        $calendarMatrix  = $calendarContext['matrix'];
+
         // ---------------------------------------------------
         // Valores por defecto (demo / BD según disponibilidad)
         // ---------------------------------------------------
@@ -61,13 +65,15 @@ class AgendaController extends Controller
         $activeDoctor   = $doctorPanels[0] ?? null;
         $patientRecord  = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
         $timeline       = $this->patientTimeline();
-        $calendarMatrix = $this->calendarMatrix();
-        $calendarEvents = [];
-        $eventList      = collect();
-        $stats          = [];
+        $calendarMatrix = $calendarContext['matrix'];
+        $calendarEvents    = [];
+        $eventList         = collect();
+        $stats             = [];
+        $calendarPrepared  = false;
 
         // Lista global de doctores (para combos en recepción/admin)
-        $doctorsList = $this->doctorsFromDb();
+        $doctorsList      = $this->doctorsFromDb();
+        $doctorPatientMap = $this->doctorPatientDirectory();
 
         // ==========================================================
         // DOCTOR: usar datos REALES de BD para todas las secciones
@@ -127,6 +133,73 @@ class AgendaController extends Controller
         }
 
         // ==========================================================
+        // PACIENTE: ficha, historial y calendario propios
+        // ==========================================================
+        if ($rolSlug === 'paciente') {
+            $patientHasRealData = false;
+            $personaId = (int) ($user->FK_COD_PERSONA ?? optional($user->persona)->COD_PERSONA ?? 0);
+
+            if ($personaId > 0 && DB::getSchemaBuilder()->hasTable('tbl_cita')) {
+                try {
+                    $citasPaciente = $this->fetchCitasFromDatabase($rolSlug, $personaId);
+
+                    if ($citasPaciente->isNotEmpty()) {
+                        $patientRecord = $this->buildPatientRecordFromDb($personaId, $citasPaciente);
+
+                        $calendarBundle = $this->buildCalendarEventsForPatient($citasPaciente);
+                        $calendarEvents = $calendarBundle['byDate'];
+                        $eventList      = collect($calendarBundle['list']);
+                        $patientHasRealData = true;
+                    }
+                } catch (\Throwable $e) {
+                    // Si algo falla seguimos con los datos de respaldo (demo)
+                }
+            }
+
+            if (!$patientHasRealData) {
+                $nombrePersona = trim(
+                    sprintf(
+                        '%s %s',
+                        optional($user->persona)->PRIMER_NOMBRE,
+                        optional($user->persona)->PRIMER_APELLIDO
+                    )
+                );
+
+                $patientRecord = [
+                    'profile' => [
+                        'codigo'       => $personaId > 0 ? 'PAC-' . str_pad($personaId, 4, '0', STR_PAD_LEFT) : null,
+                        'nombre'       => $nombrePersona !== '' ? $nombrePersona : 'Paciente',
+                        'doctor'       => 'Sin doctor asignado',
+                        'especialidad' => 'Odontología',
+                        'estado'       => 'Sin citas',
+                        'correo'       => null,
+                        'telefono'     => null,
+                        'proxima'      => [
+                            'fecha'  => null,
+                            'hora'   => null,
+                            'motivo' => null,
+                            'estado' => 'Sin citas',
+                        ],
+                    ],
+                    'historial' => [],
+                ];
+
+                $calendarEvents = [];
+                $eventList      = collect();
+            }
+
+            $stats = $this->buildStats(
+                $rolSlug,
+                $doctorPanels,
+                $availablePatients,
+                $patientRecord ?? [],
+                $eventList->all()
+            );
+
+            $calendarPrepared = true;
+        }
+
+        // ==========================================================
         // ADMIN en sección "citas": datos reales de BD
         // ==========================================================
         if ($sectionKey === 'citas' && $rolSlug === 'admin') {
@@ -159,7 +232,10 @@ class AgendaController extends Controller
                 [],                    // patientRecord no se usa en rama admin
                 $eventList->all()
             );
-        } else {
+            $calendarPrepared = true;
+        }
+
+        if (!$calendarPrepared) {
             // Resto de roles / secciones: usamos los paneles (demo o reales) para calendario y estadísticas
             $calendarEventBundle = $this->buildCalendarEvents(
                 $doctorPanels,
@@ -222,12 +298,14 @@ class AgendaController extends Controller
             'patientRecord'     => $patientRecord,
             'timeline'          => $timeline,
             'calendarMatrix'    => $calendarMatrix,
+            'calendarContext'   => $calendarContext,
             'calendarEvents'    => $calendarEvents,
             'eventList'         => $eventList,
             'stats'             => $stats,
             'shareLink'         => $shareLink,
             'shareCode'         => $shareCode,
             'doctorsList'       => $doctorsList,
+            'doctorPatientMap'  => $doctorPatientMap,
         ]);
     }
 
@@ -283,7 +361,7 @@ class AgendaController extends Controller
                 'calendario' => [
                     'pageTitle' => 'Agenda · Recepción',
                     'heading'   => 'Agenda diaria',
-                    'intro'     => 'Calendario consolidado para coordinar salas y recursos.',
+                    'intro'     => 'Monitorea todas las citas de la clínica y gestiona cambios al instante.',
                 ],
                 'reportes' => [
                     'pageTitle' => 'Historial · Recepción',
@@ -456,6 +534,7 @@ class AgendaController extends Controller
                     $first = $pRows->first();
 
                     return [
+                        'persona_id' => $first->paciente_persona_id,
                         'id'      => $first->COD_CITA,  // ID REAL DE LA CITA
                         'codigo'  => 'PAC-' . str_pad($first->paciente_persona_id, 4, '0', STR_PAD_LEFT),
                         'nombre'  => $first->paciente_nombre,
@@ -475,15 +554,19 @@ class AgendaController extends Controller
                     'id'        => $row->COD_CITA,
                     'fecha'     => $row->FEC_CITA,
                     'hora'      => $row->HOR_CITA,
+                    'hora_fin'  => $row->HOR_FIN,
+                    'paciente_persona_id' => $row->paciente_persona_id,
                     'paciente'  => $row->paciente_nombre,
                     'estado'    => $normalizeEstado($row->estado_nombre),
                     'motivo'    => $row->MOT_CITA,
+                    'nota'      => $row->OBSERVACIONES,
                     'duracion'  => null,
                     'ubicacion' => 'Consultorio',
                 ];
             })->values()->all();
 
             $doctorPanels[] = [
+                'doctor_persona_id' => $doctorPersonaId,
                 'codigo'       => $codigo,
                 'nombre'       => $first->doctor_nombre,
                 'especialidad' => 'Odontología',
@@ -586,6 +669,58 @@ class AgendaController extends Controller
                     'persona_id' => (int) $row->COD_PERSONA,
                     'nombre'     => $row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO,
                     'usuario'    => $row->USR_USUARIO,
+                ];
+            })->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function doctorPatientDirectory(): array
+    {
+        try {
+            if (
+                !DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente') ||
+                !DB::getSchemaBuilder()->hasTable('tbl_persona')
+            ) {
+                return [];
+            }
+
+            $rows = DB::table('tbl_doctor_paciente as dp')
+                ->join('tbl_persona as doc', 'doc.COD_PERSONA', '=', 'dp.FK_COD_DOCTOR')
+                ->join('tbl_persona as pac', 'pac.COD_PERSONA', '=', 'dp.FK_COD_PACIENTE')
+                ->where('dp.ACTIVO', 1)
+                ->select([
+                    'dp.FK_COD_DOCTOR as doctor_id',
+                    'dp.FK_COD_PACIENTE as paciente_id',
+                    DB::raw("CONCAT(doc.PRIMER_NOMBRE,' ',doc.PRIMER_APELLIDO) as doctor_nombre"),
+                    DB::raw("CONCAT(pac.PRIMER_NOMBRE,' ',pac.PRIMER_APELLIDO) as paciente_nombre"),
+                ])
+                ->orderBy('doc.PRIMER_NOMBRE')
+                ->orderBy('doc.PRIMER_APELLIDO')
+                ->orderBy('pac.PRIMER_NOMBRE')
+                ->orderBy('pac.PRIMER_APELLIDO')
+                ->get();
+
+            if ($rows->isEmpty()) {
+                return [];
+            }
+
+            return $rows->groupBy('doctor_id')->mapWithKeys(function ($group, $doctorId) {
+                $first = $group->first();
+
+                return [
+                    (int) $doctorId => [
+                        'doctor'    => $first->doctor_nombre,
+                        'doctor_id' => (int) $doctorId,
+                        'patients'  => $group->map(function ($row) {
+                            return [
+                                'persona_id' => (int) $row->paciente_id,
+                                'nombre'     => $row->paciente_nombre,
+                                'codigo'     => 'PAC-' . str_pad($row->paciente_id, 4, '0', STR_PAD_LEFT),
+                            ];
+                        })->values()->all(),
+                    ],
                 ];
             })->all();
         } catch (\Throwable $e) {
@@ -886,63 +1021,98 @@ class AgendaController extends Controller
         ];
     }
 
-    private function calendarMatrix(): array
+    private function buildCalendarContext(Request $request): array
     {
+        $month = $this->resolveCalendarMonth($request->input('month'));
+
         return [
-            [
-                ['label' => '27', 'date' => '2025-10-27', 'isMuted' => true],
-                ['label' => '28', 'date' => '2025-10-28', 'isMuted' => true],
-                ['label' => '29', 'date' => '2025-10-29', 'isMuted' => true],
-                ['label' => '30', 'date' => '2025-10-30', 'isMuted' => true],
-                ['label' => '31', 'date' => '2025-10-31', 'isMuted' => true],
-                ['label' => '1',  'date' => '2025-11-01'],
-                ['label' => '2',  'date' => '2025-11-02'],
-            ],
-            [
-                ['label' => '3',  'date' => '2025-11-03'],
-                ['label' => '4',  'date' => '2025-11-04'],
-                ['label' => '5',  'date' => '2025-11-05'],
-                ['label' => '6',  'date' => '2025-11-06'],
-                ['label' => '7',  'date' => '2025-11-07'],
-                ['label' => '8',  'date' => '2025-11-08'],
-                ['label' => '9',  'date' => '2025-11-09'],
-            ],
-            [
-                ['label' => '10', 'date' => '2025-11-10'],
-                ['label' => '11', 'date' => '2025-11-11'],
-                ['label' => '12', 'date' => '2025-11-12', 'isToday' => true],
-                ['label' => '13', 'date' => '2025-11-13'],
-                ['label' => '14', 'date' => '2025-11-14'],
-                ['label' => '15', 'date' => '2025-11-15'],
-                ['label' => '16', 'date' => '2025-11-16'],
-            ],
-            [
-                ['label' => '17', 'date' => '2025-11-17'],
-                ['label' => '18', 'date' => '2025-11-18'],
-                ['label' => '19', 'date' => '2025-11-19'],
-                ['label' => '20', 'date' => '2025-11-20'],
-                ['label' => '21', 'date' => '2025-11-21'],
-                ['label' => '22', 'date' => '2025-11-22'],
-                ['label' => '23', 'date' => '2025-11-23'],
-            ],
-            [
-                ['label' => '24', 'date' => '2025-11-24'],
-                ['label' => '25', 'date' => '2025-11-25'],
-                ['label' => '26', 'date' => '2025-11-26'],
-                ['label' => '27', 'date' => '2025-11-27'],
-                ['label' => '28', 'date' => '2025-11-28'],
-                ['label' => '29', 'date' => '2025-11-29'],
-                ['label' => '30', 'date' => '2025-11-30'],
-            ],
-            [
-                ['label' => '1', 'date' => '2025-12-01', 'isMuted' => true],
-                ['label' => '2', 'date' => '2025-12-02', 'isMuted' => true],
-                ['label' => '3', 'date' => '2025-12-03', 'isMuted' => true],
-                ['label' => '4', 'date' => '2025-12-04', 'isMuted' => true],
-                ['label' => '5', 'date' => '2025-12-05', 'isMuted' => true],
-                ['label' => '6', 'date' => '2025-12-06', 'isMuted' => true],
-                ['label' => '7', 'date' => '2025-12-07', 'isMuted' => true],
-            ],
+            'month' => $month->format('Y-m'),
+            'label' => ucfirst($month->locale(app()->getLocale())->translatedFormat('F Y')),
+            'prev'  => $month->copy()->subMonth()->format('Y-m'),
+            'next'  => $month->copy()->addMonth()->format('Y-m'),
+            'matrix'=> $this->calendarMatrix($month),
+        ];
+    }
+
+    private function resolveCalendarMonth(?string $value): Carbon
+    {
+        if ($value && preg_match('/^\d{4}-\d{2}$/', $value)) {
+            try {
+                return Carbon::createFromFormat('Y-m', $value)->startOfMonth();
+            } catch (\Throwable $e) {
+                // fallback handled below
+            }
+        }
+
+        return Carbon::today()->startOfMonth();
+    }
+
+    private function calendarMatrix(?Carbon $month = null): array
+    {
+        $month = $month ? $month->copy()->startOfMonth() : Carbon::today()->startOfMonth();
+
+        $start = $month->copy()->startOfMonth()->startOfWeek(Carbon::MONDAY);
+        $end   = $month->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY);
+
+        $matrix = [];
+        $cursor = $start->copy();
+
+        while ($cursor <= $end) {
+            $week = [];
+
+            for ($i = 0; $i < 7; $i++) {
+                $week[] = [
+                    'label'   => $cursor->day,
+                    'date'    => $cursor->toDateString(),
+                    'isMuted' => $cursor->month !== $month->month,
+                    'isToday' => $cursor->isToday(),
+                ];
+
+                $cursor->addDay();
+            }
+
+            $matrix[] = $week;
+        }
+
+        return $matrix;
+    }
+
+    private function buildCalendarEventsForPatient($citas)
+    {
+        $normalizeEstado = function ($nombreEstado = null) {
+            if (!$nombreEstado) {
+                return 'Pendiente';
+            }
+
+            $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
+
+            return str_replace('_', ' ', $nombreEstado);
+        };
+
+        $events = collect($citas)
+            ->map(function ($cita) use ($normalizeEstado) {
+                return [
+                    'id'        => $cita->COD_CITA,
+                    'fecha'     => $cita->FEC_CITA,
+                    'hora'      => substr((string) $cita->HOR_CITA, 0, 5),
+                    'hora_fin'  => $cita->HOR_FIN ? substr((string) $cita->HOR_FIN, 0, 5) : null,
+                    'motivo'    => $cita->MOT_CITA,
+                    'doctor'    => $cita->doctor_nombre,
+                    'paciente'  => $cita->paciente_nombre,
+                    'doctor_persona_id'   => $cita->doctor_persona_id,
+                    'paciente_persona_id' => $cita->paciente_persona_id,
+                    'estado'    => $normalizeEstado($cita->estado_nombre),
+                    'nota'      => $cita->OBSERVACIONES,
+                ];
+            })
+            ->sortBy(function ($event) {
+                return sprintf('%s %s', $event['fecha'] ?? '', $event['hora'] ?? '');
+            })
+            ->values();
+
+        return [
+            'list'   => $events->all(),
+            'byDate' => $events->groupBy('fecha')->map(fn ($g) => $g->values()->all())->all(),
         ];
     }
 
@@ -954,6 +1124,7 @@ class AgendaController extends Controller
                 return collect($doctor['agenda'])->map(function ($event) use ($doctor) {
                     return array_merge($event, [
                         'doctor'       => $doctor['nombre'],
+                        'doctor_persona_id' => $doctor['doctor_persona_id'] ?? null,
                         'especialidad' => $doctor['especialidad'],
                         'color'        => $doctor['color'],
                     ]);
@@ -992,6 +1163,26 @@ class AgendaController extends Controller
         $canceladas       = $eventsCollection->where('estado', 'Cancelada')->count();
         $pacientesActivos = collect($doctorPanels)->sum(fn ($doc) => count($doc['pacientes'] ?? []));
 
+        $patientNextStat = (function () use ($patientRecord) {
+            $fecha = trim((string) data_get($patientRecord, 'profile.proxima.fecha', ''));
+            $hora  = trim((string) data_get($patientRecord, 'profile.proxima.hora', ''));
+
+            if ($fecha && $hora) {
+                $value = sprintf('%s · %s', $fecha, $hora);
+            } elseif ($fecha || $hora) {
+                $value = $fecha ?: $hora;
+            } else {
+                $value = 'Sin programar';
+            }
+
+            return [
+                'label' => 'Próxima cita',
+                'value' => $value,
+                'icon'  => 'fas fa-calendar-day',
+                'color' => 'info',
+            ];
+        })();
+
         return match ($rolSlug) {
             'doctor' => [
                 ['label' => 'Pacientes activos', 'value' => $pacientesActivos, 'icon' => 'fas fa-user-friends', 'color' => 'primary'],
@@ -999,16 +1190,10 @@ class AgendaController extends Controller
                 ['label' => 'Citas confirmadas', 'value' => $confirmadas, 'icon' => 'fas fa-check-circle', 'color' => 'success'],
             ],
             'paciente' => [
-                [
-                    'label' => 'Próxima cita',
-                    'value' => ($patientRecord['profile']['proxima']['fecha'] ?? '') . ' · ' .
-                               ($patientRecord['profile']['proxima']['hora'] ?? ''),
-                    'icon'  => 'fas fa-calendar-day',
-                    'color' => 'info',
-                ],
+                $patientNextStat,
                 [
                     'label' => 'Estado',
-                    'value' => $patientRecord['profile']['proxima']['estado'] ?? 'Pendiente',
+                    'value' => data_get($patientRecord, 'profile.proxima.estado', 'Sin citas'),
                     'icon'  => 'fas fa-heartbeat',
                     'color' => 'success',
                 ],
@@ -1090,6 +1275,7 @@ class AgendaController extends Controller
                         $estadoNombre = strtoupper($row->estado_nombre ?? '');
 
                         return [
+                            'persona_id' => $row->paciente_persona_id,
                             'cita_id' => $row->COD_CITA,
                             'nombre'  => $row->paciente_nombre,
                             'motivo'  => $row->MOT_CITA,
@@ -1097,6 +1283,22 @@ class AgendaController extends Controller
                             'hora'    => substr($row->HOR_CITA, 0, 5),
                             'estado'  => $estadoNombre,
                             'nota'    => $row->OBSERVACIONES,
+                        ];
+                    })->all(),
+                    'agenda'            => $rows->map(function ($row) {
+                        $estadoNombre = $row->estado_nombre ?? 'Pendiente';
+                        $estadoLabel = ucfirst(strtolower(str_replace('_', ' ', $estadoNombre)));
+
+                        return [
+                            'id'        => $row->COD_CITA,
+                            'fecha'     => $row->FEC_CITA,
+                            'hora'      => substr($row->HOR_CITA, 0, 5),
+                            'hora_fin'  => $row->HOR_FIN ? substr($row->HOR_FIN, 0, 5) : null,
+                            'paciente'  => $row->paciente_nombre,
+                            'paciente_persona_id' => $row->paciente_persona_id,
+                            'estado'    => $estadoLabel,
+                            'motivo'    => $row->MOT_CITA,
+                            'nota'      => $row->OBSERVACIONES,
                         ];
                     })->all(),
                 ];
@@ -1246,6 +1448,72 @@ class AgendaController extends Controller
         );
     }
 
+    public function store(Request $request)
+    {
+        if (!$this->citaTableExists()) {
+            return $this->respondAgendaAction($request, false, '', 'La tabla de citas no está disponible.');
+        }
+
+        $payload = $this->prepareCitaPayload($request);
+
+        try {
+            $id = DB::table('tbl_cita')->insertGetId($payload);
+        } catch (\Throwable $e) {
+            $id = 0;
+        }
+
+        return $this->respondAgendaAction(
+            $request,
+            $id > 0,
+            'La cita se creó correctamente.',
+            'No se pudo crear la cita.'
+        );
+    }
+
+    public function update(Request $request, int $id)
+    {
+        if (!$this->citaTableExists()) {
+            return $this->respondAgendaAction($request, false, '', 'La tabla de citas no está disponible.');
+        }
+
+        $payload = $this->prepareCitaPayload($request);
+
+        try {
+            $updated = DB::table('tbl_cita')
+                ->where('COD_CITA', $id)
+                ->update($payload) > 0;
+        } catch (\Throwable $e) {
+            $updated = false;
+        }
+
+        return $this->respondAgendaAction(
+            $request,
+            $updated,
+            'La cita se actualizó correctamente.',
+            'No se pudo actualizar la cita.'
+        );
+    }
+
+    public function destroy(Request $request, int $id)
+    {
+        if (!$this->citaTableExists()) {
+            return $this->respondAgendaAction($request, false, '', 'La tabla de citas no está disponible.');
+        }
+
+        try {
+            $deleted = DB::table('tbl_cita')->where('COD_CITA', $id)->delete() > 0;
+        } catch (\Throwable $e) {
+            $deleted = false;
+        }
+
+        return $this->respondAgendaAction(
+            $request,
+            $deleted,
+            'La cita se eliminó correctamente.',
+            'No se pudo eliminar la cita.'
+        );
+    }
+
     private function findEstadoId(string $nombre): ?int
     {
         $row = DB::table('tbl_estado_cita')
@@ -1253,6 +1521,225 @@ class AgendaController extends Controller
             ->first();
 
         return $row ? (int)$row->COD_ESTADO : null;
+    }
+
+    private function defaultEstadoId(): ?int
+    {
+        if (!DB::getSchemaBuilder()->hasTable('tbl_estado_cita')) {
+            return null;
+        }
+
+        return DB::table('tbl_estado_cita')->orderBy('COD_ESTADO')->value('COD_ESTADO');
+    }
+
+    private function prepareCitaPayload(Request $request): array
+    {
+        $data = $request->validate([
+            'doctor_persona_id'   => ['required', 'integer', 'exists:tbl_persona,COD_PERSONA'],
+            'paciente_persona_id' => ['required', 'integer', 'exists:tbl_persona,COD_PERSONA'],
+            'fecha'               => ['required', 'date'],
+            'hora_inicio'         => ['required', 'date_format:H:i'],
+            'hora_fin'            => ['nullable', 'date_format:H:i'],
+            'motivo'              => ['required', 'string', 'max:255'],
+            'observaciones'       => ['nullable', 'string', 'max:500'],
+            'estado'              => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $estadoNombre = strtoupper(trim($data['estado'] ?? 'PENDIENTE'));
+        if ($estadoNombre === '') {
+            $estadoNombre = 'PENDIENTE';
+        }
+
+        $estadoId = $this->findEstadoId($estadoNombre) ?? $this->defaultEstadoId();
+
+        return array_filter([
+            'FK_COD_DOCTOR'   => $data['doctor_persona_id'],
+            'FK_COD_PACIENTE' => $data['paciente_persona_id'],
+            'FEC_CITA'        => $data['fecha'],
+            'HOR_CITA'        => $data['hora_inicio'],
+            'HOR_FIN'         => $data['hora_fin'] ?? null,
+            'MOT_CITA'        => $data['motivo'],
+            'OBSERVACIONES'   => $data['observaciones'] ?? null,
+            'ESTADO_CITA'     => $estadoId,
+        ], function ($value) {
+            return $value !== null;
+        });
+    }
+
+    private function citaTableExists(): bool
+    {
+        return DB::getSchemaBuilder()->hasTable('tbl_cita');
+    }
+
+    private function respondAgendaAction(Request $request, bool $ok, string $success, string $error)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok'      => $ok,
+                'message' => $ok ? $success : $error,
+            ], $ok ? 200 : 422);
+        }
+
+        return back()->with($ok ? 'success' : 'error', $ok ? $success : $error);
+    }
+
+    public function exportDoctorAgenda(Request $request)
+    {
+        $personaId = (int) (auth()->user()->FK_COD_PERSONA ?? 0);
+        abort_if($personaId === 0, 403);
+
+        if (!$this->citaTableExists()) {
+            return $this->streamCsv('agenda-doctor.csv', [['Sin datos']]);
+        }
+
+        $citas = $this->fetchCitasFromDatabase('doctor', $personaId);
+        $rows  = $citas->map(function ($cita) {
+            return [
+                $cita->FEC_CITA,
+                substr($cita->HOR_CITA ?? '', 0, 5),
+                $cita->paciente_nombre,
+                $cita->MOT_CITA,
+                ucfirst(strtolower($cita->estado_nombre ?? 'Pendiente')),
+            ];
+        })->toArray();
+
+        array_unshift($rows, ['Fecha', 'Hora', 'Paciente', 'Motivo', 'Estado']);
+
+        return $this->streamCsv('agenda-doctor.csv', $rows);
+    }
+
+    public function exportDoctorResumen(Request $request)
+    {
+        $personaId = (int) (auth()->user()->FK_COD_PERSONA ?? 0);
+        abort_if($personaId === 0, 403);
+
+        if (!$this->citaTableExists()) {
+            return $this->streamCsv('resumen-clinico.csv', [['Sin datos']]);
+        }
+
+        $citas = $this->fetchCitasFromDatabase('doctor', $personaId);
+        $rows  = $citas->map(function ($cita) {
+            return [
+                $cita->paciente_nombre,
+                $cita->FEC_CITA,
+                substr($cita->HOR_CITA ?? '', 0, 5),
+                $cita->MOT_CITA,
+                ucfirst(strtolower($cita->estado_nombre ?? 'Pendiente')),
+                $cita->OBSERVACIONES,
+            ];
+        })->toArray();
+
+        array_unshift($rows, ['Paciente', 'Fecha', 'Hora', 'Motivo', 'Estado', 'Notas']);
+
+        return $this->streamCsv('resumen-clinico.csv', $rows);
+    }
+
+    public function exportPatientHistory(Request $request)
+    {
+        $personaId = (int) (auth()->user()->FK_COD_PERSONA ?? 0);
+        abort_if($personaId === 0, 403);
+
+        if (!$this->citaTableExists()) {
+            return $this->streamCsv('historial-paciente.csv', [['Sin datos']]);
+        }
+
+        $citas = $this->fetchCitasFromDatabase('paciente', $personaId);
+        $rows  = $citas->map(function ($cita) {
+            return [
+                $cita->FEC_CITA,
+                substr($cita->HOR_CITA ?? '', 0, 5),
+                $cita->doctor_nombre,
+                $cita->MOT_CITA,
+                ucfirst(strtolower($cita->estado_nombre ?? 'Pendiente')),
+                $cita->OBSERVACIONES,
+            ];
+        })->toArray();
+
+        array_unshift($rows, ['Fecha', 'Hora', 'Doctor', 'Motivo', 'Estado', 'Notas']);
+
+        return $this->streamCsv('historial-paciente.csv', $rows);
+    }
+
+    public function exportReceptionBitacora(Request $request)
+    {
+        if (!$this->citaTableExists()) {
+            return $this->streamCsv('bitacora-recepcion.csv', [['Sin datos']]);
+        }
+
+        $citas = $this->fetchCitasFromDatabase('admin', 0);
+        $rows  = $citas->map(function ($cita) {
+            return [
+                $cita->FEC_CITA,
+                substr($cita->HOR_CITA ?? '', 0, 5),
+                $cita->doctor_nombre,
+                $cita->paciente_nombre,
+                ucfirst(strtolower($cita->estado_nombre ?? 'Pendiente')),
+                $cita->MOT_CITA,
+            ];
+        })->toArray();
+
+        array_unshift($rows, ['Fecha', 'Hora', 'Doctor', 'Paciente', 'Estado', 'Motivo']);
+
+        return $this->streamCsv('bitacora-recepcion.csv', $rows);
+    }
+
+    public function exportAdminMonthly(Request $request)
+    {
+        if (!$this->citaTableExists()) {
+            return $this->streamCsv('reporte-mensual.csv', [['Sin datos']]);
+        }
+
+        $monthParam = $request->query('month', Carbon::now()->format('Y-m'));
+        try {
+            $target = Carbon::createFromFormat('Y-m', $monthParam);
+        } catch (\Throwable $e) {
+            $target = Carbon::now();
+        }
+
+        $monthKey = $target->format('Y-m');
+        $citas    = $this->fetchCitasFromDatabase('admin', 0);
+
+        $rows = $citas->filter(function ($cita) use ($monthKey) {
+            if (!$cita->FEC_CITA) {
+                return false;
+            }
+            return Carbon::parse($cita->FEC_CITA)->format('Y-m') === $monthKey;
+        })->map(function ($cita) {
+            return [
+                $cita->FEC_CITA,
+                substr($cita->HOR_CITA ?? '', 0, 5),
+                $cita->doctor_nombre,
+                $cita->paciente_nombre,
+                ucfirst(strtolower($cita->estado_nombre ?? 'Pendiente')),
+                $cita->MOT_CITA,
+            ];
+        })->values()->toArray();
+
+        array_unshift($rows, ['Fecha', 'Hora', 'Doctor', 'Paciente', 'Estado', 'Motivo']);
+
+        $filename = sprintf('reporte-mensual-%s.csv', str_replace('-', '', $monthKey));
+
+        return $this->streamCsv($filename, $rows);
+    }
+
+    private function streamCsv(string $filename, array $rows)
+    {
+        if (empty($rows)) {
+            $rows[] = ['Sin datos'];
+        }
+
+        $callback = function () use ($rows) {
+            $handle = fopen('php://output', 'w');
+            foreach ($rows as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     private function updateEstadoCita(

@@ -8,7 +8,9 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ $heading }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0"><i class="fas fa-file-medical"></i> Descargar resumen clínico</button>
+        <a href="{{ route('agenda.export.doctor_resumen') }}" class="btn btn-outline-primary mt-2 mt-md-0" target="_blank">
+            <i class="fas fa-file-medical"></i> Descargar resumen clínico
+        </a>
     </div>
 @endsection
 

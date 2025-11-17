@@ -8,9 +8,9 @@
             <h1 class="h3 font-weight-bold text-primary mb-1">{{ ucfirst($heading) }}</h1>
             <p class="text-muted mb-0">{{ $intro }}</p>
         </div>
-        <button class="btn btn-outline-primary mt-2 mt-md-0">
+        <a href="{{ route('agenda.export.admin_mensual') }}" class="btn btn-outline-primary mt-2 mt-md-0" target="_blank">
             <i class="fas fa-download"></i> Exportar reporte mensual
-        </button>
+        </a>
     </div>
 @endsection
 
