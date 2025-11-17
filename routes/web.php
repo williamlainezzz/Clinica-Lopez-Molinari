@@ -221,6 +221,20 @@ Route::middleware(['auth'])->prefix('agenda')->group(function () {
         ->name('agenda.reportes');
 
     // Acciones sobre citas
+    Route::post('/citas', [AgendaController::class, 'store'])
+        ->middleware('can:agenda.citas.ver')
+        ->name('agenda.citas.store');
+
+    Route::put('/citas/{id}', [AgendaController::class, 'update'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.update');
+
+    Route::delete('/citas/{id}', [AgendaController::class, 'destroy'])
+        ->middleware('can:agenda.citas.ver')
+        ->whereNumber('id')
+        ->name('agenda.citas.destroy');
+
     Route::post('/citas/{id}/confirmar',  [AgendaController::class, 'confirmar'])
         ->middleware('can:agenda.citas.ver')
         ->whereNumber('id')

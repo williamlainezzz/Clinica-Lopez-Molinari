@@ -12,15 +12,14 @@
             <a href="{{ route('agenda.calendario') }}" class="btn btn-outline-primary">
                 <i class="fas fa-calendar-alt"></i> Ver calendario
             </a>
-            <a href="{{ route('export.citas.csv') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-file-download"></i> Reportes
-            </a>
+            <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalPacientesSinDoctor">
+                <i class="fas fa-user-clock"></i> Pacientes sin doctor
+            </button>
         </div>
     </div>
 @endsection
 
 @section('content')
-    {{-- Tarjetas de resumen --}}
     <div class="row mb-4">
         @foreach($stats as $stat)
             <div class="col-md-3 mb-3">
@@ -39,218 +38,168 @@
         @endforeach
     </div>
 
-    @php
-        // Aplanamos doctorPanels → filas de tabla
-        $rows = collect($doctorPanels ?? [])->flatMap(function ($doctor) {
-            return collect($doctor['pacientes'] ?? [])->map(function ($pac) use ($doctor) {
-                return [
-                    'doctor'   => $doctor['nombre'] ?? 'Sin nombre',
-                    'paciente' => $pac['nombre'] ?? 'Paciente',
-                    'motivo'   => $pac['motivo'] ?? '',
-                    'fecha'    => $pac['fecha'] ?? '',
-                    'hora'     => $pac['hora'] ?? '',
-                    'estado'   => $pac['estado'] ?? '',
-                    'cita_id'  => $pac['cita_id'] ?? ($pac['id'] ?? null),
-                ];
-            });
-        })->values();
-    @endphp
-
-    <div class="row">
-        {{-- PANEL PRINCIPAL: Citas programadas --}}
-        <div class="col-lg-8 mb-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Citas programadas</h3>
-                    <small class="text-muted">Supervisa y gestiona citas por doctor y paciente.</small>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Doctor</th>
-                                <th>Paciente</th>
-                                <th>Motivo</th>
-                                <th>Fecha / Hora</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($rows as $row)
-                                @php
-                                    $estadoRaw   = $row['estado'] ?? '';
-                                    $estadoUpper = strtoupper(trim($estadoRaw));
-
-                                    $badge = match ($estadoUpper) {
-                                        'CONFIRMADA' => 'success',
-                                        'CANCELADA'  => 'danger',
-                                        'PENDIENTE'  => 'warning',
-                                        default      => 'secondary',
-                                    };
-
-                                    $estadoLabel = match ($estadoUpper) {
-                                        'CONFIRMADA' => 'Confirmada',
-                                        'CANCELADA'  => 'Cancelada',
-                                        'PENDIENTE'  => 'Pendiente',
-                                        default      => ($estadoRaw !== '' ? $estadoRaw : 'Sin estado'),
-                                    };
-
-                                    $citaId = $row['cita_id'] ?? null;
-                                @endphp
-                                <tr>
-                                    <td class="font-weight-bold">{{ $row['doctor'] }}</td>
-                                    <td>{{ $row['paciente'] }}</td>
-                                    <td>{{ $row['motivo'] }}</td>
-                                    <td>{{ $row['fecha'] }} @if($row['hora']) · {{ $row['hora'] }} @endif</td>
-                                    <td>
-                                        <span class="badge badge-{{ $badge }}">
-                                            {{ $estadoLabel }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        @if($citaId)
-                                            <div class="btn-group btn-group-sm">
-                                                {{-- Confirmar --}}
-                                                <form method="POST"
-                                                    action="{{ route('agenda.citas.confirmar', $citaId) }}"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                            class="btn btn-outline-success"
-                                                            @if($estadoUpper === 'CONFIRMADA') disabled @endif>
-                                                        Confirmar
-                                                    </button>
-                                                </form>
-
-                                                {{-- Cancelar --}}
-                                                <form method="POST"
-                                                    action="{{ route('agenda.citas.cancelar', $citaId) }}"
-                                                    class="d-inline">
-                                                    @csrf
-                                                    <button type="submit"
-                                                            class="btn btn-outline-danger"
-                                                            @if($estadoUpper === 'CANCELADA') disabled @endif>
-                                                        Cancelar
-                                                    </button>
-                                                </form>
-
-                                                {{-- Reprogramar --}}
-                                                <button type="button"
-                                                        class="btn btn-outline-warning text-dark btn-open-reprogramar"
-                                                        data-toggle="modal"
-                                                        data-target="#modalReprogramar"
-                                                        data-cita-id="{{ $citaId }}"
-                                                        data-fecha="{{ $row['fecha'] }}"
-                                                        data-hora="{{ $row['hora'] }}">
-                                                    Reprogramar
-                                                </button>
-                                            </div>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center text-muted">
-                                        No hay citas registradas todavía.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h3 class="h5 mb-0">Doctores registrados</h3>
+            <small class="text-muted">Consulta y gestiona los pacientes asignados.</small>
         </div>
-
-        {{-- PANEL LATERAL: Pacientes sin doctor + Tips --}}
-        <div class="col-lg-4 mb-4">
-            {{-- Pacientes sin doctor --}}
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div class="list-group list-group-flush">
+            @forelse(($doctorPanels ?? []) as $doctor)
+                @php
+                    $doctorId    = $doctor['doctor_persona_id'] ?? null;
+                    $totalPac    = count($doctor['pacientes'] ?? []);
+                    $codigo      = $doctor['codigo'] ?? '';
+                @endphp
+                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
                     <div>
-                        <h3 class="h6 mb-0">Pacientes sin doctor</h3>
-                        <small class="text-muted">Asigna un doctor a cada paciente.</small>
+                        <strong>{{ $doctor['nombre'] ?? 'Doctor' }}</strong>
+                        <p class="text-muted mb-0 small">{{ $doctor['especialidad'] ?? 'Odontología' }} · {{ $codigo }}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="badge badge-light mr-3">{{ $totalPac }} pacientes</span>
+                        <button class="btn btn-sm btn-outline-primary btn-ver-pacientes"
+                                data-toggle="modal"
+                                data-target="#modalPacientesDoctor"
+                                data-doctor-id="{{ $doctorId }}">
+                            <i class="fas fa-users"></i> Ver pacientes
+                        </button>
                     </div>
                 </div>
-                <div class="card-body">
-                    @if(empty($availablePatients))
-                        <p class="text-muted mb-0">
-                            No hay pacientes en espera de asignación.
-                        </p>
-                    @else
-                        @if(empty($doctorsList))
-                            <p class="text-muted mb-0">
-                                Hay pacientes sin doctor, pero aún no hay doctores registrados.
-                            </p>
-                        @else
-                            @foreach($availablePatients as $patient)
-                                <div class="mb-3">
-                                    <h5 class="mb-1">{{ $patient['nombre'] ?? 'Paciente' }}</h5>
-                                    <p class="mb-1 text-muted">
-                                        {{ $patient['motivo'] ?? 'Pendiente de asignar doctor' }}
-                                    </p>
+                <template id="recep-doctor-{{ $doctorId }}">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>Motivo</th>
+                                    <th>Fecha / Hora</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($doctor['pacientes'] ?? [] as $paciente)
+                                    @php
+                                        $estadoRaw = strtoupper($paciente['estado'] ?? '');
+                                        $badge = match ($estadoRaw) {
+                                            'CONFIRMADA' => 'success',
+                                            'CANCELADA'  => 'danger',
+                                            'PENDIENTE'  => 'warning',
+                                            default      => 'secondary',
+                                        };
+                                        $estadoLabel = $paciente['estado'] ?? 'Sin estado';
+                                        $citaId = $paciente['cita_id'] ?? ($paciente['id'] ?? null);
+                                    @endphp
+                                    <tr>
+                                        <td class="font-weight-bold">{{ $paciente['nombre'] ?? 'Paciente' }}</td>
+                                        <td>{{ $paciente['motivo'] ?? 'N/D' }}</td>
+                                        <td>{{ $paciente['fecha'] ?? '' }} @if(!empty($paciente['hora'])) · {{ $paciente['hora'] }} @endif</td>
+                                        <td><span class="badge badge-{{ $badge }}">{{ $estadoLabel }}</span></td>
+                                        <td class="text-right">
+                                            @if($citaId)
+                                                <div class="btn-group btn-group-sm">
+                                                    <form method="POST" action="{{ route('agenda.citas.confirmar', $citaId) }}" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-outline-success"
+                                                                @if($estadoRaw === 'CONFIRMADA') disabled @endif>
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('agenda.citas.cancelar', $citaId) }}" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-outline-danger"
+                                                                @if($estadoRaw === 'CANCELADA') disabled @endif>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-outline-warning text-dark btn-open-reprogramar"
+                                                            data-toggle="modal" data-target="#modalReprogramarRecepcion"
+                                                            data-cita-id="{{ $citaId }}"
+                                                            data-fecha="{{ $paciente['fecha'] ?? '' }}"
+                                                            data-hora="{{ $paciente['hora'] ?? '' }}">
+                                                        <i class="fas fa-sync"></i>
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Sin pacientes asignados.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+            @empty
+                <div class="list-group-item text-muted text-center">No hay doctores con citas registradas.</div>
+            @endforelse
+        </div>
+    </div>
 
-                                    <form method="POST"
-                                          action="{{ route('agenda.pacientes.asignar_recepcion') }}">
-                                        @csrf
-
-                                        {{-- Paciente a asignar --}}
-                                        <input type="hidden" name="paciente_persona_id"
-                                               value="{{ $patient['persona_id'] }}">
-
-                                        {{-- Doctor destino --}}
-                                        <div class="form-group mb-2">
-                                            <label class="small mb-1">Doctor</label>
-                                            <select name="doctor_persona_id"
-                                                    class="form-control form-control-sm"
-                                                    required>
-                                                <option value="">Seleccione un doctor...</option>
-                                                @foreach($doctorsList as $doc)
-                                                    <option value="{{ $doc['persona_id'] }}">
-                                                        {{ $doc['nombre'] }}
-                                                        ({{ $doc['usuario'] }})
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-
-                                        <button type="submit"
-                                                class="btn btn-sm btn-outline-success">
-                                            Asignar
-                                        </button>
-                                    </form>
-                                </div>
-
-                                @if(!$loop->last)
-                                    <hr>
-                                @endif
-                            @endforeach
-                        @endif
-                    @endif
+    {{-- Modal pacientes doctor --}}
+    <div class="modal fade" id="modalPacientesDoctor" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pacientes asignados</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
-            </div>
-
-            {{-- Tips de uso --}}
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white">
-                    <h3 class="h6 mb-0">Tips de uso</h3>
-                </div>
-                <div class="card-body">
-                    <ul class="small mb-0">
-                        <li>Usa <strong>Confirmar</strong> cuando el paciente confirme por llamada o WhatsApp.</li>
-                        <li>Usa <strong>Cancelar</strong> solo si la cita definitivamente no se realizará.</li>
-                        <li>Con <strong>Reprogramar</strong> ajustas fecha y hora; la cita queda como <em>PENDIENTE</em>.</li>
-                        <li>Desde este panel puedes asignar pacientes nuevos a cualquier doctor disponible.</li>
-                    </ul>
+                <div class="modal-body js-modal-body">
+                    <p class="text-muted mb-0">Selecciona un doctor para ver sus pacientes.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Modal: Reprogramar cita --}}
-    <div class="modal fade" id="modalReprogramar" tabindex="-1" aria-hidden="true">
+    {{-- Modal pacientes sin doctor --}}
+    <div class="modal fade" id="modalPacientesSinDoctor" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pacientes sin doctor</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @if(empty($availablePatients))
+                        <p class="text-muted mb-0">No hay pacientes en espera de asignación.</p>
+                    @else
+                        @foreach($availablePatients as $patient)
+                            <div class="border rounded p-3 mb-3">
+                                <strong>{{ $patient['nombre'] ?? 'Paciente' }}</strong>
+                                <p class="text-muted small mb-2">{{ $patient['motivo'] ?? 'Sin motivo' }}</p>
+                                <form method="POST" action="{{ route('agenda.pacientes.asignar_recepcion') }}" class="form-inline flex-wrap">
+                                    @csrf
+                                    <input type="hidden" name="paciente_persona_id" value="{{ $patient['persona_id'] }}">
+                                    <div class="form-group mr-2 mb-2">
+                                        <select name="doctor_persona_id" class="form-control form-control-sm" required>
+                                            <option value="">Doctor...</option>
+                                            @foreach($doctorsList as $doc)
+                                                <option value="{{ $doc['persona_id'] }}">{{ $doc['nombre'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-success mb-2">
+                                        Asignar
+                                    </button>
+                                </form>
+                            </div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal reprogramar --}}
+    <div class="modal fade" id="modalReprogramarRecepcion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
-            <form method="POST" id="formReprogramar" class="modal-content">
+            <form method="POST" id="formReprogramarRecepcion" class="modal-content">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Reprogramar cita</h5>
@@ -259,29 +208,23 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted mb-3">
-                        Ajusta la nueva fecha y hora para la cita seleccionada.
-                        El estado se dejará como <strong>PENDIENTE</strong>.
-                    </p>
-
+                    <p class="text-muted">Selecciona la nueva fecha y hora.</p>
                     <div class="form-group">
-                        <label for="reprog_fecha">Fecha</label>
-                        <input type="date" name="fecha" id="reprog_fecha" class="form-control" required>
+                        <label>Fecha</label>
+                        <input type="date" name="fecha" class="form-control" required>
                     </div>
-
                     <div class="form-group">
-                        <label for="reprog_hora_inicio">Hora inicio</label>
-                        <input type="time" name="hora_inicio" id="reprog_hora_inicio" class="form-control" required>
+                        <label>Hora inicio</label>
+                        <input type="time" name="hora_inicio" class="form-control" required>
                     </div>
-
                     <div class="form-group mb-0">
-                        <label for="reprog_hora_fin">Hora fin (opcional)</label>
-                        <input type="time" name="hora_fin" id="reprog_hora_fin" class="form-control">
+                        <label>Hora fin (opcional)</label>
+                        <input type="time" name="hora_fin" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cerrar</button>
-                    <button class="btn btn-primary" type="submit">Guardar cambios</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -290,22 +233,27 @@
 
 @section('js')
 <script>
-    // Reutilizamos el mismo JS que en doctor para abrir el modal de reprogramar
-    $('#modalReprogramar').on('show.bs.modal', function (event) {
-        var button   = $(event.relatedTarget);
-        var citaId   = button.data('cita-id');
-        var fecha    = button.data('fecha') || '';
-        var hora     = button.data('hora')  || '';
+    (function () {
+        const baseUrl = "{{ url('/agenda/citas') }}";
 
-        var modal    = $(this);
-        var form     = modal.find('#formReprogramar');
+        $('.btn-ver-pacientes').on('click', function () {
+            const doctorId = $(this).data('doctor-id');
+            const template = document.getElementById('recep-doctor-' + doctorId);
+            const modal = $('#modalPacientesDoctor');
+            modal.find('.js-modal-body').html(template ? template.innerHTML : '<p class="text-muted mb-0">Sin información disponible.</p>');
+        });
 
-        var baseUrl  = "{{ url('/agenda/citas') }}";
-        form.attr('action', baseUrl + '/' + citaId + '/reprogramar');
-
-        modal.find('#reprog_fecha').val(fecha);
-        modal.find('#reprog_hora_inicio').val(hora);
-        modal.find('#reprog_hora_fin').val('');
-    });
+        $('#modalReprogramarRecepcion').on('show.bs.modal', function (event) {
+            const button = $(event.relatedTarget);
+            const citaId = button.data('cita-id');
+            const fecha = button.data('fecha') || '';
+            const hora = button.data('hora') || '';
+            const form = $('#formReprogramarRecepcion');
+            form.attr('action', baseUrl + '/' + citaId + '/reprogramar');
+            form.find('input[name="fecha"]').val(fecha);
+            form.find('input[name="hora_inicio"]').val(hora);
+            form.find('input[name="hora_fin"]').val('');
+        });
+    })();
 </script>
 @endsection
