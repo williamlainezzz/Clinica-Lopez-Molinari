@@ -45,10 +45,10 @@ class AgendaController extends Controller
     $labelSet = $labels[$rolSlug][$sectionKey] ?? $labels['admin'][$sectionKey];
 
     // -----------------------------
-    // Valores "demo" por defecto
+    // Valores por defecto
     // -----------------------------
-    $doctorPanels      = $this->demoDoctors();
-    $availablePatients = $this->availablePatients();
+    $doctorPanels      = $this->demoDoctors();           // demo doctores (fallback)
+    $availablePatients = $this->availablePatientsFromDb(); // pacientes sin doctor reales
     $activeDoctor      = $doctorPanels[0] ?? null;
     $patientRecord     = $activeDoctor ? $this->patientRecord($activeDoctor) : null;
     $timeline          = $this->patientTimeline();
@@ -116,7 +116,7 @@ class AgendaController extends Controller
     }
 
     // ==========================================================
-    // ADMIN en sección "citas": datos reales de BD (ya tenías esto)
+    // ADMIN en sección "citas": datos reales de BD
     // ==========================================================
     if ($sectionKey === 'citas' && $rolSlug === 'admin') {
         $personaId = (int) ($user->FK_COD_PERSONA ?? 0);
@@ -126,7 +126,7 @@ class AgendaController extends Controller
 
         // Convertimos esa colección en el formato que espera la vista
         $doctorPanels      = $this->buildDoctorPanelsFromCitas($citas);
-        $availablePatients = []; // Más adelante llenamos "pacientes sin doctor"
+        $availablePatients = $this->availablePatientsFromDb();
 
         // Lista plana solo para las tarjetas de estadísticas
         $eventList = $citas->map(function ($c) {
@@ -150,16 +150,50 @@ class AgendaController extends Controller
         );
     } else {
         // Resto de roles / secciones: usamos los paneles (demo o reales) para calendario y estadísticas
-        $calendarEventBundle = $this->buildCalendarEvents($doctorPanels, $rolSlug, $activeDoctor ?? [], $patientRecord ?? []);
-        $calendarEvents      = $calendarEventBundle['byDate'];
-        $eventList           = collect($calendarEventBundle['list']);
-        $stats               = $this->buildStats(
+        $calendarEventBundle = $this->buildCalendarEvents(
+            $doctorPanels,
+            $rolSlug,
+            $activeDoctor ?? [],
+            $patientRecord ?? []
+        );
+
+        $calendarEvents = $calendarEventBundle['byDate'];
+        $eventList      = collect($calendarEventBundle['list']);
+
+        $stats = $this->buildStats(
             $rolSlug,
             $doctorPanels,
             $availablePatients,
             $patientRecord ?? [],
             $eventList->all()
         );
+    }
+
+    // ===========================================
+    // Enlace / código para registro de pacientes
+    // ===========================================
+    $shareLink = null;
+    $shareCode = null;
+
+    if ($rolSlug === 'doctor') {
+        // Intentamos primero con el usuario (login)
+        $username  = $user->USR_USUARIO ?? null;
+        $personaId = (int) ($user->FK_COD_PERSONA ?? optional($user->persona)->COD_PERSONA ?? 0);
+
+        if ($username) {
+            // Ej: /registro/paciente?doctor=olagos
+            $shareLink = url('/registro/paciente?doctor=' . urlencode($username));
+            $shareCode = 'DOC-' . strtoupper($username);
+        } elseif ($personaId > 0) {
+            // Fallback por ID de persona
+            // Ej: /registro/paciente?doctor_id=20
+            $shareLink = url('/registro/paciente?doctor_id=' . $personaId);
+            $shareCode = 'DOC-' . str_pad($personaId, 4, '0', STR_PAD_LEFT);
+        }
+    } elseif (in_array($rolSlug, ['admin', 'recepcionista'])) {
+        // Link genérico de registro cuando es admin/recepción
+        $shareLink = url('/registro/paciente');
+        $shareCode = 'REGISTRO-GENERAL';
     }
 
     $view = $this->resolveView($rolSlug, $sectionKey);
@@ -180,10 +214,11 @@ class AgendaController extends Controller
         'calendarEvents'    => $calendarEvents,
         'eventList'         => $eventList,
         'stats'             => $stats,
-        'shareLink'         => url('/registro/paciente?doctor=dr-lopez'),
-        'shareCode'         => 'DR-LOPEZ-2025',
+        'shareLink'         => $shareLink,
+        'shareCode'         => $shareCode,
     ]);
 }
+
 
 
     private function resolveView(string $rolSlug, string $sectionKey): string
