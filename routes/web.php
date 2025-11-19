@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\TwoFactorEmailController;
+use App\Http\Controllers\Auth\UsernameSuggestionController;
 
 // Seguridad (controladores reales)
 use App\Http\Controllers\Seguridad\RolController;
@@ -35,6 +36,9 @@ use App\Http\Controllers\RegistroPacienteController;
 ========================= */
 Route::get('/', fn() => view('welcome'))->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+
+Route::middleware(['guest','throttle:30,1'])->get('/registro/usuario-sugerido', UsernameSuggestionController::class)
+    ->name('register.username');
 
 Route::middleware('guest')->get('/registro/paciente', [RegistroPacienteController::class, 'create'])
     ->name('registro.paciente');

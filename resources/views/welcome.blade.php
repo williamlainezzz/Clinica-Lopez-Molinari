@@ -127,8 +127,11 @@
     <div class="absolute inset-0 bg-slate-900/60" @click="showLogin=false"></div>
 
     <!-- Añadido: modal-panel -->
-    <div x-transition
-         class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+    <div x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+         class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200 transform transition-all">
       <div class="flex items-center justify-between px-5 py-4 border-b">
         <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
         <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
@@ -141,7 +144,7 @@
         @endif
 
         {{-- FORM LOGIN (usuario o correo + password) --}}
-        <form method="POST" action="{{ route('login') }}"novalidate x-data="{ showPwd:false }">
+        <form method="POST" action="{{ route('login') }}" novalidate x-data="{ showPwd:false }">
           @csrf
 
           <!-- Usuario o correo -->
@@ -219,7 +222,11 @@
 <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
   <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
 
-  <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+  <div x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+       class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200 transform transition-all">
     <div class="flex items-center justify-between px-5 py-4 border-b">
       <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
       <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
@@ -228,51 +235,80 @@
     <div class="p-5 max-h-[85vh] overflow-y-auto">
 
     @php
-    use App\Models\PreguntaSeguridad;
-    $preguntasSeg = PreguntaSeguridad::where('ESTADO', 1)->orderBy('TEXTO_PREGUNTA')->get();
-@endphp
+        use App\Models\PreguntaSeguridad;
+
+        $preguntasSeg = PreguntaSeguridad::where('ESTADO', 1)
+            ->orderBy('TEXTO_PREGUNTA')
+            ->get();
+
+        $hondurasLocations = [
+            'Atlántida' => ['Arizona', 'El Porvenir', 'Esparta', 'Jutiapa', 'La Ceiba', 'La Masica', 'San Francisco', 'Tela'],
+            'Choluteca' => ['Apacilagua', 'Choluteca', 'Concepción de María', 'Duyure', 'El Corpus', 'El Triunfo', 'Marcovia', 'Morolica', 'Namasigüe', 'Orocuina', 'Pespire', 'San Antonio de Flores', 'San Isidro', 'San José', 'San Marcos de Colón', 'Santa Ana de Yusguare'],
+            'Colón' => ['Balfate', 'Bonito Oriental', 'Iriona', 'Limón', 'Sabá', 'Santa Fe', 'Santa Rosa de Aguán', 'Sonaguera', 'Tocoa', 'Trujillo'],
+            'Comayagua' => ['Ajuterique', 'Comayagua', 'El Rosario', 'Esquías', 'Humuya', 'La Libertad', 'Lamaní', 'La Trinidad', 'Lejamaní', 'Meámbar', 'Minas de Oro', 'Ojos de Agua', 'San Jerónimo', 'San José de Comayagua', 'San José del Potrero', 'San Luis', 'San Sebastián', 'Siguatepeque', 'Taulabé', 'Villa de San Antonio', 'Las Lajas'],
+            'Copán' => ['Cabañas', 'Concepción', 'Copán Ruinas', 'Corquín', 'Cucuyagua', 'Dolores', 'Dulce Nombre', 'El Paraíso', 'Florida', 'La Jigua', 'La Unión', 'Nueva Arcadia', 'San Agustín', 'San Antonio', 'San Jerónimo', 'San José', 'San Juan de Opoa', 'San Nicolás', 'San Pedro', 'Santa Rita', 'Santa Rosa de Copán', 'Trinidad de Copán', 'Veracruz'],
+            'Cortés' => ['Choloma', 'La Lima', 'Omoa', 'Pimienta', 'Potrerillos', 'Puerto Cortés', 'San Antonio de Cortés', 'San Francisco de Yojoa', 'San Manuel', 'San Pedro Sula', 'Santa Cruz de Yojoa', 'Villanueva'],
+            'El Paraíso' => ['Alauca', 'Danlí', 'El Paraíso', 'Güinope', 'Jacaleapa', 'Liure', 'Morocelí', 'Oropolí', 'Potrerillos', 'San Lucas', 'San Matías', 'Soledad', 'Teupasenti', 'Texiguat', 'Trojes', 'Vado Ancho', 'Yauyupe', 'Yuscarán'],
+            'Francisco Morazán' => ['Alubarén', 'Cedros', 'Curarén', 'Distrito Central', 'El Porvenir', 'Guaimaca', 'La Libertad', 'La Venta', 'Lepaterique', 'Marale', 'Nueva Armenia', 'Ojojona', 'Orica', 'Reitoca', 'Sabanagrande', 'San Antonio de Oriente', 'San Buenaventura', 'San Ignacio', 'San Juan de Flores', 'San Miguelito', 'Santa Ana', 'Santa Lucía', 'Talanga', 'Tatumbla', 'Valle de Ángeles', 'Vallecillo', 'Villa de San Francisco'],
+            'Gracias a Dios' => ['Ahuas', 'Brus Laguna', 'Juan Francisco Bulnes', 'Puerto Lempira', 'Villeda Morales', 'Wampusirpi'],
+            'Intibucá' => ['Camasca', 'Colomoncagua', 'Concepción', 'Dolores', 'Intibucá', 'Jesús de Otoro', 'La Esperanza', 'Magdalena', 'Masaguara', 'San Antonio', 'San Francisco de Opalaca', 'San Isidro', 'San Juan', 'San Marcos de la Sierra', 'San Miguel Guancapla', 'Santa Lucía', 'Yamaranguila'],
+            'Islas de la Bahía' => ['Guanaja', 'José Santos Guardiola', 'Roatán', 'Útila'],
+            'La Paz' => ['Aguanqueterique', 'Cabañas', 'Cane', 'Chinacla', 'Guajiquiro', 'La Paz', 'Lauterique', 'Marcala', 'Mercedes de Oriente', 'Opatoro', 'San Antonio del Norte', 'San José', 'San Juan', 'San Pedro de Tutule', 'Santa Ana', 'Santa Elena', 'Santa María', 'Santiago de Puringla', 'Yarula'],
+            'Lempira' => ['Belén', 'Candelaria', 'Cololaca', 'Erandique', 'Gracias', 'Gualcince', 'Guarita', 'La Campa', 'La Iguala', 'Las Flores', 'La Unión', 'La Virtud', 'Lepaera', 'Mapulaca', 'Piraera', 'San Andrés', 'San Francisco', 'San Juan Guarita', 'San Manuel Colohete', 'San Rafael', 'San Sebastián', 'Santa Cruz', 'Talgua', 'Tambla', 'Tomalá', 'Valladolid', 'Virginia'],
+            'Ocotepeque' => ['Belén Gualcho', 'Concepción', 'Dolores Merendón', 'Fraternidad', 'La Encarnación', 'La Labor', 'Lucerna', 'Mercedes', 'Ocotepeque', 'San Fernando', 'San Francisco del Valle', 'San Jorge', 'San Marcos', 'Santa Fe', 'Sensenti', 'Sinuapa'],
+            'Olancho' => ['Campamento', 'Catacamas', 'Concordia', 'Dulce Nombre de Culmí', 'El Rosario', 'Esquipulas del Norte', 'Gualaco', 'Guarizama', 'Guata', 'Guayape', 'Jano', 'Juticalpa', 'La Unión', 'Mangulile', 'Manto', 'Patuca', 'Salamá', 'San Esteban', 'San Francisco de Becerra', 'San Francisco de la Paz', 'Santa María del Real', 'Silca', 'Yocón'],
+            'Santa Bárbara' => ['Arada', 'Atima', 'Azacualpa', 'Ceguaca', 'Chinda', 'Concepción del Norte', 'Concepción del Sur', 'El Níspero', 'Gualala', 'Ilama', 'Las Vegas', 'Macuelizo', 'Naranjito', 'Nueva Celilac', 'Petoa', 'Protección', 'Quimistán', 'San Francisco de Ojuera', 'San José de Colinas', 'San Luis', 'San Marcos', 'San Nicolás', 'San Pedro Zacapa', 'San Vicente Centenario', 'Santa Bárbara', 'Santa Rita', 'Trinidad'],
+            'Valle' => ['Alianza', 'Amapala', 'Aramecina', 'Caridad', 'Goascorán', 'Langue', 'Nacaome', 'San Francisco de Coray', 'San Lorenzo'],
+            'Yoro' => ['Arenal', 'El Negrito', 'El Progreso', 'Jocón', 'Morazán', 'Olanchito', 'Santa Rita', 'Sulaco', 'Victoria', 'Yoro', 'Yorito'],
+        ];
+
+        $oldNombres = trim(collect([old('PRIMER_NOMBRE'), old('SEGUNDO_NOMBRE')])->filter()->implode(' '));
+        $oldApellidos = trim(collect([old('PRIMER_APELLIDO'), old('SEGUNDO_APELLIDO')])->filter()->implode(' '));
+    @endphp
 
       {{-- FORM REGISTRO COMPLETO --}}
-      <form method="POST" action="{{ route('register') }}" novalidate>
+      <form method="POST" action="{{ route('register') }}" novalidate id="formRegistro">
         @csrf
 
-        {{-- Header: usuario autogenerado (discreto) --}}
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
-          <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
-            <span class="font-medium text-slate-600 mr-1">Usuario:</span>
-            <code id="username-preview" class="font-semibold"></code>
+        <div class="space-y-3 mb-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
+            <span id="username-pill" class="text-xs text-slate-500">Se generará automáticamente</span>
+          </div>
+          <div id="username-card" class="flex items-center gap-4 rounded-2xl border border-slate-100 bg-gradient-to-r from-white via-white to-sky-50 px-4 py-3 shadow-sm opacity-60">
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 14c3.314 0 6 2.015 6 4.5V20H6v-1.5C6 16.015 8.686 14 12 14zM12 4.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs uppercase tracking-wide text-slate-500">Usuario asignado</p>
+              <div class="text-lg font-semibold text-slate-900">
+                <code id="username-preview-hero" class="text-sky-700"></code>
+              </div>
+              <p class="text-xs text-slate-500" id="username-helper-text">Se mostrará automáticamente cuando completes tu nombre.</p>
+            </div>
           </div>
         </div>
 
-        {{-- Nombres --}}
+        {{-- Nombres y apellidos combinados --}}
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
-            <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
-                          :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
+            <x-input-label for="NOMBRES_COMPLETOS" :value="__('Nombres')" />
+            <x-text-input id="NOMBRES_COMPLETOS" class="block mt-1 w-full" type="text" name="NOMBRES_COMPLETOS"
+                          :value="$oldNombres" required autofocus autocomplete="given-name" />
+            <input type="hidden" name="PRIMER_NOMBRE" id="PRIMER_NOMBRE" value="{{ old('PRIMER_NOMBRE') }}">
+            <input type="hidden" name="SEGUNDO_NOMBRE" id="SEGUNDO_NOMBRE" value="{{ old('SEGUNDO_NOMBRE') }}">
             <x-input-error :messages="$errors->register->get('PRIMER_NOMBRE')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
-            <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
-                          :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
             <x-input-error :messages="$errors->register->get('SEGUNDO_NOMBRE')" class="mt-2" />
           </div>
-        </div>
-
-        {{-- Apellidos --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div>
-            <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
-            <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
-                          :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
+            <x-input-label for="APELLIDOS_COMPLETOS" :value="__('Apellidos')" />
+            <x-text-input id="APELLIDOS_COMPLETOS" class="block mt-1 w-full" type="text" name="APELLIDOS_COMPLETOS"
+                          :value="$oldApellidos" required autocomplete="family-name" />
+            <input type="hidden" name="PRIMER_APELLIDO" id="PRIMER_APELLIDO" value="{{ old('PRIMER_APELLIDO') }}">
+            <input type="hidden" name="SEGUNDO_APELLIDO" id="SEGUNDO_APELLIDO" value="{{ old('SEGUNDO_APELLIDO') }}">
             <x-input-error :messages="$errors->register->get('PRIMER_APELLIDO')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
-            <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
-                          :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
             <x-input-error :messages="$errors->register->get('SEGUNDO_APELLIDO')" class="mt-2" />
           </div>
         </div>
@@ -292,49 +328,47 @@
           <div>
             <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
             <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
-                          :value="old('NUM_TELEFONO')" placeholder="99991234" />
+                          :value="old('NUM_TELEFONO')" />
             <x-input-error :messages="$errors->register->get('NUM_TELEFONO')" class="mt-2" />
           </div>
         </div>
 
-        {{-- Departamento + Municipio --}}
+        {{-- Departamento + Ciudad --}}
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div>
             <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
-            <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
-                          :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+            <select id="DEPARTAMENTO" name="DEPARTAMENTO" class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500">
+              <option value="" {{ old('DEPARTAMENTO') ? '' : 'selected' }}>Seleccione...</option>
+              @foreach ($hondurasLocations as $departamento => $ciudades)
+                <option value="{{ $departamento }}" {{ old('DEPARTAMENTO') === $departamento ? 'selected' : '' }}>{{ $departamento }}</option>
+              @endforeach
+            </select>
             <x-input-error :messages="$errors->register->get('DEPARTAMENTO')" class="mt-2" />
           </div>
           <div>
-            <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
-            <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
-                          :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
+            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
+            <select id="CIUDAD" name="CIUDAD" data-selected="{{ old('CIUDAD') }}" class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500">
+              <option value="">{{ old('DEPARTAMENTO') ? 'Selecciona una ciudad' : 'Selecciona un departamento' }}</option>
+            </select>
+            <input type="hidden" name="MUNICIPIO" id="MUNICIPIO" value="{{ old('MUNICIPIO', old('CIUDAD')) }}">
+            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
             <x-input-error :messages="$errors->register->get('MUNICIPIO')" class="mt-2" />
           </div>
         </div>
 
-        {{-- Ciudad + Colonia --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
-            <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
-                          :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
-            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="COLONIA" :value="__('Colonia')" />
-            <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
-                          :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
-            <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
-          </div>
+        {{-- Colonia --}}
+        <div class="mt-4">
+          <x-input-label for="COLONIA" :value="__('Colonia')" />
+          <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
+                        :value="old('COLONIA')" />
+          <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
         </div>
 
         {{-- Dirección / Referencia --}}
         <div class="mt-4">
           <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
           <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
-                    class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
-                    placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
+                    class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500">{{ old('REFERENCIA') }}</textarea>
           <x-input-error :messages="$errors->register->get('REFERENCIA')" class="mt-2" />
         </div>
 
@@ -347,7 +381,6 @@
       type="email"
       name="CORREO"
       :value="old('CORREO')"
-      placeholder="tucorreo@ejemplo.com"
       required
       class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}"
   />
@@ -531,68 +564,291 @@
         </div>
 
         <div class="flex items-center justify-end mt-6">
-          <x-primary-button class="px-5">Registrarme</x-primary-button>
+          <x-primary-button type="button" id="btnOpenRegisterWelcome" class="px-5">Registrarme</x-primary-button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
+</div>
 
-          {{-- Script: vista previa del usuario autogenerado --}}
-          <script>
-            (function () {
-              const maxLen = 50;
-              const $n = document.getElementById('PRIMER_NOMBRE');
-              const $a = document.getElementById('PRIMER_APELLIDO');
-              const $pill = document.getElementById('username-pill');
-              const $out1 = document.getElementById('username-preview');
-              const $out2 = document.getElementById('username-preview-inline');
-
-              function strip(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-              function mk(n,a){
-                const first=(n||'').trim().charAt(0);
-                const last=(a||'').trim().replace(/\s+/g,'');
-                let base=(first+last).toLowerCase();
-                base=strip(base).replace(/[^a-z0-9]/g,'');
-                return (base||'user').slice(0,maxLen);
-              }
-              function up(){
-                const u = mk($n?.value,$a?.value);
-                if(($n?.value?.trim() || $a?.value?.trim())){
-                  $pill?.classList.remove('hidden');
-                  if($out1) $out1.textContent=u;
-                  if($out2) $out2.textContent=u;
-                }else{
-                  $pill?.classList.add('hidden');
-                  if($out1) $out1.textContent='';
-                  if($out2) $out2.textContent='';
-                }
-              }
-              ['input','change'].forEach(e=>{ $n?.addEventListener(e,up); $a?.addEventListener(e,up); });
-              up();
-            })();
-          </script>
-        </form>
+<!-- Modal de confirmación de registro -->
+<div id="modalRegistroConfirm" class="fixed inset-0 z-[60] hidden items-center justify-center px-4 opacity-0 transition-opacity duration-200">
+  <div class="absolute inset-0 bg-slate-900/60" data-dismiss-modal></div>
+  <div class="modal-card relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl transform transition-all duration-300 scale-95 opacity-0 -translate-y-2">
+    <div class="flex items-start gap-3">
+      <div class="flex h-12 w-12 items-center justify-center rounded-full bg-sky-100 text-sky-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 11c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm0 2c-2.21 0-4 1.343-4 3v1h8v-1c0-1.657-1.79-3-4-3z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-sm uppercase tracking-wide text-slate-500">Bienvenido(a)</p>
+        <h4 class="text-lg font-semibold text-slate-900">Clínica Dental López Molinari</h4>
+        <p class="mt-2 text-sm text-slate-600">Tu usuario asignado es <code id="username-preview-modal" class="font-semibold text-sky-600"></code>. Guárdalo para iniciar sesión después de la confirmación.</p>
       </div>
     </div>
+    <div class="mt-6 flex items-center justify-end gap-3">
+      <button type="button" class="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800" data-dismiss-modal>Volver</button>
+      <button type="button" data-submit-form class="inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">Continuar y registrarme</button>
+    </div>
   </div>
+</div>
 
+<script>
+  (function () {
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-open]');
+      if (!btn) return;
+      e.preventDefault();
+      const which = btn.getAttribute('data-open');
+      if (which === 'login') {
+        window.dispatchEvent(new CustomEvent('open-login'));
+      }
+      if (which === 'register') {
+        window.dispatchEvent(new CustomEvent('open-register'));
+      }
+    });
 
+    const maxLen = 50;
+    const visibleNames = document.getElementById('NOMBRES_COMPLETOS');
+    const visibleSurnames = document.getElementById('APELLIDOS_COMPLETOS');
+    const firstNameField = document.getElementById('PRIMER_NOMBRE');
+    const secondNameField = document.getElementById('SEGUNDO_NOMBRE');
+    const firstSurnameField = document.getElementById('PRIMER_APELLIDO');
+    const secondSurnameField = document.getElementById('SEGUNDO_APELLIDO');
+    const usernameTargets = [
+      document.getElementById('username-preview-inline'),
+      document.getElementById('username-preview-hero'),
+      document.getElementById('username-preview-modal'),
+    ];
+    const usernameStatus = document.getElementById('username-pill');
+    const usernameCard = document.getElementById('username-card');
+    const usernameHelper = document.getElementById('username-helper-text');
+    const usernameSuggestionUrl = "{{ route('register.username') }}";
+    let usernameDebounce = null;
+    let usernameAbort = null;
 
+    function strip(value) {
+      return (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
 
+    function makeUsername(first, last) {
+      const initial = (first || '').trim().charAt(0);
+      const lastClean = strip((last || '').trim().replace(/\s+/g, ''));
+      let base = (initial + lastClean).toLowerCase().replace(/[^a-z0-9]/g, '');
+      return (base || 'usuario').slice(0, maxLen);
+    }
 
+    function splitValue(source) {
+      const raw = (source?.value || '').trim().replace(/\s+/g, ' ');
+      if (!raw) {
+        return ['', ''];
+      }
+      const parts = raw.split(' ');
+      const primary = parts.shift() || '';
+      const secondary = parts.join(' ');
+      return [primary, secondary];
+    }
 
-  <script>
-  // Delegación: cualquier elemento con data-open="login" o "register" abre el modal correcto
-  document.addEventListener('click', function (e) {
-    const btn = e.target.closest('[data-open]');
-    if (!btn) return;
-    e.preventDefault();
-    const which = btn.getAttribute('data-open');
-    if (which === 'login')   window.dispatchEvent(new CustomEvent('open-login'));
-    if (which === 'register') window.dispatchEvent(new CustomEvent('open-register'));
-  });
+    function setUsernameDisplay(username, pending = false) {
+      usernameTargets.forEach(function (el) {
+        if (el) {
+          if (username) {
+            el.textContent = username;
+          } else {
+            el.textContent = pending ? 'generando…' : 'pendiente';
+          }
+        }
+      });
+      if (usernameStatus) {
+        usernameStatus.textContent = pending
+          ? 'Confirmando disponibilidad…'
+          : (username ? 'Usuario listo' : 'Se generará automáticamente');
+      }
+      if (usernameCard) {
+        if (pending || username) {
+          usernameCard.classList.remove('opacity-60');
+        } else {
+          usernameCard.classList.add('opacity-60');
+        }
+      }
+      if (usernameHelper) {
+        usernameHelper.textContent = pending
+          ? 'Estamos reservando tu usuario automáticamente.'
+          : (username
+              ? 'Usa este usuario para iniciar sesión cuando recibas la confirmación.'
+              : 'Se mostrará automáticamente cuando completes tu nombre.');
+      }
+    }
+
+    function requestUsernameFromServer(first, last) {
+      if (!usernameSuggestionUrl) {
+        return;
+      }
+      usernameAbort?.abort();
+      usernameAbort = new AbortController();
+      fetch(
+        `${usernameSuggestionUrl}?nombre=${encodeURIComponent(first)}&apellido=${encodeURIComponent(last)}`,
+        {
+          headers: { 'Accept': 'application/json' },
+          signal: usernameAbort.signal,
+        }
+      )
+        .then(function (response) {
+          if (!response.ok) throw new Error('username-error');
+          return response.json();
+        })
+        .then(function (data) {
+          if (data && data.username) {
+            setUsernameDisplay(data.username, false);
+          }
+        })
+        .catch(function (error) {
+          if (error.name === 'AbortError') return;
+        });
+    }
+
+    function updateUsernameDisplay() {
+      const first = (firstNameField?.value || '').trim();
+      const last = (firstSurnameField?.value || '').trim();
+      if (!first || !last) {
+        clearTimeout(usernameDebounce);
+        usernameAbort?.abort();
+        setUsernameDisplay('', false);
+        return;
+      }
+      const fallback = makeUsername(first, last);
+      setUsernameDisplay(fallback, Boolean(usernameSuggestionUrl));
+      clearTimeout(usernameDebounce);
+      if (!usernameSuggestionUrl) {
+        return;
+      }
+      usernameDebounce = setTimeout(function () {
+        requestUsernameFromServer(first, last);
+      }, 350);
+    }
+
+    function syncNames() {
+      const [firstName, secondName] = splitValue(visibleNames);
+      if (firstNameField) firstNameField.value = firstName;
+      if (secondNameField) secondNameField.value = secondName;
+      const [firstSurname, secondSurname] = splitValue(visibleSurnames);
+      if (firstSurnameField) firstSurnameField.value = firstSurname;
+      if (secondSurnameField) secondSurnameField.value = secondSurname;
+      updateUsernameDisplay();
+    }
+
+    ['input', 'change'].forEach(function (evt) {
+      visibleNames?.addEventListener(evt, syncNames);
+      visibleSurnames?.addEventListener(evt, syncNames);
+    });
+    syncNames();
+
+    const locations = @json($hondurasLocations);
+    const deptSelect = document.getElementById('DEPARTAMENTO');
+    const citySelect = document.getElementById('CIUDAD');
+    const municipioHidden = document.getElementById('MUNICIPIO');
+
+    function fillCities(dept, selectedCity) {
+      if (!citySelect) return;
+      const cities = locations[dept] || [];
+      let options = '<option value="">' + (dept ? 'Selecciona una ciudad' : 'Selecciona un departamento') + '</option>';
+      cities.forEach(function (city) {
+        const isSelected = city === selectedCity;
+        options += '<option value="' + city + '"' + (isSelected ? ' selected' : '') + '>' + city + '</option>';
+      });
+      citySelect.innerHTML = options;
+      citySelect.disabled = !dept;
+      const effectiveCity = cities.includes(selectedCity) ? selectedCity : '';
+      citySelect.value = effectiveCity;
+      if (municipioHidden) {
+        municipioHidden.value = effectiveCity;
+      }
+    }
+
+    const initialCity = citySelect ? (citySelect.dataset.selected || municipioHidden?.value || '') : '';
+    fillCities(deptSelect ? deptSelect.value : '', initialCity);
+
+    deptSelect?.addEventListener('change', function () {
+      fillCities(this.value, '');
+    });
+
+    citySelect?.addEventListener('change', function () {
+      if (municipioHidden) {
+        municipioHidden.value = this.value;
+      }
+    });
+
+    const formRegistro = document.getElementById('formRegistro');
+    const btnRegistro = document.getElementById('btnOpenRegisterWelcome');
+    const confirmModal = document.getElementById('modalRegistroConfirm');
+    const modalCard = confirmModal ? confirmModal.querySelector('.modal-card') : null;
+
+    function showConfirmModal() {
+      if (!confirmModal) return;
+      confirmModal.classList.remove('hidden');
+      confirmModal.classList.add('flex');
+      requestAnimationFrame(function () {
+        confirmModal.classList.add('opacity-100');
+        modalCard?.classList.remove('-translate-y-2', 'opacity-0', 'scale-95');
+        modalCard?.classList.add('translate-y-0', 'opacity-100', 'scale-100');
+      });
+    }
+
+    function hideConfirmModal() {
+      if (!confirmModal) return;
+      confirmModal.classList.remove('opacity-100');
+      modalCard?.classList.remove('translate-y-0');
+      modalCard?.classList.add('-translate-y-2');
+      setTimeout(function () {
+        confirmModal.classList.remove('flex');
+        confirmModal.classList.add('hidden');
+        modalCard?.classList.add('opacity-0', 'scale-95');
+      }, 220);
+    }
+
+    confirmModal?.querySelectorAll('[data-dismiss-modal]').forEach(function (btn) {
+      btn.addEventListener('click', hideConfirmModal);
+    });
+
+    function openRegisterConfirm() {
+      if (!formRegistro) return;
+      if (typeof formRegistro.checkValidity === 'function' && !formRegistro.checkValidity()) {
+        formRegistro.reportValidity?.();
+        return;
+      }
+      syncNames();
+      updateUsernameDisplay();
+      showConfirmModal();
+    }
+
+    btnRegistro?.addEventListener('click', function (event) {
+      event.preventDefault();
+      openRegisterConfirm();
+    });
+
+    formRegistro?.addEventListener('submit', function (event) {
+      if (formRegistro.dataset.confirmed === 'true') {
+        formRegistro.dataset.confirmed = '';
+        return;
+      }
+      event.preventDefault();
+      openRegisterConfirm();
+    });
+
+    confirmModal?.querySelector('[data-submit-form]')?.addEventListener('click', function () {
+      hideConfirmModal();
+      if (!formRegistro) return;
+      formRegistro.dataset.confirmed = 'true';
+      if (typeof formRegistro.requestSubmit === 'function') {
+        formRegistro.requestSubmit();
+      } else {
+        formRegistro.submit();
+      }
+    });
+  })();
 </script>
 
 </body>

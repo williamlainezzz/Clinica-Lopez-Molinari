@@ -12,10 +12,9 @@
             <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearCitaAdmin">
                 <i class="fas fa-plus-circle"></i> Crear cita
             </button>
-            <a href="{{ route('agenda.calendario', ['month' => $calendarContext['month'] ?? null]) }}"
-               class="btn btn-outline-secondary">
-                <i class="fas fa-calendar-week"></i> Agenda global
-            </a>
+            <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalMapaAsignaciones">
+                <i class="fas fa-user-friends"></i> Doctores y pacientes
+            </button>
         </div>
     </div>
 @endsection
@@ -206,6 +205,55 @@
         </div>
     </div>
 
+    {{-- Modal: Mapa de asignaciones doctor / paciente --}}
+    <div class="modal fade" id="modalMapaAsignaciones" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Doctores y pacientes</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @if(!empty($doctorPanels))
+                        <div class="row">
+                            <div class="col-md-5 mb-3 mb-md-0">
+                                <div class="list-group" id="doctorRoster">
+                                    @foreach($doctorPanels as $index => $doctor)
+                                        @php
+                                            $doctorId = $doctor['doctor_persona_id'] ?? null;
+                                        @endphp
+                                        <button type="button"
+                                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center js-roster-item {{ $index === 0 ? 'active' : '' }}"
+                                                data-doctor-id="{{ $doctorId }}"
+                                                data-doctor-name="{{ $doctor['nombre'] ?? 'Doctor' }}"
+                                                data-doctor-specialty="{{ $doctor['especialidad'] ?? 'Odontología' }}">
+                                            <div>
+                                                <div class="font-weight-bold">{{ $doctor['nombre'] ?? 'Doctor' }}</div>
+                                                <small class="text-muted">{{ $doctor['especialidad'] ?? 'Odontología' }}</small>
+                                            </div>
+                                            <span class="badge badge-light text-primary font-weight-bold">
+                                                {{ count($doctor['pacientes'] ?? []) }}
+                                            </span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="js-roster-panel">
+                                    <p class="text-muted mb-0">Selecciona un doctor para ver a los pacientes asignados y sus próximas citas.</p>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">Todavía no hay doctores con pacientes registrados.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal: Citas por doctor --}}
     <div class="modal fade" id="modalDoctorCitas" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -369,6 +417,70 @@
     (function () {
         const map = @json($doctorPatientMap ?? []);
 
+        function buildPatientsTable(patients) {
+            if (!patients || !patients.length) {
+                return '<p class="text-muted mb-0">Sin pacientes asignados en este momento.</p>';
+            }
+
+            let rows = '';
+            patients.forEach(function (patient) {
+                const estado = (patient.estado || '').toUpperCase();
+                const fecha = patient.fecha || '';
+                const hora = patient.hora || '';
+                const estadoLabel = estado === 'CONFIRMADA'
+                    ? '<span class="badge badge-success">Confirmada</span>'
+                    : estado === 'CANCELADA'
+                        ? '<span class="badge badge-danger">Cancelada</span>'
+                        : estado === 'PENDIENTE'
+                            ? '<span class="badge badge-warning">Pendiente</span>'
+                            : '<span class="badge badge-secondary">' + (patient.estado || 'Sin estado') + '</span>';
+                rows += '<tr>' +
+                    '<td class="font-weight-bold">' + (patient.nombre || 'Paciente') + '</td>' +
+                    '<td>' + (patient.motivo || 'N/D') + '</td>' +
+                    '<td>' + fecha + (hora ? ' · ' + hora : '') + '</td>' +
+                    '<td>' + estadoLabel + '</td>' +
+                    '</tr>';
+            });
+
+            return '<div class="table-responsive">' +
+                '<table class="table table-sm table-striped mb-0">' +
+                '<thead>' +
+                '<tr>' +
+                '<th>Paciente</th>' +
+                '<th>Motivo</th>' +
+                '<th>Fecha / Hora</th>' +
+                '<th>Estado</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>' + rows + '</tbody>' +
+                '</table>' +
+                '</div>';
+        }
+
+        function renderRosterPanel(button) {
+            const panel = $('#modalMapaAsignaciones .js-roster-panel');
+            if (!button || !button.length) {
+                panel.html('<p class="text-muted mb-0">Selecciona un doctor para ver la información.</p>');
+                return;
+            }
+
+            const doctorId = button.data('doctor-id');
+            const doctorName = button.data('doctor-name');
+            const specialty = button.data('doctor-specialty');
+            const doctorData = map[doctorId] || {};
+            const patients = doctorData.patients || [];
+            const totalPacientes = patients.length;
+
+            let content = '<div class="mb-3">' +
+                '<h4 class="h5 mb-1">' + doctorName + '</h4>' +
+                '<p class="text-muted mb-2">' + specialty + '</p>' +
+                '<span class="badge badge-info">' + totalPacientes + ' pacientes asignados</span>' +
+                '</div>';
+
+            content += buildPatientsTable(patients);
+            panel.html(content);
+        }
+
         function hydratePatients(modal, doctorId) {
             const select = modal.find('select[name="paciente_persona_id"]');
             select.empty();
@@ -402,6 +514,24 @@
 
         $('#modalCrearCitaAdmin select[name="doctor_persona_id"]').on('change', function () {
             hydratePatients($('#modalCrearCitaAdmin'), this.value);
+        });
+
+        $('#modalMapaAsignaciones').on('shown.bs.modal', function () {
+            const modal = $(this);
+            const firstButton = modal.find('.js-roster-item').first();
+            modal.find('.js-roster-item').removeClass('active');
+            if (firstButton.length) {
+                firstButton.addClass('active');
+                renderRosterPanel(firstButton);
+            } else {
+                renderRosterPanel(null);
+            }
+        });
+
+        $(document).on('click', '.js-roster-item', function () {
+            const button = $(this);
+            button.addClass('active').siblings().removeClass('active');
+            renderRosterPanel(button);
         });
 
         $('.btn-open-doctor').on('click', function () {

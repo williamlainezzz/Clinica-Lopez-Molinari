@@ -161,6 +161,9 @@
       const $apellido = document.getElementById('PRIMER_APELLIDO');
       const $pill = document.getElementById('username-pill');
       const $out = document.getElementById('username-preview');
+      const suggestionUrl = "{{ route('register.username') }}";
+      let usernameDebounce = null;
+      let usernameAbort = null;
 
       function stripDiacritics(str) {
         return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -173,17 +176,60 @@
         if (!base) base = 'user';
         return base.slice(0, maxLen);
       }
-      function update() {
-        const n = $nombre?.value || '';
-        const a = $apellido?.value || '';
-        const u = makeUsername(n, a);
-        if ((n && n.trim()) || (a && a.trim())) {
+      function setUsername(username, pending = false) {
+        if (username || pending) {
           $pill.classList.remove('hidden');
-          $out.textContent = u;
         } else {
           $pill.classList.add('hidden');
-          $out.textContent = '';
         }
+        if ($out) {
+          $out.textContent = username || (pending ? 'generando…' : '');
+        }
+      }
+
+      function requestUsername(nombre, apellido) {
+        if (!suggestionUrl) {
+          return;
+        }
+        usernameAbort?.abort();
+        usernameAbort = new AbortController();
+        fetch(
+          `${suggestionUrl}?nombre=${encodeURIComponent(nombre)}&apellido=${encodeURIComponent(apellido)}`,
+          {
+            headers: { 'Accept': 'application/json' },
+            signal: usernameAbort.signal,
+          }
+        )
+          .then(response => {
+            if (!response.ok) throw new Error('username-error');
+            return response.json();
+          })
+          .then(data => {
+            if (data && data.username) {
+              setUsername(data.username, false);
+            }
+          })
+          .catch(error => {
+            if (error.name === 'AbortError') return;
+          });
+      }
+
+      function update() {
+        const n = ($nombre?.value || '').trim();
+        const a = ($apellido?.value || '').trim();
+        if (!n || !a) {
+          clearTimeout(usernameDebounce);
+          usernameAbort?.abort();
+          setUsername('', false);
+          return;
+        }
+        const u = makeUsername(n, a);
+        setUsername(u, Boolean(suggestionUrl));
+        clearTimeout(usernameDebounce);
+        if (!suggestionUrl) {
+          return;
+        }
+        usernameDebounce = setTimeout(() => requestUsername(n, a), 300);
       }
       ['input','change'].forEach(evt => {
         $nombre?.addEventListener(evt, update);
