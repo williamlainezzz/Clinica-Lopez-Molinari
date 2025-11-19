@@ -12,10 +12,9 @@
             <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearCitaAdmin">
                 <i class="fas fa-plus-circle"></i> Crear cita
             </button>
-            <a href="{{ route('agenda.calendario', ['month' => $calendarContext['month'] ?? null]) }}"
-               class="btn btn-outline-secondary">
-                <i class="fas fa-calendar-week"></i> Agenda global
-            </a>
+            <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalDoctorPacientes">
+                <i class="fas fa-user-friends"></i> Doctores y pacientes
+            </button>
         </div>
     </div>
 @endsection
@@ -66,21 +65,19 @@
                                 </div>
                             </div>
                         </div>
+                        @php
+                            $assignedPatients = collect(($doctorPatientMap[$doctorId]['patients'] ?? []));
+                        @endphp
                         <div class="text-right">
-                            <button class="btn btn-outline-primary btn-open-doctor mb-2"
-                                    data-doctor-id="{{ $doctorId }}"
-                                    data-doctor-name="{{ $doctor['nombre'] ?? 'Doctor' }}"
-                                    data-target="#modalDoctorCitas"
-                                    data-toggle="modal">
-                                <i class="fas fa-eye"></i> Ver citas
-                            </button>
-                            <br>
-                            <button class="btn btn-primary btn-open-crear"
-                                    data-doctor="{{ $doctorId }}"
-                                    data-toggle="modal"
-                                    data-target="#modalCrearCitaAdmin">
-                                <i class="fas fa-calendar-plus"></i> Crear cita
-                            </button>
+                            <div class="btn-group-vertical btn-group-sm">
+                                <button class="btn btn-outline-primary btn-open-doctor"
+                                        data-doctor-id="{{ $doctorId }}"
+                                        data-doctor-name="{{ $doctor['nombre'] ?? 'Doctor' }}"
+                                        data-target="#modalDoctorCitas"
+                                        data-toggle="modal">
+                                    <i class="fas fa-eye"></i> Ver citas
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -163,6 +160,35 @@
                         </table>
                     </div>
                 </template>
+
+                <template id="doctor-pacientes-{{ $doctorId }}">
+                    @if($assignedPatients->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Apellido</th>
+                                        <th>Teléfono</th>
+                                        <th>Dirección</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($assignedPatients as $paciente)
+                                        <tr>
+                                            <td>{{ $paciente['primer_nombre'] ?? $paciente['nombre'] ?? 'Paciente' }}</td>
+                                            <td>{{ $paciente['primer_apellido'] ?? '—' }}</td>
+                                            <td>{{ $paciente['telefono'] ?? 'Sin teléfono' }}</td>
+                                            <td>{{ $paciente['direccion'] ?? 'Sin dirección' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <p class="text-muted mb-0">Sin pacientes asignados en el directorio.</p>
+                    @endif
+                </template>
             @empty
                 <div class="alert alert-info">No se encontraron doctores con citas registradas.</div>
             @endforelse
@@ -218,6 +244,55 @@
                 </div>
                 <div class="modal-body js-doctor-body">
                     <p class="text-muted mb-0">Selecciona un doctor para visualizar sus citas.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal: Asignaciones doctor-paciente --}}
+    <div class="modal fade" id="modalDoctorPacientes" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Asignaciones doctor - paciente</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <h6 class="text-uppercase small text-muted">Doctores</h6>
+                            <div class="list-group js-doctor-list">
+                                @forelse(($doctorPanels ?? []) as $doctor)
+                                    @php
+                                        $doctorId = $doctor['doctor_persona_id'] ?? null;
+                                    @endphp
+                                    <button type="button"
+                                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center js-select-doctor"
+                                            data-doctor-id="{{ $doctorId }}"
+                                            data-doctor-name="{{ $doctor['nombre'] ?? 'Doctor' }}">
+                                        <div>
+                                            <strong>{{ $doctor['nombre'] ?? 'Doctor' }}</strong>
+                                            <div class="small text-muted">{{ $doctor['especialidad'] ?? 'Odontología' }}</div>
+                                        </div>
+                                        <span class="badge badge-light badge-pill">{{ count($doctor['pacientes'] ?? []) }}</span>
+                                    </button>
+                                @empty
+                                    <p class="text-muted mb-0">No hay doctores registrados.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="text-uppercase small text-muted mb-0">Pacientes asignados</h6>
+                                <span class="font-weight-bold js-pacientes-doctor text-primary">Selecciona un doctor</span>
+                            </div>
+                            <div class="js-pacientes-body">
+                                <p class="text-muted mb-0">Selecciona un doctor para visualizar a sus pacientes asignados.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -410,6 +485,41 @@
             const modal = $('#modalDoctorCitas');
             modal.find('.js-doctor-name').text($(this).data('doctor-name'));
             modal.find('.js-doctor-body').html(template ? template.innerHTML : '<p class="text-muted mb-0">Sin información disponible.</p>');
+        });
+
+        const pacientesModal = $('#modalDoctorPacientes');
+        const pacientesBody = pacientesModal.find('.js-pacientes-body');
+
+        function renderDoctorPatients(doctorId) {
+            const template = document.getElementById('doctor-pacientes-' + doctorId);
+            if (template) {
+                pacientesBody.html(template.innerHTML);
+            } else {
+                pacientesBody.html('<p class="text-muted mb-0">Sin información disponible.</p>');
+            }
+        }
+
+        $('.js-select-doctor').on('click', function () {
+            const button = $(this);
+            const doctorId = button.data('doctor-id');
+            const doctorName = button.data('doctor-name');
+            button.closest('.js-doctor-list').find('.js-select-doctor').removeClass('active');
+            button.addClass('active');
+            pacientesModal.find('.js-pacientes-doctor').text(doctorName || 'Doctor');
+            renderDoctorPatients(doctorId);
+        });
+
+        pacientesModal.on('show.bs.modal', function () {
+            pacientesModal.find('.js-select-doctor').removeClass('active');
+            pacientesModal.find('.js-pacientes-doctor').text('Selecciona un doctor');
+            pacientesBody.html('<p class="text-muted mb-0">Selecciona un doctor para visualizar a sus pacientes asignados.</p>');
+        });
+
+        pacientesModal.on('shown.bs.modal', function () {
+            const firstDoctor = pacientesModal.find('.js-select-doctor').first();
+            if (firstDoctor.length) {
+                firstDoctor.trigger('click');
+            }
         });
 
         $('#modalReprogramar').on('show.bs.modal', function (event) {

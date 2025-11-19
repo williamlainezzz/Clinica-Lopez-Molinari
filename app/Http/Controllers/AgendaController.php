@@ -679,27 +679,70 @@ class AgendaController extends Controller
     private function doctorPatientDirectory(): array
     {
         try {
+            $schema = DB::getSchemaBuilder();
             if (
-                !DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente') ||
-                !DB::getSchemaBuilder()->hasTable('tbl_persona')
+                !$schema->hasTable('tbl_doctor_paciente') ||
+                !$schema->hasTable('tbl_persona')
             ) {
                 return [];
             }
 
-            $rows = DB::table('tbl_doctor_paciente as dp')
+            $hasTelefonos   = $schema->hasTable('tbl_telefono');
+            $hasDirecciones = $schema->hasTable('tbl_direccion');
+
+            $query = DB::table('tbl_doctor_paciente as dp')
                 ->join('tbl_persona as doc', 'doc.COD_PERSONA', '=', 'dp.FK_COD_DOCTOR')
                 ->join('tbl_persona as pac', 'pac.COD_PERSONA', '=', 'dp.FK_COD_PACIENTE')
-                ->where('dp.ACTIVO', 1)
-                ->select([
-                    'dp.FK_COD_DOCTOR as doctor_id',
-                    'dp.FK_COD_PACIENTE as paciente_id',
-                    DB::raw("CONCAT(doc.PRIMER_NOMBRE,' ',doc.PRIMER_APELLIDO) as doctor_nombre"),
-                    DB::raw("CONCAT(pac.PRIMER_NOMBRE,' ',pac.PRIMER_APELLIDO) as paciente_nombre"),
-                ])
+                ->where('dp.ACTIVO', 1);
+
+            $select = [
+                'dp.FK_COD_DOCTOR as doctor_id',
+                'dp.FK_COD_PACIENTE as paciente_id',
+                DB::raw("CONCAT(doc.PRIMER_NOMBRE,' ',doc.PRIMER_APELLIDO) as doctor_nombre"),
+                DB::raw("CONCAT(pac.PRIMER_NOMBRE,' ',pac.PRIMER_APELLIDO) as paciente_nombre"),
+                'pac.PRIMER_NOMBRE as paciente_primer_nombre',
+                'pac.PRIMER_APELLIDO as paciente_primer_apellido',
+            ];
+
+            if ($hasTelefonos) {
+                $telefonoSub = DB::table('tbl_telefono')
+                    ->select('FK_COD_PERSONA', DB::raw("GROUP_CONCAT(NUM_TELEFONO ORDER BY NUM_TELEFONO SEPARATOR '||') as telefonos"))
+                    ->groupBy('FK_COD_PERSONA');
+
+                $query->leftJoinSub($telefonoSub, 'tel', function ($join) {
+                    $join->on('tel.FK_COD_PERSONA', '=', 'pac.COD_PERSONA');
+                });
+
+                $select[] = DB::raw("COALESCE(tel.telefonos, '') as telefonos");
+            } else {
+                $select[] = DB::raw("'' as telefonos");
+            }
+
+            if ($hasDirecciones) {
+                $direccionSub = DB::table('tbl_direccion')
+                    ->select(
+                        'FK_COD_PERSONA',
+                        DB::raw(
+                            "GROUP_CONCAT(TRIM(CONCAT_WS(', ', NULLIF(COLONIA, ''), NULLIF(CIUDAD, ''), NULLIF(MUNICIPIO, ''), NULLIF(DEPARTAMENTO, ''), NULLIF(REFERENCIA, ''))) ORDER BY COD_DIRECCION SEPARATOR '||') as direcciones"
+                        )
+                    )
+                    ->groupBy('FK_COD_PERSONA');
+
+                $query->leftJoinSub($direccionSub, 'dir', function ($join) {
+                    $join->on('dir.FK_COD_PERSONA', '=', 'pac.COD_PERSONA');
+                });
+
+                $select[] = DB::raw("COALESCE(dir.direcciones, '') as direcciones");
+            } else {
+                $select[] = DB::raw("'' as direcciones");
+            }
+
+            $rows = $query
                 ->orderBy('doc.PRIMER_NOMBRE')
                 ->orderBy('doc.PRIMER_APELLIDO')
                 ->orderBy('pac.PRIMER_NOMBRE')
                 ->orderBy('pac.PRIMER_APELLIDO')
+                ->select($select)
                 ->get();
 
             if ($rows->isEmpty()) {
@@ -712,10 +755,17 @@ class AgendaController extends Controller
                 return [
                     'doctor'   => $first->doctor_nombre,
                     'patients' => $group->map(function ($row) {
+                        $telefonos = array_values(array_filter(array_map('trim', explode('||', $row->telefonos ?? ''))));
+                        $direcciones = array_values(array_filter(array_map('trim', explode('||', $row->direcciones ?? ''))));
+
                         return [
-                            'persona_id' => (int) $row->paciente_id,
-                            'nombre'     => $row->paciente_nombre,
-                            'codigo'     => 'PAC-' . str_pad($row->paciente_id, 4, '0', STR_PAD_LEFT),
+                            'persona_id'      => (int) $row->paciente_id,
+                            'nombre'          => $row->paciente_nombre,
+                            'primer_nombre'   => $row->paciente_primer_nombre,
+                            'primer_apellido' => $row->paciente_primer_apellido,
+                            'codigo'          => 'PAC-' . str_pad($row->paciente_id, 4, '0', STR_PAD_LEFT),
+                            'telefono'        => $telefonos[0] ?? 'Sin teléfono registrado',
+                            'direccion'       => $direcciones[0] ?? 'Sin dirección registrada',
                         ];
                     })->values()->all(),
                 ];
