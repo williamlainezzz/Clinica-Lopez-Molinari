@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Persona;
+use App\Models\PreguntaSeguridad;
 use App\Models\Usuario;
 use App\Services\UsernameGenerator;
 use Illuminate\Auth\Events\Registered;
@@ -22,7 +23,14 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        return view('auth.register');
+        $preguntas = PreguntaSeguridad::where('ESTADO', 1)
+            ->orderBy('TEXTO_PREGUNTA')
+            ->get();
+
+        return view('auth.register', [
+            'preguntasSeg'      => $preguntas,
+            'hondurasLocations' => $this->hondurasLocations(),
+        ]);
     }
 
     /**
@@ -33,10 +41,18 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request)
     {
+        $this->mergeFullNames($request);
+
         // 0) Normaliza el correo del request que usa tu form (CLAVE EN MAYÚSCULAS)
         $request->merge([
             'CORREO' => mb_strtolower(trim((string) $request->input('CORREO'))),
         ]);
+
+        if ($request->filled('CIUDAD') && !$request->filled('MUNICIPIO')) {
+            $request->merge([
+                'MUNICIPIO' => $request->input('CIUDAD'),
+            ]);
+        }
 
         // 1) Validación (UNA sola vez) con UNIQUE en tbl_correo.CORREO
         $validated = $request->validateWithBag('register', [
@@ -62,7 +78,6 @@ class RegisteredUserController extends Controller
             'DEPARTAMENTO' => ['nullable', 'string', 'max:30'],
             'MUNICIPIO'    => ['nullable', 'string', 'max:30'],
             'CIUDAD'       => ['nullable', 'string', 'max:30'],
-            'COLONIA'      => ['nullable', 'string', 'max:30'],
             'REFERENCIA'   => ['nullable', 'string', 'max:255'],
 
             // Preguntas de seguridad
@@ -131,7 +146,6 @@ class RegisteredUserController extends Controller
                     !empty($validated['DEPARTAMENTO']) ||
                     !empty($validated['MUNICIPIO']) ||
                     !empty($validated['CIUDAD']) ||
-                    !empty($validated['COLONIA']) ||
                     !empty($validated['REFERENCIA'])
                 ) {
                     DB::table('tbl_direccion')->insert([
@@ -139,7 +153,6 @@ class RegisteredUserController extends Controller
                         'DEPARTAMENTO'   => $validated['DEPARTAMENTO'] ?? '',
                         'MUNICIPIO'      => $validated['MUNICIPIO'] ?? '',
                         'CIUDAD'         => $validated['CIUDAD'] ?? null,
-                        'COLONIA'        => $validated['COLONIA'] ?? null,
                         'REFERENCIA'     => $validated['REFERENCIA'] ?? null,
                     ]);
                 }
@@ -211,6 +224,65 @@ class RegisteredUserController extends Controller
         $doctorId = (int) ($request->query('doctor_id') ?? $request->input('doctor_id') ?? 0);
 
         return $doctorId > 0 ? $doctorId : null;
+    }
+
+    private function mergeFullNames(Request $request): void
+    {
+        $fullNames = trim((string) $request->input('NOMBRES_COMPLETOS', ''));
+        $fullSurnames = trim((string) $request->input('APELLIDOS_COMPLETOS', ''));
+
+        if ($fullNames !== '' && !$request->filled('PRIMER_NOMBRE')) {
+            [$first, $second] = $this->splitNameParts($fullNames);
+            $request->merge([
+                'PRIMER_NOMBRE'  => $first,
+                'SEGUNDO_NOMBRE' => $second,
+            ]);
+        }
+
+        if ($fullSurnames !== '' && !$request->filled('PRIMER_APELLIDO')) {
+            [$first, $second] = $this->splitNameParts($fullSurnames);
+            $request->merge([
+                'PRIMER_APELLIDO'  => $first,
+                'SEGUNDO_APELLIDO' => $second,
+            ]);
+        }
+    }
+
+    private function splitNameParts(string $fullName): array
+    {
+        $parts = array_values(array_filter(preg_split('/\s+/', trim($fullName))));
+        $first = $parts[0] ?? '';
+        $second = null;
+
+        if (count($parts) > 1) {
+            $second = trim(implode(' ', array_slice($parts, 1))) ?: null;
+        }
+
+        return [$first, $second];
+    }
+
+    private function hondurasLocations(): array
+    {
+        return [
+            'Atlántida' => ['Arizona', 'El Porvenir', 'Esparta', 'Jutiapa', 'La Ceiba', 'La Masica', 'San Francisco', 'Tela'],
+            'Choluteca' => ['Apacilagua', 'Choluteca', 'Concepción de María', 'Duyure', 'El Corpus', 'El Triunfo', 'Marcovia', 'Morolica', 'Namasigüe', 'Orocuina', 'Pespire', 'San Antonio de Flores', 'San Isidro', 'San José', 'San Marcos de Colón', 'Santa Ana de Yusguare'],
+            'Colón' => ['Balfate', 'Bonito Oriental', 'Iriona', 'Limón', 'Sabá', 'Santa Fe', 'Santa Rosa de Aguán', 'Sonaguera', 'Tocoa', 'Trujillo'],
+            'Comayagua' => ['Ajuterique', 'Comayagua', 'El Rosario', 'Esquías', 'Humuya', 'La Libertad', 'Lamaní', 'La Trinidad', 'Lejamaní', 'Meámbar', 'Minas de Oro', 'Ojos de Agua', 'San Jerónimo', 'San José de Comayagua', 'San José del Potrero', 'San Luis', 'San Sebastián', 'Siguatepeque', 'Taulabé', 'Villa de San Antonio', 'Las Lajas'],
+            'Copán' => ['Cabañas', 'Concepción', 'Copán Ruinas', 'Corquín', 'Cucuyagua', 'Dolores', 'Dulce Nombre', 'El Paraíso', 'Florida', 'La Jigua', 'La Unión', 'Nueva Arcadia', 'San Agustín', 'San Antonio', 'San Jerónimo', 'San José', 'San Juan de Opoa', 'San Nicolás', 'San Pedro', 'Santa Rita', 'Santa Rosa de Copán', 'Trinidad de Copán', 'Veracruz'],
+            'Cortés' => ['Choloma', 'La Lima', 'Omoa', 'Pimienta', 'Potrerillos', 'Puerto Cortés', 'San Antonio de Cortés', 'San Francisco de Yojoa', 'San Manuel', 'San Pedro Sula', 'Santa Cruz de Yojoa', 'Villanueva'],
+            'El Paraíso' => ['Alauca', 'Danlí', 'El Paraíso', 'Güinope', 'Jacaleapa', 'Liure', 'Morocelí', 'Oropolí', 'Potrerillos', 'San Lucas', 'San Matías', 'Soledad', 'Teupasenti', 'Texiguat', 'Trojes', 'Vado Ancho', 'Yauyupe', 'Yuscarán'],
+            'Francisco Morazán' => ['Alubarén', 'Cedros', 'Curarén', 'Distrito Central', 'El Porvenir', 'Guaimaca', 'La Libertad', 'La Venta', 'Lepaterique', 'Marale', 'Nueva Armenia', 'Ojojona', 'Orica', 'Reitoca', 'Sabanagrande', 'San Antonio de Oriente', 'San Buenaventura', 'San Ignacio', 'San Juan de Flores', 'San Miguelito', 'Santa Ana', 'Santa Lucía', 'Talanga', 'Tatumbla', 'Valle de Ángeles', 'Vallecillo', 'Villa de San Francisco'],
+            'Gracias a Dios' => ['Ahuas', 'Brus Laguna', 'Juan Francisco Bulnes', 'Puerto Lempira', 'Villeda Morales', 'Wampusirpi'],
+            'Intibucá' => ['Camasca', 'Colomoncagua', 'Concepción', 'Dolores', 'Intibucá', 'Jesús de Otoro', 'La Esperanza', 'Magdalena', 'Masaguara', 'San Antonio', 'San Francisco de Opalaca', 'San Isidro', 'San Juan', 'San Marcos de la Sierra', 'San Miguel Guancapla', 'Santa Lucía', 'Yamaranguila'],
+            'Islas de la Bahía' => ['Guanaja', 'José Santos Guardiola', 'Roatán', 'Útila'],
+            'La Paz' => ['Aguanqueterique', 'Cabañas', 'Cane', 'Chinacla', 'Guajiquiro', 'La Paz', 'Lauterique', 'Marcala', 'Mercedes de Oriente', 'Opatoro', 'San Antonio del Norte', 'San José', 'San Juan', 'San Pedro de Tutule', 'Santa Ana', 'Santa Elena', 'Santa María', 'Santiago de Puringla', 'Yarula'],
+            'Lempira' => ['Belén', 'Candelaria', 'Cololaca', 'Erandique', 'Gracias', 'Gualcince', 'Guarita', 'La Campa', 'La Iguala', 'Las Flores', 'La Unión', 'La Virtud', 'Lepaera', 'Mapulaca', 'Piraera', 'San Andrés', 'San Francisco', 'San Juan Guarita', 'San Manuel Colohete', 'San Rafael', 'San Sebastián', 'Santa Cruz', 'Talgua', 'Tambla', 'Tomalá', 'Valladolid', 'Virginia'],
+            'Ocotepeque' => ['Belén Gualcho', 'Concepción', 'Dolores Merendón', 'Fraternidad', 'La Encarnación', 'La Labor', 'Lucerna', 'Mercedes', 'Ocotepeque', 'San Fernando', 'San Francisco del Valle', 'San Jorge', 'San Marcos', 'Santa Fe', 'Sensenti', 'Sinuapa'],
+            'Olancho' => ['Campamento', 'Catacamas', 'Concordia', 'Dulce Nombre de Culmí', 'El Rosario', 'Esquipulas del Norte', 'Gualaco', 'Guarizama', 'Guata', 'Guayape', 'Jano', 'Juticalpa', 'La Unión', 'Mangulile', 'Manto', 'Patuca', 'Salamá', 'San Esteban', 'San Francisco de Becerra', 'San Francisco de la Paz', 'Santa María del Real', 'Silca', 'Yocón'],
+            'Santa Bárbara' => ['Arada', 'Atima', 'Azacualpa', 'Ceguaca', 'Chinda', 'Concepción del Norte', 'Concepción del Sur', 'El Níspero', 'Gualala', 'Ilama', 'Las Vegas', 'Macuelizo', 'Naranjito', 'Nueva Celilac', 'Petoa', 'Protección', 'Quimistán', 'San Francisco de Ojuera', 'San José de Colinas', 'San Luis', 'San Marcos', 'San Nicolás', 'San Pedro Zacapa', 'San Vicente Centenario', 'Santa Bárbara', 'Santa Rita', 'Trinidad'],
+            'Valle' => ['Alianza', 'Amapala', 'Aramecina', 'Caridad', 'Goascorán', 'Langue', 'Nacaome', 'San Francisco de Coray', 'San Lorenzo'],
+            'Yoro' => ['Arenal', 'El Negrito', 'El Progreso', 'Jocón', 'Morazán', 'Olanchito', 'Santa Rita', 'Sulaco', 'Victoria', 'Yoro', 'Yorito'],
+        ];
     }
 
     /**

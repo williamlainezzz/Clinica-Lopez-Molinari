@@ -205,7 +205,7 @@
         </div>
     </div>
 
-    {{-- Modal: Mapa de asignaciones doctor / paciente --}}
+    {{-- Modal: Directorio de doctores y pacientes --}}
     <div class="modal fade" id="modalMapaAsignaciones" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -242,7 +242,7 @@
                             </div>
                             <div class="col-md-7">
                                 <div class="js-roster-panel">
-                                    <p class="text-muted mb-0">Selecciona un doctor para ver a los pacientes asignados y sus próximas citas.</p>
+                                    <p class="text-muted mb-0">Selecciona un doctor para ver a los pacientes asignados.</p>
                                 </div>
                             </div>
                         </div>
@@ -417,44 +417,23 @@
     (function () {
         const map = @json($doctorPatientMap ?? []);
 
-        function buildPatientsTable(patients) {
+        function buildPatientsList(patients) {
             if (!patients || !patients.length) {
                 return '<p class="text-muted mb-0">Sin pacientes asignados en este momento.</p>';
             }
 
-            let rows = '';
+            let items = '';
             patients.forEach(function (patient) {
-                const estado = (patient.estado || '').toUpperCase();
-                const fecha = patient.fecha || '';
-                const hora = patient.hora || '';
-                const estadoLabel = estado === 'CONFIRMADA'
-                    ? '<span class="badge badge-success">Confirmada</span>'
-                    : estado === 'CANCELADA'
-                        ? '<span class="badge badge-danger">Cancelada</span>'
-                        : estado === 'PENDIENTE'
-                            ? '<span class="badge badge-warning">Pendiente</span>'
-                            : '<span class="badge badge-secondary">' + (patient.estado || 'Sin estado') + '</span>';
-                rows += '<tr>' +
-                    '<td class="font-weight-bold">' + (patient.nombre || 'Paciente') + '</td>' +
-                    '<td>' + (patient.motivo || 'N/D') + '</td>' +
-                    '<td>' + fecha + (hora ? ' · ' + hora : '') + '</td>' +
-                    '<td>' + estadoLabel + '</td>' +
-                    '</tr>';
+                const codigo = patient.codigo ? '<span class="badge badge-light ml-2">' + patient.codigo + '</span>' : '';
+                const nota = patient.nota ? '<div class="text-muted small">' + patient.nota + '</div>' : '';
+                items += '<div class="border rounded p-2 mb-2">' +
+                    '<div class="d-flex justify-content-between align-items-center">' +
+                    '<span class="font-weight-bold">' + (patient.nombre || 'Paciente') + '</span>' + codigo +
+                    '</div>' + nota +
+                    '</div>';
             });
 
-            return '<div class="table-responsive">' +
-                '<table class="table table-sm table-striped mb-0">' +
-                '<thead>' +
-                '<tr>' +
-                '<th>Paciente</th>' +
-                '<th>Motivo</th>' +
-                '<th>Fecha / Hora</th>' +
-                '<th>Estado</th>' +
-                '</tr>' +
-                '</thead>' +
-                '<tbody>' + rows + '</tbody>' +
-                '</table>' +
-                '</div>';
+            return items;
         }
 
         function renderRosterPanel(button) {
@@ -477,7 +456,7 @@
                 '<span class="badge badge-info">' + totalPacientes + ' pacientes asignados</span>' +
                 '</div>';
 
-            content += buildPatientsTable(patients);
+            content += '<div class="mt-3">' + buildPatientsList(patients) + '</div>';
             panel.html(content);
         }
 
