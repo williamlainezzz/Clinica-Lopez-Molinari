@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Persona;
 use App\Models\Usuario;
+use App\Services\UsernameGenerator;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -87,7 +87,7 @@ class RegisteredUserController extends Controller
     ]);
 
     // 3) Generar username único
-    $usr = $this->makeUsername($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
+    $usr = UsernameGenerator::generate($validated['PRIMER_NOMBRE'], $validated['PRIMER_APELLIDO']);
 
     // 4) Buscar el rol PACIENTE en la tabla tbl_rol
     $rolPacienteId = DB::table('tbl_rol')
@@ -217,25 +217,6 @@ class RegisteredUserController extends Controller
      * Genera username único: 1ra letra del nombre + apellido, minúsculas, sin acentos.
      * Si existe, agrega sufijo incremental (ej: wsolis, wsolis1, wsolis2...).
      */
-    protected function makeUsername(string $nombre, string $apellido, int $maxLen = 50): string
-    {
-        $base = Str::ascii(Str::lower(
-            substr(trim($nombre), 0, 1) . preg_replace('/\s+/', '', trim($apellido))
-        ));
-        $base = preg_replace('/[^a-z0-9]/', '', $base) ?: 'user';
-        $base = substr($base, 0, $maxLen);
-
-        $user = $base;
-        $i    = 1;
-
-        while (DB::table('tbl_usuario')->where('USR_USUARIO', $user)->exists()) {
-            $s    = (string) $i++;
-            $user = substr($base, 0, $maxLen - strlen($s)) . $s;
-        }
-        return $user;
-    }
-
-
     /**
      * Normaliza una respuesta: trim, minúsculas, sin tildes/acentos.
      * Así el usuario puede escribir "Bogotá" o "bogota" y validará igual.
