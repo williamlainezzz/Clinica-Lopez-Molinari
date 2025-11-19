@@ -33,6 +33,15 @@
       }
     }
   </style>
+  <style>
+    .modal-animated {
+      animation: floatIn 320ms ease;
+    }
+    @keyframes floatIn {
+      0% {opacity: 0; transform: translateY(16px) scale(.98);} 
+      100% {opacity: 1; transform: translateY(0) scale(1);} 
+    }
+  </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50 text-slate-800 relative">
 
@@ -128,7 +137,7 @@
 
     <!-- Añadido: modal-panel -->
     <div x-transition
-         class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+         class="modal-panel modal-animated relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
       <div class="flex items-center justify-between px-5 py-4 border-b">
         <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
         <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
@@ -216,10 +225,10 @@
   </div>
 
   <!-- ===== MODAL: REGISTRO ===== -->
-<div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-  <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
+  <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
 
-  <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+  <div x-transition class="modal-panel modal-animated relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
     <div class="flex items-center justify-between px-5 py-4 border-b">
       <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
       <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
@@ -236,44 +245,38 @@
       <form method="POST" action="{{ route('register') }}" novalidate>
         @csrf
 
-        {{-- Header: usuario autogenerado (discreto) --}}
+        @php
+            $nombresCompletos = trim((old('PRIMER_NOMBRE') ?? '') . ' ' . (old('SEGUNDO_NOMBRE') ?? ''));
+            $apellidosCompletos = trim((old('PRIMER_APELLIDO') ?? '') . ' ' . (old('SEGUNDO_APELLIDO') ?? ''));
+        @endphp
+
+        {{-- Header: usuario autogenerado --}}
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
-          <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
-            <span class="font-medium text-slate-600 mr-1">Usuario:</span>
+          <div id="username-pill" class="hidden text-xs bg-sky-50 border border-sky-100 rounded-md px-3 py-2 text-sky-800 shadow-sm">
+            <span class="font-medium mr-1">Usuario asignado:</span>
             <code id="username-preview" class="font-semibold"></code>
           </div>
         </div>
 
-        {{-- Nombres --}}
+        {{-- Nombres y apellidos combinados --}}
+        <input type="hidden" name="PRIMER_NOMBRE" id="PRIMER_NOMBRE" value="{{ old('PRIMER_NOMBRE') }}">
+        <input type="hidden" name="SEGUNDO_NOMBRE" id="SEGUNDO_NOMBRE" value="{{ old('SEGUNDO_NOMBRE') }}">
+        <input type="hidden" name="PRIMER_APELLIDO" id="PRIMER_APELLIDO" value="{{ old('PRIMER_APELLIDO') }}">
+        <input type="hidden" name="SEGUNDO_APELLIDO" id="SEGUNDO_APELLIDO" value="{{ old('SEGUNDO_APELLIDO') }}">
+
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
-            <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
-                          :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
-            <x-input-error :messages="$errors->register->get('PRIMER_NOMBRE')" class="mt-2" />
+            <x-input-label for="NOMBRES_COMPLETOS" :value="__('Nombres (primer y segundo)')" />
+            <x-text-input id="NOMBRES_COMPLETOS" class="block mt-1 w-full" type="text" name="NOMBRES_COMPLETOS"
+                          :value="$nombresCompletos" required autofocus />
+            <x-input-error :messages="array_filter([$errors->register->first('PRIMER_NOMBRE'), $errors->register->first('SEGUNDO_NOMBRE')])" class="mt-2" />
           </div>
           <div>
-            <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
-            <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
-                          :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
-            <x-input-error :messages="$errors->register->get('SEGUNDO_NOMBRE')" class="mt-2" />
-          </div>
-        </div>
-
-        {{-- Apellidos --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
-            <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
-                          :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
-            <x-input-error :messages="$errors->register->get('PRIMER_APELLIDO')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
-            <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
-                          :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
-            <x-input-error :messages="$errors->register->get('SEGUNDO_APELLIDO')" class="mt-2" />
+            <x-input-label for="APELLIDOS_COMPLETOS" :value="__('Apellidos (primero y segundo)')" />
+            <x-text-input id="APELLIDOS_COMPLETOS" class="block mt-1 w-full" type="text" name="APELLIDOS_COMPLETOS"
+                          :value="$apellidosCompletos" required />
+            <x-input-error :messages="array_filter([$errors->register->first('PRIMER_APELLIDO'), $errors->register->first('SEGUNDO_APELLIDO')])" class="mt-2" />
           </div>
         </div>
 
@@ -292,49 +295,37 @@
           <div>
             <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
             <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
-                          :value="old('NUM_TELEFONO')" placeholder="99991234" />
+                          :value="old('NUM_TELEFONO')" />
             <x-input-error :messages="$errors->register->get('NUM_TELEFONO')" class="mt-2" />
           </div>
         </div>
 
-        {{-- Departamento + Municipio --}}
+        {{-- Departamento + Ciudad --}}
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div>
             <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
-            <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
-                          :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+            <select id="DEPARTAMENTO" name="DEPARTAMENTO" class="block mt-1 w-full rounded-md border-slate-300">
+              <option value="">Selecciona un departamento</option>
+            </select>
             <x-input-error :messages="$errors->register->get('DEPARTAMENTO')" class="mt-2" />
           </div>
           <div>
-            <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
-            <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
-                          :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
-            <x-input-error :messages="$errors->register->get('MUNICIPIO')" class="mt-2" />
+            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
+            <select id="CIUDAD" name="CIUDAD" class="block mt-1 w-full rounded-md border-slate-300" disabled>
+              <option value="">Selecciona un departamento primero</option>
+            </select>
+            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
           </div>
         </div>
 
-        {{-- Ciudad + Colonia --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
-            <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
-                          :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
-            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="COLONIA" :value="__('Colonia')" />
-            <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
-                          :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
-            <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
-          </div>
-        </div>
+        <input type="hidden" name="MUNICIPIO" id="MUNICIPIO" value="{{ old('MUNICIPIO') }}">
+        <input type="hidden" name="COLONIA" id="COLONIA" value="">
 
         {{-- Dirección / Referencia --}}
         <div class="mt-4">
           <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
           <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
-                    class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
-                    placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
+                    class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500">{{ old('REFERENCIA') }}</textarea>
           <x-input-error :messages="$errors->register->get('REFERENCIA')" class="mt-2" />
         </div>
 
@@ -347,7 +338,6 @@
       type="email"
       name="CORREO"
       :value="old('CORREO')"
-      placeholder="tucorreo@ejemplo.com"
       required
       class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}"
   />
@@ -424,9 +414,9 @@
 
 
         {{-- ====== CREDENCIALES ====== --}}
-        <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Usuario asignado</h3>
+        <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Credenciales</h3>
         <div class="mb-3 text-xs text-slate-600">
-          Este será tu usuario para iniciar sesión: <code class="font-semibold" id="username-preview-inline"></code>
+          Tu usuario se generará automáticamente con los datos ingresados: <code class="font-semibold" id="username-preview-inline"></code>
         </div>
 
         {{-- Contraseña + Confirmación (una sola columna) --}}
@@ -531,7 +521,7 @@
         </div>
 
         <div class="flex items-center justify-end mt-6">
-          <x-primary-button class="px-5">Registrarme</x-primary-button>
+          <x-primary-button class="px-5" id="btn-register">Registrarme</x-primary-button>
         </div>
       </form>
     </div>
@@ -539,51 +529,168 @@
 </div>
 
 
-          {{-- Script: vista previa del usuario autogenerado --}}
-          <script>
-            (function () {
-              const maxLen = 50;
-              const $n = document.getElementById('PRIMER_NOMBRE');
-              const $a = document.getElementById('PRIMER_APELLIDO');
-              const $pill = document.getElementById('username-pill');
-              const $out1 = document.getElementById('username-preview');
-              const $out2 = document.getElementById('username-preview-inline');
+          {{-- Script: vista previa del usuario autogenerado y normalización de nombres --}}
+<script>
+  (function () {
+    const maxLen = 50;
+    const $n = document.getElementById('PRIMER_NOMBRE');
+    const $a = document.getElementById('PRIMER_APELLIDO');
+    const $namesFull = document.getElementById('NOMBRES_COMPLETOS');
+    const $lastFull = document.getElementById('APELLIDOS_COMPLETOS');
+    const $pill = document.getElementById('username-pill');
+    const $out1 = document.getElementById('username-preview');
+    const $out2 = document.getElementById('username-preview-inline');
 
-              function strip(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-              function mk(n,a){
-                const first=(n||'').trim().charAt(0);
-                const last=(a||'').trim().replace(/\s+/g,'');
-                let base=(first+last).toLowerCase();
-                base=strip(base).replace(/[^a-z0-9]/g,'');
-                return (base||'user').slice(0,maxLen);
-              }
-              function up(){
-                const u = mk($n?.value,$a?.value);
-                if(($n?.value?.trim() || $a?.value?.trim())){
-                  $pill?.classList.remove('hidden');
-                  if($out1) $out1.textContent=u;
-                  if($out2) $out2.textContent=u;
-                }else{
-                  $pill?.classList.add('hidden');
-                  if($out1) $out1.textContent='';
-                  if($out2) $out2.textContent='';
-                }
-              }
-              ['input','change'].forEach(e=>{ $n?.addEventListener(e,up); $a?.addEventListener(e,up); });
-              up();
-            })();
-          </script>
-        </form>
+    function splitName(value) {
+      const parts = (value || '').trim().split(/\s+/).filter(Boolean);
+      const first = parts.shift() || '';
+      const rest = parts.join(' ');
+      return [first, rest];
+    }
+
+      function strip(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+    function mk(n,a){
+      const first=(n||'').trim().charAt(0);
+      const last=(a||'').trim().replace(/\s+/g,'');
+      let base=(first+last).toLowerCase();
+      base=strip(base).replace(/[^a-z0-9]/g,'');
+      return (base||'user').slice(0,maxLen);
+    }
+    function up(){
+      const u = mk($n?.value,$a?.value);
+      if(($n?.value?.trim() || $a?.value?.trim())){
+        $pill?.classList.remove('hidden');
+        if($out1) $out1.textContent=u;
+        if($out2) $out2.textContent=u;
+      }else{
+        $pill?.classList.add('hidden');
+        if($out1) $out1.textContent='';
+        if($out2) $out2.textContent='';
+      }
+    }
+
+    function syncNames(){
+      const [pName, sName] = splitName($namesFull?.value || '');
+      const [pLast, sLast] = splitName($lastFull?.value || '');
+      if($n) $n.value = pName;
+      if($a) $a.value = pLast;
+      const $sN = document.getElementById('SEGUNDO_NOMBRE');
+      const $sA = document.getElementById('SEGUNDO_APELLIDO');
+      if($sN) $sN.value = sName;
+      if($sA) $sA.value = sLast;
+      up();
+    }
+
+    ['input','change'].forEach(e=>{
+      $namesFull?.addEventListener(e, syncNames);
+      $lastFull?.addEventListener(e, syncNames);
+    });
+    ['input','change'].forEach(e=>{ $n?.addEventListener(e,up); $a?.addEventListener(e,up); });
+
+    const registerForm = document.querySelector('form[action="{{ route('register') }}"]');
+    registerForm?.addEventListener('submit', () => {
+      syncNames();
+      const city = document.getElementById('CIUDAD')?.value || '';
+      const municipio = document.getElementById('MUNICIPIO');
+      if(municipio) municipio.value = city;
+    });
+
+    syncNames();
+    up();
+  })();
+</script>
+
+{{-- Script: cargar departamentos y ciudades de Honduras --}}
+<script>
+  (function(){
+    const data = {
+      "Atlántida": ["La Ceiba", "Tela", "Arizona", "Esparta", "Jutiapa", "La Masica", "San Francisco", "El Porvenir"],
+      "Choluteca": ["Choluteca", "Apacilagua", "Concepción de María", "Duyure", "El Corpus", "Marcovia", "Namasigüe", "Orocuina", "Pespire", "San Antonio de Flores", "San Isidro", "San José", "San Marcos de Colón", "Santa Ana de Yusguare"],
+      "Colón": ["Trujillo", "Balfate", "Iriona", "Limón", "Saba", "Santa Fe", "Santa Rosa de Aguán", "Sonaguera", "Tocoa", "Bonito Oriental"],
+      "Comayagua": ["Comayagua", "Ajuterique", "El Rosario", "Esquías", "Humuya", "La Libertad", "Lamaní", "Las Lajas", "Lejamaní", "Meámbar", "Minas de Oro", "Ojos de Agua", "San Jerónimo", "San José de Comayagua", "San José del Potrero", "San Luis", "San Sebastián", "Siguatepeque", "Taulabé", "Villa de San Antonio"],
+      "Copán": ["Santa Rosa de Copán", "Cabañas", "Concepción", "Copán Ruinas", "Corquín", "Cucuyagua", "Dolores", "Dulce Nombre", "El Paraíso", "Florida", "La Jigua", "La Unión", "Nueva Arcadia", "San Agustín", "San Antonio", "San Jerónimo", "San José", "San Juan de Opoa", "San Nicolás", "San Pedro", "Santa Rita", "Trinidad de Copán", "Veracruz"],
+      "Cortés": ["San Pedro Sula", "Choloma", "La Lima", "Villanueva", "Puerto Cortés", "Omoa", "Pimienta", "Potrerillos", "San Antonio de Cortés", "San Francisco de Yojoa", "Santa Cruz de Yojoa"],
+      "El Paraíso": ["Yuscarán", "Alauca", "Danlí", "El Paraíso", "Güinope", "Jacaleapa", "Liure", "Morocelí", "Oropolí", "Potrerillos", "San Antonio de Flores", "San Lucas", "San Matías", "Soledad", "Teupasenti", "Texiguat", "Vado Ancho"],
+      "Francisco Morazán": ["Distrito Central", "Alubarén", "Cedros", "Curarén", "El Porvenir", "Guaimaca", "La Libertad", "La Venta", "Lepaterique", "Maraita", "Marale", "Nueva Armenia", "Ojojona", "Orica", "Reitoca", "Sabanagrande", "San Antonio de Oriente", "San Buenaventura", "San Ignacio", "San Juan de Flores", "San Miguelito", "Santa Ana", "Santa Lucía", "Talanga", "Tatumbla", "Valle de Ángeles", "Villa de San Francisco", "Vallecillo"],
+      "Gracias a Dios": ["Puerto Lempira", "Ahuas", "Brus Laguna", "Juan Francisco Bulnes", "Ramón Villeda Morales", "Wampusirpi"],
+      "Intibucá": ["La Esperanza", "Camasca", "Colomoncagua", "Concepción", "Dolores", "Intibucá", "Jesús de Otoro", "Magdalena", "Masaguara", "San Antonio", "San Isidro", "San Juan", "San Marcos de la Sierra", "San Miguelito", "Santa Lucía", "Yamaranguila"],
+      "Islas de la Bahía": ["Roatán", "José Santos Guardiola", "Utila", "Guanaja"],
+      "La Paz": ["La Paz", "Aguanqueterique", "Cabañas", "Cane", "Chinacla", "Guajiquiro", "Lauterique", "Marcala", "Mercedes de Oriente", "Opatoro", "San Antonio del Norte", "San José", "San Juan", "San Pedro de Tutule", "Santa Ana", "Santa Elena", "Santa María", "Santiago de Puringla", "Yarula"],
+      "Lempira": ["Gracias", "Belén", "Candelaria", "Cololaca", "Erandique", "Gualcince", "Guarita", "La Campa", "La Iguala", "Las Flores", "La Unión", "La Virtud", "Lepaera", "Mapulaca", "Piraera", "San Andrés", "San Francisco", "San Juan Guarita", "San Manuel Colohete", "San Marcos de Caiquín", "San Rafael", "San Sebastián", "Santa Cruz", "Talgua", "Tambla", "Tomalá", "Valladolid", "Virginia"],
+      "Ocotepeque": ["Nueva Ocotepeque", "Belén Gualcho", "Concepción", "Dolores Merendón", "Fraternidad", "La Encarnación", "La Labor", "Lucerna", "Mercedes", "San Fernando", "San Francisco del Valle", "San Jorge", "San Marcos", "Santa Fe", "Sensenti", "Sinuapa"],
+      "Olancho": ["Juticalpa", "Campamento", "Catacamas", "Concordia", "Dulce Nombre de Culmí", "El Rosario", "Esquipulas del Norte", "Gualaco", "Guarizama", "Guata", "Guayape", "Jano", "La Unión", "Mangulile", "Manto", "Salamá", "San Esteban", "San Francisco de Becerra", "San Francisco de la Paz", "Santa María del Real", "Silca", "Yocón"],
+      "Santa Bárbara": ["Santa Bárbara", "Arada", "Atima", "Azacualpa", "Ceguaca", "Concepción del Norte", "Concepción del Sur", "Chinda", "El Níspero", "Gualala", "Ilama", "Las Vegas", "Macuelizo", "Naranjito", "Nuevo Celilac", "Petoa", "Protección", "Quimistán", "San Francisco de Ojuera", "San José de las Colinas", "San Luis", "San Marcos", "San Nicolás", "San Pedro Zacapa", "San Vicente Centenario", "Santa Rita", "Trinidad"],
+      "Valle": ["Nacaome", "Alianza", "Amapala", "Aramecina", "Caridad", "Goascorán", "Langue", "San Francisco de Coray", "San Lorenzo"] ,
+      "Yoro": ["Yoro", "Arenal", "El Negrito", "El Progreso", "Jocón", "Morazán", "Olanchito", "Santa Rita", "Sulaco", "Victoria", "Yorito"]
+    };
+
+    const deptSelect = document.getElementById('DEPARTAMENTO');
+    const citySelect = document.getElementById('CIUDAD');
+
+    function fillDepartments() {
+      if(!deptSelect) return;
+      Object.keys(data).sort().forEach(dep => {
+        const opt = document.createElement('option');
+        opt.value = dep;
+        opt.textContent = dep;
+        if(dep === "{{ old('DEPARTAMENTO') }}") opt.selected = true;
+        deptSelect.appendChild(opt);
+      });
+    }
+
+    function fillCities(dep) {
+      if(!citySelect) return;
+      citySelect.innerHTML = '';
+      if(!dep || !data[dep]) {
+        citySelect.disabled = true;
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Selecciona un departamento primero';
+        citySelect.appendChild(opt);
+        return;
+      }
+      citySelect.disabled = false;
+      data[dep].forEach(city => {
+        const opt = document.createElement('option');
+        opt.value = city;
+        opt.textContent = city;
+        if(city === "{{ old('CIUDAD') }}") opt.selected = true;
+        citySelect.appendChild(opt);
+      });
+    }
+
+    deptSelect?.addEventListener('change', (e) => {
+      fillCities(e.target.value);
+    });
+
+    fillDepartments();
+    if(deptSelect?.value) {
+      fillCities(deptSelect.value);
+    } else {
+      fillCities('');
+    }
+  })();
+</script>
+
+{{-- Modal emergente de bienvenida al registrar --}}
+<div id="registerOverlay" class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/70 px-4">
+  <div class="modal-panel modal-animated max-w-md w-full bg-white rounded-2xl shadow-xl ring-1 ring-slate-200 overflow-hidden">
+    <div class="bg-gradient-to-r from-sky-500 to-teal-500 px-5 py-4 text-white">
+      <h4 class="text-lg font-semibold">¡Bienvenido a la clínica!</h4>
+      <p class="text-sm opacity-90">Estamos preparando tu cuenta.</p>
+    </div>
+    <div class="p-5 space-y-2 text-slate-700">
+      <p class="text-sm">Tu usuario asignado será:</p>
+      <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 flex items-center justify-between">
+        <span class="text-slate-500 text-sm">Usuario</span>
+        <code id="overlay-username" class="font-semibold text-slate-800"></code>
       </div>
+      <p class="text-xs text-slate-500">Guárdalo para tu próximo inicio de sesión.</p>
     </div>
   </div>
+</div>
 
-
-
-
-
-
-  <script>
+<script>
   // Delegación: cualquier elemento con data-open="login" o "register" abre el modal correcto
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('[data-open]');
@@ -593,6 +700,34 @@
     if (which === 'login')   window.dispatchEvent(new CustomEvent('open-login'));
     if (which === 'register') window.dispatchEvent(new CustomEvent('open-register'));
   });
+
+  (function(){
+    const overlay = document.getElementById('registerOverlay');
+    const overlayUsername = document.getElementById('overlay-username');
+    const btnRegister = document.getElementById('btn-register');
+    const registerForm = document.querySelector('form[action="{{ route('register') }}"]');
+    const userPreview = document.getElementById('username-preview-inline');
+
+    function showOverlay(){
+      if(!overlay) return;
+      if(overlayUsername && userPreview){
+        overlayUsername.textContent = userPreview.textContent || '';
+      }
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+    }
+
+    registerForm?.addEventListener('submit', () => {
+      showOverlay();
+    });
+
+    btnRegister?.addEventListener('click', () => {
+      if(userPreview && userPreview.textContent === ''){
+        const fallback = document.getElementById('PRIMER_NOMBRE')?.value || 'usuario';
+        if(overlayUsername) overlayUsername.textContent = fallback;
+      }
+    });
+  })();
 </script>
 
 </body>

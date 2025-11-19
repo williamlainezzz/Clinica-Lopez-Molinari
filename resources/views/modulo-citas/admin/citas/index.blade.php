@@ -12,10 +12,9 @@
             <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearCitaAdmin">
                 <i class="fas fa-plus-circle"></i> Crear cita
             </button>
-            <a href="{{ route('agenda.calendario', ['month' => $calendarContext['month'] ?? null]) }}"
-               class="btn btn-outline-secondary">
-                <i class="fas fa-calendar-week"></i> Agenda global
-            </a>
+            <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#modalDoctoresPacientes">
+                <i class="fas fa-user-friends"></i> Doctores y pacientes
+            </button>
         </div>
     </div>
 @endsection
@@ -329,6 +328,47 @@
         </div>
     </div>
 
+    {{-- Modal: Doctores y pacientes --}}
+    <div class="modal fade" id="modalDoctoresPacientes" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Doctores y pacientes</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-5 mb-3 mb-md-0">
+                            <div class="list-group" id="doctorPatientSelector">
+                                @forelse(($doctorPanels ?? []) as $doctor)
+                                    <button type="button"
+                                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center doctor-patient-option"
+                                            data-doctor-id="{{ $doctor['doctor_persona_id'] ?? '' }}"
+                                            data-doctor-name="{{ $doctor['nombre'] ?? 'Doctor' }}">
+                                        <div>
+                                            <div class="font-weight-bold">{{ $doctor['nombre'] ?? 'Doctor' }}</div>
+                                            <small class="text-muted">{{ $doctor['especialidad'] ?? 'Odontología' }}</small>
+                                        </div>
+                                        <span class="badge badge-primary badge-pill">{{ count($doctor['pacientes'] ?? []) }}</span>
+                                    </button>
+                                @empty
+                                    <div class="text-muted">No hay doctores registrados.</div>
+                                @endforelse
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="border rounded p-3 h-100" id="doctorPatientDetail">
+                                <p class="text-muted mb-0">Selecciona un doctor para ver a sus pacientes asignados.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Modal: Reprogramar cita --}}
     <div class="modal fade" id="modalReprogramar" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -368,6 +408,7 @@
 <script>
     (function () {
         const map = @json($doctorPatientMap ?? []);
+        const doctorPanels = @json($doctorPanels ?? []);
 
         function hydratePatients(modal, doctorId) {
             const select = modal.find('select[name="paciente_persona_id"]');
@@ -424,6 +465,56 @@
             form.find('input[name="fecha"]').val(fecha);
             form.find('input[name="hora_inicio"]').val(hora);
             form.find('input[name="hora_fin"]').val('');
+        });
+
+        function renderDoctorPatients(target, doctorId) {
+            if (!doctorId) {
+                target.html('<p class="text-muted mb-0">Selecciona un doctor para ver a sus pacientes asignados.</p>');
+                return;
+            }
+
+            const doctorInfo = (doctorPanels || []).find(d => String(d.doctor_persona_id) === String(doctorId));
+            const patientList = map[doctorId] ? (map[doctorId].patients || []) : [];
+
+            if (!doctorInfo) {
+                target.html('<p class="text-muted mb-0">No se encontró información del doctor.</p>');
+                return;
+            }
+
+            if (!patientList.length) {
+                target.html('<div class="d-flex align-items-center h-100"><p class="text-muted mb-0">Este doctor todavía no tiene pacientes asignados.</p></div>');
+                return;
+            }
+
+            const items = patientList.map(p => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="font-weight-bold">${p.nombre || 'Paciente'}</div>
+                        <small class="text-muted">ID ${p.persona_id || ''}</small>
+                    </div>
+                    <span class="badge badge-light text-primary">Asignado</span>
+                </li>
+            `).join('');
+
+            const template = `
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="mb-0">${doctorInfo.nombre || 'Doctor'}</h6>
+                        <small class="text-muted">${doctorInfo.especialidad || 'Especialidad no especificada'}</small>
+                    </div>
+                    <span class="badge badge-primary badge-pill">${patientList.length} pacientes</span>
+                </div>
+                <ul class="list-group list-group-flush">${items}</ul>
+            `;
+
+            target.html(template);
+        }
+
+        $('#doctorPatientSelector').on('click', '.doctor-patient-option', function () {
+            const doctorId = $(this).data('doctor-id');
+            $('#doctorPatientSelector .doctor-patient-option').removeClass('active');
+            $(this).addClass('active');
+            renderDoctorPatients($('#doctorPatientDetail'), doctorId);
         });
     })();
 </script>
