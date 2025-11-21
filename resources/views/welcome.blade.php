@@ -171,7 +171,7 @@
         @endif
 
         {{-- FORM LOGIN (usuario o correo + password) --}}
-        <form method="POST" action="{{ route('login') }}"novalidate x-data="{ showPwd:false }">
+        <form method="POST" action="{{ route('login') }}" novalidate x-data="{ showPwd:false }">
           @csrf
 
           <!-- Usuario o correo -->
