@@ -1,0 +1,137 @@
+:root {
+  --clinica-primary: #0ea5e9;
+  --clinica-primary-dark: #0b8bc7;
+  --clinica-primary-light: #38bdf8;
+  --clinica-teal: #0d9488;
+  --clinica-surface: #f8fbfd;
+  --clinica-surface-strong: #e0f2fe;
+  --clinica-text: #0f172a;
+}
+
+body {
+  background-color: var(--clinica-surface);
+  color: var(--clinica-text);
+}
+
+.btn-primary,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary:visited {
+  background: linear-gradient(90deg, var(--clinica-primary) 0%, var(--clinica-teal) 100%);
+  border-color: var(--clinica-primary-dark);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(90deg, var(--clinica-primary-dark) 0%, var(--clinica-teal) 100%);
+  border-color: var(--clinica-primary-dark);
+}
+
+.btn-outline-primary {
+  color: var(--clinica-primary-dark);
+  border-color: var(--clinica-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background: linear-gradient(90deg, var(--clinica-primary-light) 0%, var(--clinica-teal) 90%);
+  color: #fff;
+  border-color: var(--clinica-primary-dark);
+}
+
+.bg-primary,
+.label-primary,
+.badge-primary {
+  background-color: var(--clinica-primary) !important;
+  color: #fff !important;
+}
+
+.bg-info {
+  background-color: #07a3d6 !important;
+  color: #e5f6ff !important;
+}
+
+.bg-success {
+  background-color: #0f9a78 !important;
+  color: #e7f8f2 !important;
+}
+
+.main-sidebar {
+  background: linear-gradient(180deg, #0b4666 0%, #062c41 100%);
+  color: #e2ecf5;
+}
+
+.main-sidebar .brand-link {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #eaf4ff;
+}
+
+.main-sidebar .brand-link .brand-text {
+  color: #eaf4ff;
+}
+
+.nav-sidebar .nav-link {
+  color: #cde3f5;
+}
+
+.nav-sidebar .nav-link .nav-icon {
+  color: #8ed7ff;
+}
+
+.nav-sidebar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nav-sidebar .nav-link.active,
+.nav-sidebar > .nav-item.menu-open > .nav-link {
+  background: linear-gradient(90deg, rgba(14, 165, 233, 0.18), rgba(13, 148, 136, 0.22));
+  color: #fff;
+  border-left: 4px solid var(--clinica-primary-light);
+}
+
+.nav-sidebar .nav-link.active .nav-icon {
+  color: #7cd4ff;
+}
+
+.sidebar-dark-primary .nav-header {
+  color: #99c4df;
+}
+
+.main-header {
+  background: #0b4666;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.main-header .navbar-nav .nav-link {
+  color: #e6f6ff;
+}
+
+.main-header .navbar-nav .nav-link:hover {
+  color: #fff;
+}
+
+.content-wrapper,
+.control-sidebar,
+.wrapper .content-wrapper {
+  background: #f2f7fb;
+}
+
+.card-primary:not(.card-outline) > .card-header {
+  background: linear-gradient(90deg, var(--clinica-primary) 0%, var(--clinica-teal) 100%);
+}
+
+.pagination > li > a,
+.pagination > li > span {
+  color: var(--clinica-primary);
+}
+
+a {
+  color: var(--clinica-primary);
+}
+
+a:hover {
+  color: var(--clinica-primary-dark);
+}
