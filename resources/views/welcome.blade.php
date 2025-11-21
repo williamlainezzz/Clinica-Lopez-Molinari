@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bienvenido — Clínica Dental</title>
 
-    {{-- TailwindCSS desde CDN (si ya lo cargas en otro lado, puedes quitar esta línea) --}}
+    {{-- TailwindCSS desde CDN --}}
     <script src="https://cdn.tailwindcss.com"></script>
 
     {{-- Alpine.js --}}
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <link rel="icon" type="image/png" href="{{ asset('images/logo-clinica.png') }}">
+    {{-- Favicon con el logo de la clínica --}}
+    <link rel="icon" type="image/avif" href="{{ asset('images/logo_clinica.avif') }}">
 </head>
 <body class="h-full bg-slate-50 text-slate-900 antialiased">
 
@@ -22,9 +23,12 @@
         <header class="w-full border-b border-slate-200 bg-white/80 backdrop-blur">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="h-10 w-10 rounded-full bg-teal-600 flex items-center justify-center text-white font-semibold">
-                        CD
-                    </div>
+                    {{-- Logo de la clínica en el header --}}
+                    <img
+                        src="{{ asset('images/logo_clinica.avif') }}"
+                        alt="Complejo Dental López Molinari"
+                        class="h-10 w-10 rounded-full object-contain bg-white"
+                    >
                     <div>
                         <p class="text-sm font-semibold text-slate-900 leading-tight">
                             Complejo Dental <span class="text-teal-700">López Molinari</span>
@@ -797,6 +801,8 @@
                     base = base.replace(/[^a-z0-9.]/g, '');
 
                     this.usuarioGenerado = base;
+                    const preview = document.getElementById('username-preview');
+                    if (preview) preview.textContent = this.usuarioGenerado;
                 },
 
                 updateCiudades() {
