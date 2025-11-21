@@ -37,12 +37,10 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block">
-  <b>Complejo Dental</b><br>López Molinari
-</span>',
+    'logo' => '<span class="brand-text"><b>Complejo Dental</b><br>López Molinari</span>',
 
     'logo_img' => 'images/logo_clinica.avif',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo_img_class' => 'brand-image elevation-0',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
     'logo_img_alt' => 'Clínica Dental',
@@ -56,11 +54,11 @@ return [
     'auth_logo' => [
         'enabled' => false,
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'Auth Logo',
-            'class' => '',
-            'width' => 50,
-            'height' => 50,
+            'path' => 'images/logo_clinica.avif',
+            'alt' => 'Complejo Dental López Molinari',
+            'class' => 'object-contain',
+            'width' => 60,
+            'height' => 60,
         ],
     ],
 
@@ -74,11 +72,11 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'AdminLTE Preloader Image',
+            'path' => 'images/logo_clinica.avif',
+            'alt' => 'Cargando Complejo Dental López Molinari',
             'effect' => 'animation__shake',
-            'width' => 60,
-            'height' => 60,
+            'width' => 64,
+            'height' => 64,
         ],
     ],
 
@@ -128,16 +126,16 @@ return [
     */
 
     'classes_body' => '',
-    'classes_brand' => '',
-    'classes_brand_text' => '',
-    'classes_content_wrapper' => '',
+    'classes_brand' => 'text-wrap',
+    'classes_brand_text' => 'brand-text font-weight-bold',
+    'classes_content_wrapper' => 'clinica-content-wrapper',
     'classes_content_header' => '',
     'classes_content' => '',
-    'classes_sidebar' => 'sidebar-dark-primary elevation-4',
+    'classes_sidebar' => 'sidebar-dark-primary elevation-4 clinica-sidebar',
     'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_topnav' => 'navbar-dark',
     'classes_topnav_nav' => 'navbar-expand',
-    'classes_topnav_container' => 'container',
+    'classes_topnav_container' => 'container-fluid',
 
     /*
     |--------------------------------------------------------------------------
@@ -205,82 +203,78 @@ return [
 
         // Panel
         [
-            'text' => 'Welcome',
+            'text' => 'Panel principal',
             'route' => 'dashboard',
-            'icon'  => 'fas fa-tachometer-alt',
+            'icon'  => 'fas fa-home',
         ],
 
-        // Modulo de citas (menú)
-[
-    'text'  => 'Citas',
-    'icon'  => 'fas fa-calendar-check',
-    'can'   => 'agenda.menu', // ← NUEVO: controla la visibilidad del grupo
-    'submenu' => [
-
-        // Citas
+        // Módulo de citas y agenda
         [
-            'text'   => 'Ver Citas',
-            'route'  => 'agenda.citas',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/citas*'],
-            'can'    => 'agenda.citas.ver', // ← NUEVO
+            'header' => 'Agenda y citas',
         ],
-
-        // Calendario
         [
-            'text'   => 'Agenda',
-            'route'  => 'agenda.calendario',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/calendario*'],
-            'can'    => 'agenda.calendario.ver', // ← NUEVO
+            'text'  => 'Citas y agenda',
+            'icon'  => 'fas fa-calendar-check',
+            'can'   => 'agenda.menu',
+            'submenu' => [
+                [
+                    'text'   => 'Citas',
+                    'route'  => 'agenda.citas',
+                    'icon'   => 'fas fa-dot-circle',
+                    'active' => ['agenda/citas*'],
+                    'can'    => 'agenda.citas.ver',
+                ],
+                [
+                    'text'   => 'Agenda',
+                    'route'  => 'agenda.calendario',
+                    'icon'   => 'fas fa-dot-circle',
+                    'active' => ['agenda/calendario*'],
+                    'can'    => 'agenda.calendario.ver',
+                ],
+                [
+                    'text'   => 'Historial',
+                    'route'  => 'agenda.reportes',
+                    'icon'   => 'fas fa-dot-circle',
+                    'active' => ['agenda/reportes*'],
+                    'can'    => 'agenda.reportes.ver',
+                ],
+            ],
         ],
-
-        // Reportes
-        [
-            'text'   => 'Historial',
-            'route'  => 'agenda.reportes',
-            'icon'   => 'far fa-circle',
-            'active' => ['agenda/reportes*'],
-            'can'    => 'agenda.reportes.ver', // ← NUEVO
-        ],
-    ],
-],
-
 
         // PERSONAS & USUARIOS
         [
-            'header' => '',
+            'header' => 'Gestión de personas',
         ],
         [
-            'text' => 'Personas & Usuarios',
+            'text' => 'Personas y usuarios',
             'icon' => 'fas fa-users',
             'can'  => 'personas.menu',
             'submenu' => [
                 [
                     'text'   => 'Doctores',
                     'route'  => 'doctores.index',
-                    'icon'   => 'far fa-circle',
+                    'icon'   => 'fas fa-user-md',
                     'can'    => 'personas.doctores.ver',
                     'active' => ['personas/doctores*'],
                 ],
                 [
                     'text'   => 'Pacientes',
                     'route'  => 'pacientes.index',
-                    'icon'   => 'far fa-circle',
+                    'icon'   => 'fas fa-user-injured',
                     'can'    => 'personas.pacientes.ver',
                     'active' => ['personas/pacientes*'],
                 ],
                 [
                     'text'   => 'Recepcionistas',
                     'route'  => 'recepcionistas.index',
-                    'icon'   => 'far fa-circle',
+                    'icon'   => 'fas fa-clipboard-user',
                     'can'    => 'personas.recepcionistas.ver',
                     'active' => ['personas/recepcionistas*'],
                 ],
                 [
                     'text'   => 'Administradores',
                     'route'  => 'administradores.index',
-                    'icon'   => 'far fa-circle',
+                    'icon'   => 'fas fa-user-shield',
                     'can'    => 'personas.administradores.ver',
                     'active' => ['personas/administradores*'],
                 ],
@@ -288,78 +282,77 @@ return [
         ],
 
         // SEGURIDAD
-        ['header' => ''],
         [
-            'text'    => 'Seguridad',
+            'header' => 'Seguridad',
+        ],
+        [
+            'text'    => 'Controles de seguridad',
             'icon'    => 'fas fa-shield-alt',
-            'can'     => 'seguridad.menu', // ← controla visibilidad del grupo completo
+            'can'     => 'seguridad.menu',
             'submenu' => [
-
                 [
                     'text'  => 'Objetos',
                     'route' => 'seguridad.objetos.index',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                     'can'   => 'seguridad.objetos.ver',
                 ],
                 [
                     'text'  => 'Permisos',
                     'route' => 'seguridad.permisos.index',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                     'can'   => 'seguridad.permisos.ver',
                 ],
                 [
                     'text'  => 'Usuarios',
-                    'route' => 'usuarios.index', // alias a seguridad.usuarios.index
-                    'icon'  => 'far fa-circle',
-                    'can'   => 'seguridad.usuarios.ver', // si decides controlar Usuarios también
+                    'route' => 'usuarios.index',
+                    'icon'  => 'fas fa-dot-circle',
+                    'can'   => 'seguridad.usuarios.ver',
                 ],
                 [
                     'text'  => 'Roles',
                     'route' => 'seguridad.roles.index',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                     'can'   => 'seguridad.roles.ver',
                 ],
                 [
                     'text'  => 'Bitácora',
                     'route' => 'seguridad.bitacora.index',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                     'can'   => 'seguridad.bitacora.ver',
                 ],
                 [
                     'text'  => 'Backups',
                     'route' => 'seguridad.backups.index',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                     'can'   => 'seguridad.backups.ver',
                 ],
             ],
         ],
 
         // REPORTES
-        ['header' => ''],
+        [
+            'header' => 'Reportes y analíticas',
+        ],
         [
             'text'  => 'Reportes',
             'icon'  => 'fas fa-chart-bar',
             'submenu' => [
-
-                // Subbotón 1: contiene las 6 opciones
                 [
                     'text'  => 'Tipos de reporte',
-                    'icon'  => 'far fa-folder-open',
+                    'icon'  => 'fas fa-folder-open',
                     'submenu' => [
-                        ['text' => 'Citas por rango de fechas',  'route' => 'reportes.citas_rango',       'icon' => 'far fa-dot-circle'],
-                        ['text' => 'Citas por estado',           'route' => 'reportes.citas_estado',      'icon' => 'far fa-dot-circle'],
-                        ['text' => 'Agenda por doctor',          'route' => 'reportes.agenda_doctor',     'icon' => 'far fa-dot-circle'],
-                        ['text' => 'Pacientes activos/inactivos','route' => 'reportes.pacientes_estado',  'icon' => 'far fa-dot-circle'],
-                        ['text' => 'Usuarios por rol',           'route' => 'reportes.usuarios_rol',      'icon' => 'far fa-dot-circle'],
-                        ['text' => 'Citas no atendidas/ausencia','route' => 'reportes.citas_no_atendidas','icon' => 'far fa-dot-circle'],
+                        ['text' => 'Citas por rango de fechas',  'route' => 'reportes.citas_rango',       'icon' => 'fas fa-dot-circle'],
+                        ['text' => 'Citas por estado',           'route' => 'reportes.citas_estado',      'icon' => 'fas fa-dot-circle'],
+                        ['text' => 'Agenda por doctor',          'route' => 'reportes.agenda_doctor',     'icon' => 'fas fa-dot-circle'],
+                        ['text' => 'Pacientes activos/inactivos','route' => 'reportes.pacientes_estado',  'icon' => 'fas fa-dot-circle'],
+                        ['text' => 'Usuarios por rol',           'route' => 'reportes.usuarios_rol',      'icon' => 'fas fa-dot-circle'],
+                        ['text' => 'Citas no atendidas/ausencia','route' => 'reportes.citas_no_atendidas','icon' => 'fas fa-dot-circle'],
                     ],
                 ],
-
-                // Subbotón 2: Procesos (aparte, sin submenu)
                 [
                     'text'  => 'Procesos',
                     'route' => 'reportes.procesos',
-                    'icon'  => 'far fa-circle',
+                    'icon'  => 'fas fa-dot-circle',
                 ],
             ],
         ],
@@ -389,7 +382,16 @@ return [
     */
 
     'plugins' => [
-        // ... (igual que lo tenías)
+        'ClinicaTheme' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/clinica-theme.css',
+                ],
+            ],
+        ],
     ],
 
     'iframe' => [
