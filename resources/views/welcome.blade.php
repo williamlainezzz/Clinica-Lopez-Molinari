@@ -22,7 +22,7 @@
       .modal-panel textarea,
       .modal-panel select {
         @apply block w-full mt-1 rounded-md
-               border border-slate-300 bg-white
+               border border-slate-200 bg-white/80
                placeholder-slate-400 text-slate-800
                shadow-sm
                focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500;
@@ -31,6 +31,36 @@
       .modal-panel label {
         @apply text-[13px] font-medium text-slate-700;
       }
+
+      .modal-panel .section-title {
+        @apply text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2;
+      }
+
+      .pill-accent {
+        @apply inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm;
+      }
+    }
+  </style>
+
+  <style>
+    .modal-panel {
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.06), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(13,148,136,0.08), transparent 55%),
+        rgba(255,255,255,0.92);
+      backdrop-filter: blur(22px);
+      border-radius: 1.25rem;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 22px 70px rgba(15, 23, 42, 0.28);
+    }
+
+    .modal-animated {
+      animation: floatIn 320ms ease;
+    }
+
+    @keyframes floatIn {
+      0% {opacity: 0; transform: translateY(16px) scale(.98);}
+      100% {opacity: 1; transform: translateY(0) scale(1);}
     }
   </style>
 </head>
@@ -39,15 +69,16 @@
   <!-- halos decorativos -->
   <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
     <div class="absolute -top-28 -left-24 h-96 w-96 rounded-full bg-sky-200/45 blur-3xl"></div>
-    <div class="absolute -bottom-28 -right-24 h-96 w-96 rounded-full bg-teal-200/45 blur-3xl"></div>
+    <div class="absolute -bottom-28 -right-24 h-96 w-96 rounded-full bg-teal-200/40 blur-3xl"></div>
+    <div class="absolute top-10 right-1/3 h-40 w-40 rounded-full bg-cyan-100/40 blur-3xl"></div>
   </div>
 
   <!-- header -->
   <header class="mx-auto max-w-6xl px-6 py-5">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <img src="{{ asset('images/logo_clinica.avif') }}" class="h-10 w-10 rounded-full shadow-sm ring-1 ring-white/60" alt="Logo">
-        <span class="text-lg sm:text-xl font-semibold tracking-tight">
+        <img src="{{ asset('images/logo_clinica.avif') }}" class="h-11 w-11 rounded-full shadow-sm ring-1 ring-white/60" alt="Logo de la clínica">
+        <span class="text-lg sm:text-xl font-semibold tracking-tight text-slate-900">
           Complejo Dental <span class="text-slate-500">López Molinari</span>
         </span>
       </div>
@@ -58,7 +89,7 @@
 
  <!-- hero -->
 <main class="mx-auto max-w-6xl px-6 py-6">
-  <div class="grid items-center gap-10 lg:grid-cols-2">
+  <div class="grid items-center gap-12 lg:grid-cols-2">
     <section>
       <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-slate-900">
         Gestión clínica <span class="text-sky-700">simple</span>, clara y rápida
@@ -69,7 +100,7 @@
         <button
           type="button"
           data-open="login"
-          class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-3 text-white shadow-sm ring-1 ring-sky-600/10 hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">
+          class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 to-teal-600 px-6 py-3 text-white shadow-sm ring-1 ring-sky-600/10 hover:from-sky-700 hover:to-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">
           Iniciar sesión
         </button>
 
@@ -85,11 +116,11 @@
 
       <!-- tarjetón ilustrativo -->
       <section aria-label="Ilustración clínica">
-        <div class="relative rounded-2xl bg-white/70 backdrop-blur p-3 shadow-sm ring-1 ring-slate-200">
-          <div class="absolute -inset-0.5 -z-10 rounded-2xl bg-gradient-to-tr from-sky-200/40 to-teal-200/40 blur-2xl"></div>
+        <div class="relative rounded-2xl bg-white/80 backdrop-blur p-3 shadow-lg ring-1 ring-slate-200">
+          <div class="absolute -inset-0.5 -z-10 rounded-2xl bg-gradient-to-tr from-sky-200/50 to-teal-200/50 blur-2xl"></div>
           <img
-            src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1200&auto=format&fit=crop"
-            alt="Ilustración clínica"
+            src="{{ asset('images/clinica_exterior.avif') }}"
+            alt="Fachada del Complejo Dental López Molinari"
             class="h-[320px] w-full rounded-xl object-cover sm:h-[380px] lg:h-[420px]">
         </div>
       </section>
@@ -123,14 +154,13 @@
 
 
   <!-- ===== MODAL: LOGIN (mismo archivo) ===== -->
-  <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+  <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-0">
     <div class="absolute inset-0 bg-slate-900/60" @click="showLogin=false"></div>
 
     <!-- Añadido: modal-panel -->
-    <div x-transition
-         class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-      <div class="flex items-center justify-between px-5 py-4 border-b">
-        <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
+    <div x-transition class="modal-panel modal-animated relative w-full max-w-md mx-4">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-white/60">
+        <h3 class="text-lg font-semibold text-slate-800">Iniciar sesión</h3>
         <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
       </div>
       <div class="p-5 max-h-[80vh] overflow-y-auto">
@@ -206,7 +236,7 @@
               </a>
             @endif
 
-            <x-primary-button>
+            <x-primary-button class="bg-gradient-to-r from-sky-600 to-teal-600 border-0 hover:from-sky-700 hover:to-teal-700 focus:ring-sky-600">
               {{ __('Iniciar sesión') }}
             </x-primary-button>
           </div>
@@ -216,12 +246,12 @@
   </div>
 
   <!-- ===== MODAL: REGISTRO ===== -->
-<div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+<div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-0">
   <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
 
-  <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-    <div class="flex items-center justify-between px-5 py-4 border-b">
-      <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
+  <div x-transition class="modal-panel modal-animated relative w-full max-w-5xl mx-4">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-white/60">
+      <h3 class="text-lg font-semibold text-slate-800">Crear cuenta</h3>
       <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
     </div>
 
@@ -236,44 +266,48 @@
       <form method="POST" action="{{ route('register') }}" novalidate>
         @csrf
 
-        {{-- Header: usuario autogenerado (discreto) --}}
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
-          <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
-            <span class="font-medium text-slate-600 mr-1">Usuario:</span>
-            <code id="username-preview" class="font-semibold"></code>
+        @php
+          $nombreVisible = trim((old('PRIMER_NOMBRE') ?? '') . ' ' . (old('SEGUNDO_NOMBRE') ?? ''));
+          $apellidoVisible = trim((old('PRIMER_APELLIDO') ?? '') . ' ' . (old('SEGUNDO_APELLIDO') ?? ''));
+          $nombreMsgs = array_merge($errors->register->get('PRIMER_NOMBRE'), $errors->register->get('SEGUNDO_NOMBRE'));
+          $apellidoMsgs = array_merge($errors->register->get('PRIMER_APELLIDO'), $errors->register->get('SEGUNDO_APELLIDO'));
+          $departamentosHN = [
+            'Atlántida','Choluteca','Colón','Comayagua','Copán','Cortés','El Paraíso','Francisco Morazán','Gracias a Dios','Intibucá','Islas de la Bahía','La Paz','Lempira','Ocotepeque','Olancho','Santa Bárbara','Valle','Yoro'
+          ];
+        @endphp
+
+        {{-- Header: usuario autogenerado (resaltado) --}}
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+          <div>
+            <h2 class="text-base font-semibold text-slate-800">Datos personales</h2>
+            <p class="text-xs text-slate-600">Completa tu información básica.</p>
+          </div>
+          <div id="username-pill" class="pill-accent hidden" aria-live="polite">
+            <svg class="h-4 w-4 text-sky-600" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5.5 7.5A4.5 4.5 0 0110 3h4a4.5 4.5 0 014.5 4.5v1.879a3 3 0 01-.879 2.121l-5.5 5.5a3 3 0 01-4.242 0l-1.879-1.88A3 3 0 015 12.379z"/></svg>
+            <div class="leading-tight">
+              <span class="block text-[11px] font-medium text-slate-500">Usuario asignado</span>
+              <code id="username-preview" class="font-semibold text-slate-800"></code>
+            </div>
           </div>
         </div>
 
-        {{-- Nombres --}}
+        {{-- Nombres / Apellidos (visibles) --}}
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
-            <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
-                          :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
-            <x-input-error :messages="$errors->register->get('PRIMER_NOMBRE')" class="mt-2" />
+            <x-input-label for="NOMBRES_COMPLETOS" :value="__('Nombres')" />
+            <x-text-input id="NOMBRES_COMPLETOS" class="block mt-1 w-full" type="text" name="NOMBRES_COMPLETOS"
+                          :value="$nombreVisible" placeholder="Ej. Ana María" required autofocus />
+            <x-input-error :messages="$nombreMsgs" class="mt-2" />
+            <input type="hidden" id="PRIMER_NOMBRE" name="PRIMER_NOMBRE" value="{{ old('PRIMER_NOMBRE') }}">
+            <input type="hidden" id="SEGUNDO_NOMBRE" name="SEGUNDO_NOMBRE" value="{{ old('SEGUNDO_NOMBRE') }}">
           </div>
           <div>
-            <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
-            <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
-                          :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
-            <x-input-error :messages="$errors->register->get('SEGUNDO_NOMBRE')" class="mt-2" />
-          </div>
-        </div>
-
-        {{-- Apellidos --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
-            <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
-                          :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
-            <x-input-error :messages="$errors->register->get('PRIMER_APELLIDO')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
-            <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
-                          :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
-            <x-input-error :messages="$errors->register->get('SEGUNDO_APELLIDO')" class="mt-2" />
+            <x-input-label for="APELLIDOS_COMPLETOS" :value="__('Apellidos')" />
+            <x-text-input id="APELLIDOS_COMPLETOS" class="block mt-1 w-full" type="text" name="APELLIDOS_COMPLETOS"
+                          :value="$apellidoVisible" placeholder="Ej. Rivera López" required />
+            <x-input-error :messages="$apellidoMsgs" class="mt-2" />
+            <input type="hidden" id="PRIMER_APELLIDO" name="PRIMER_APELLIDO" value="{{ old('PRIMER_APELLIDO') }}">
+            <input type="hidden" id="SEGUNDO_APELLIDO" name="SEGUNDO_APELLIDO" value="{{ old('SEGUNDO_APELLIDO') }}">
           </div>
         </div>
 
@@ -297,37 +331,29 @@
           </div>
         </div>
 
-        {{-- Departamento + Municipio --}}
+        {{-- Dirección: Departamento + Ciudad (HN) --}}
         <div class="mt-4 grid gap-4 md:grid-cols-2">
           <div>
             <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
-            <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
-                          :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+            <select id="DEPARTAMENTO" name="DEPARTAMENTO" class="block mt-1 w-full rounded-md border-slate-300" data-old="{{ old('DEPARTAMENTO') }}" required>
+              <option value="" disabled {{ old('DEPARTAMENTO') ? '' : 'selected' }}>Seleccione un departamento</option>
+              @foreach ($departamentosHN as $dep)
+                <option value="{{ $dep }}" {{ old('DEPARTAMENTO') === $dep ? 'selected' : '' }}>{{ $dep }}</option>
+              @endforeach
+            </select>
             <x-input-error :messages="$errors->register->get('DEPARTAMENTO')" class="mt-2" />
           </div>
           <div>
-            <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
-            <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
-                          :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
-            <x-input-error :messages="$errors->register->get('MUNICIPIO')" class="mt-2" />
+            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
+            <select id="CIUDAD" name="CIUDAD" class="block mt-1 w-full rounded-md border-slate-300" data-old="{{ old('CIUDAD') }}" disabled required>
+              <option value="" disabled selected>Selecciona un departamento primero</option>
+            </select>
+            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
           </div>
         </div>
 
-        {{-- Ciudad + Colonia --}}
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <div>
-            <x-input-label for="CIUDAD" :value="__('Ciudad')" />
-            <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
-                          :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
-            <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
-          </div>
-          <div>
-            <x-input-label for="COLONIA" :value="__('Colonia')" />
-            <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
-                          :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
-            <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
-          </div>
-        </div>
+        <input type="hidden" id="MUNICIPIO" name="MUNICIPIO" value="{{ old('MUNICIPIO') }}">
+        <input type="hidden" id="COLONIA" name="COLONIA" value="{{ old('COLONIA') }}">
 
         {{-- Dirección / Referencia --}}
         <div class="mt-4">
@@ -424,10 +450,14 @@
 
 
         {{-- ====== CREDENCIALES ====== --}}
-        <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Usuario asignado</h3>
-        <div class="mb-3 text-xs text-slate-600">
-          Este será tu usuario para iniciar sesión: <code class="font-semibold" id="username-preview-inline"></code>
+        <div class="mt-8 mb-4 flex flex-wrap items-center gap-3 justify-between">
+          <h3 class="section-title">Usuario asignado</h3>
+          <div class="pill-accent" aria-live="polite">
+            <span class="text-[11px] uppercase tracking-wide text-slate-500">Usuario</span>
+            <code class="font-semibold text-slate-800" id="username-preview-inline"></code>
+          </div>
         </div>
+        <p class="mb-3 text-xs text-slate-600">Este será tu usuario para iniciar sesión.</p>
 
         {{-- Contraseña + Confirmación (una sola columna) --}}
         <div
@@ -543,13 +573,31 @@
           <script>
             (function () {
               const maxLen = 50;
+              const $visibleNames = document.getElementById('NOMBRES_COMPLETOS');
+              const $visibleLasts = document.getElementById('APELLIDOS_COMPLETOS');
               const $n = document.getElementById('PRIMER_NOMBRE');
+              const $n2 = document.getElementById('SEGUNDO_NOMBRE');
               const $a = document.getElementById('PRIMER_APELLIDO');
+              const $a2 = document.getElementById('SEGUNDO_APELLIDO');
               const $pill = document.getElementById('username-pill');
               const $out1 = document.getElementById('username-preview');
               const $out2 = document.getElementById('username-preview-inline');
 
               function strip(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+              function splitName(value){
+                const parts = (value || '').trim().split(/\s+/).filter(Boolean);
+                const first = parts.shift() || '';
+                const rest = parts.join(' ');
+                return [first, rest];
+              }
+              function syncHidden(){
+                const [p1,p2] = splitName($visibleNames?.value || '');
+                const [ap1,ap2] = splitName($visibleLasts?.value || '');
+                if($n) $n.value = p1;
+                if($n2) $n2.value = p2;
+                if($a) $a.value = ap1;
+                if($a2) $a2.value = ap2;
+              }
               function mk(n,a){
                 const first=(n||'').trim().charAt(0);
                 const last=(a||'').trim().replace(/\s+/g,'');
@@ -558,8 +606,9 @@
                 return (base||'user').slice(0,maxLen);
               }
               function up(){
+                syncHidden();
                 const u = mk($n?.value,$a?.value);
-                if(($n?.value?.trim() || $a?.value?.trim())){
+                if(($visibleNames?.value?.trim() || $visibleLasts?.value?.trim())){
                   $pill?.classList.remove('hidden');
                   if($out1) $out1.textContent=u;
                   if($out2) $out2.textContent=u;
@@ -569,7 +618,10 @@
                   if($out2) $out2.textContent='';
                 }
               }
-              ['input','change'].forEach(e=>{ $n?.addEventListener(e,up); $a?.addEventListener(e,up); });
+              ['input','change'].forEach(e=>{
+                $visibleNames?.addEventListener(e, up);
+                $visibleLasts?.addEventListener(e, up);
+              });
               up();
             })();
           </script>
@@ -582,6 +634,89 @@
 
 
 
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const departamentosCiudades = {
+      "Atlántida": ["La Ceiba","Tela","El Porvenir","Jutiapa","La Masica","San Francisco","Arizona","Esparta"],
+      "Choluteca": ["Choluteca","Apacilagua","Concepción de María","El Corpus","El Triunfo","Marcovia","Morolica","Namasigüe","Orocuina","Pespire","San Antonio de Flores","San Isidro","San José","San Marcos de Colón","Santa Ana de Yusguare"],
+      "Colón": ["Trujillo","Balfate","Iriona","Limón","Sabá","Santa Fe","Santa Rosa de Aguán","Sonaguera","Tocoa"],
+      "Comayagua": ["Comayagua","Ajuterique","El Rosario","Esquías","Humuya","La Libertad","Lamani","La Trinidad","Lejamaní","Meámbar","Minas de Oro","Ojos de Agua","San Jerónimo","San José de Comayagua","San José del Potrero","San Luis","San Sebastián","Siguatepeque","Taulabé","Villa de San Antonio"] ,
+      "Copán": ["Santa Rosa de Copán","Cabañas","Concepción","Copán Ruinas","Corquín","Cucuyagua","Dolores","Dulce Nombre","El Paraíso","Florida","La Jigua","La Unión","Nueva Arcadia","San Agustín","San Antonio","San Jerónimo","San José","San Juan de Opoa","San Nicolás","San Pedro","Santa Rita","Trinidad de Copán","Veracruz"],
+      "Cortés": ["San Pedro Sula","Choloma","La Lima","Puerto Cortés","Villanueva","San Manuel","Santa Cruz de Yojoa","Omoa","Potrerillos","Pimienta","San Antonio de Cortés","San Francisco de Yojoa"],
+      "El Paraíso": ["Yuscarán","Alauca","Danlí","El Paraíso","Güinope","Jacaleapa","Liure","Morocelí","Oropolí","Potrerillos","San Antonio de Flores","San Lucas","San Matías","Soledad","Teupasenti","Texiguat","Vado Ancho","Yauyupe","Trojes"],
+      "Francisco Morazán": ["Distrito Central","Alubarén","Cedros","Curarén","El Porvenir","Guaimaca","La Libertad","La Venta","Lepaterique","Maraita","Marale","Nueva Armenia","Ojojona","Orica","Reitoca","Sabanagrande","San Antonio de Oriente","San Buenaventura","Santa Ana","Santa Lucía","Talanga","Tatumbla","Valle de Ángeles","Villa de San Francisco","Vallecillo"],
+      "Gracias a Dios": ["Puerto Lempira","Brus Laguna","Ahuas","Juan Francisco Bulnes","Ramón Villeda Morales","Wampusirpi"],
+      "Intibucá": ["La Esperanza","Camasca","Colomoncagua","Concepción","Dolores","Intibucá","Jesús de Otoro","Magdalena","Masaguara","San Antonio","San Francisco de Opalaca","San Isidro","San Juan","San Marcos de la Sierra","San Miguel Guancapla","Santa Lucía","Yamaranguila"],
+      "Islas de la Bahía": ["Roatán","José Santos Guardiola","Utila","Guanaja"],
+      "La Paz": ["La Paz","Aguanqueterique","Cabañas","Cane","Chinacla","Guajiquiro","Lauterique","Marcala","Mercedes de Oriente","Opatoro","San Antonio del Norte","San José","San Juan","San Pedro de Tutule","Santa Ana","Santa Elena","Santa María"],
+      "Lempira": ["Gracias","Belén","Candelaria","Cololaca","Erandique","Gualcince","Guarita","La Campa","La Iguala","Las Flores","Lepaera","Mapulaca","Piraera","San Andrés","San Francisco","San Juan Guarita","San Manuel Colohete","San Marcos de Caiquín","San Rafael","San Sebastián","Santa Cruz","Talgua","Tomalá","Valladolid","Virginia"],
+      "Ocotepeque": ["Nueva Ocotepeque","Belén Gualcho","Concepción","Dolores Merendón","Fraternidad","La Encarnación","La Labor","Lucerna","Mercedes","San Fernando","San Francisco del Valle","San Jorge","San Marcos","Santa Fe","Sensenti","Sinuapa"],
+      "Olancho": ["Juticalpa","Campamento","Catacamas","Concordia","Dulce Nombre de Culmí","El Rosario","Esquipulas del Norte","Gualaco","Guarizama","Guata","Guayape","Jano","La Unión","Mangulile","Manto","Patuca","Salamá","San Esteban","San Francisco de Becerra","San Francisco de la Paz","Santa María del Real","Silca","Yocón"],
+      "Santa Bárbara": ["Santa Bárbara","Arada","Atima","Azacualpa","Ceguaca","Chinda","Concepción del Norte","Concepción del Sur","El Níspero","Gualala","Ilama","Las Vegas","Macuelizo","Naranjito","Nuevo Celilac","Petoa","Protección","Quimistán","San Francisco de Ojuera","San José de las Colinas","San Luis","San Marcos","San Nicolás","San Pedro Zacapa","San Vicente Centenario","Santa Rita","Trinidad"],
+      "Valle": ["Nacaome","Alianza","Amapala","Aramecina","Caridad","Goascorán","Langue","San Francisco de Coray","San Lorenzo"],
+      "Yoro": ["Yoro","Arenal","El Negrito","El Progreso","Jocón","Morazán","Olanchito","Santa Rita","Sulaco","Victoria","Yorito"]
+    };
+
+    const deptSelect = document.getElementById('DEPARTAMENTO');
+    const citySelect = document.getElementById('CIUDAD');
+    const municipioHidden = document.getElementById('MUNICIPIO');
+
+    function renderCities(departamento, selectedCity = '') {
+      if (!citySelect) return;
+      citySelect.innerHTML = '';
+      if (!departamento || !departamentosCiudades[departamento]) {
+        citySelect.disabled = true;
+        citySelect.insertAdjacentHTML('beforeend', '<option value="" disabled selected>Selecciona un departamento primero</option>');
+        return;
+      }
+      citySelect.disabled = false;
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.disabled = true;
+      placeholder.textContent = 'Selecciona una ciudad';
+      citySelect.appendChild(placeholder);
+
+      departamentosCiudades[departamento].forEach(ciudad => {
+        const opt = document.createElement('option');
+        opt.value = ciudad;
+        opt.textContent = ciudad;
+        if (selectedCity && selectedCity === ciudad) {
+          opt.selected = true;
+          placeholder.selected = false;
+        }
+        citySelect.appendChild(opt);
+      });
+
+      if (!selectedCity) placeholder.selected = true;
+    }
+
+    deptSelect?.addEventListener('change', () => {
+      renderCities(deptSelect.value);
+      if (citySelect) {
+        citySelect.value = '';
+        citySelect.dispatchEvent(new Event('change'));
+      }
+    });
+
+    citySelect?.addEventListener('change', () => {
+      if (municipioHidden) municipioHidden.value = citySelect.value || '';
+    });
+
+    const oldDept = deptSelect?.dataset.old;
+    const oldCity = citySelect?.dataset.old;
+    if (oldDept) {
+      renderCities(oldDept, oldCity || '');
+      deptSelect.value = oldDept;
+      if (citySelect && oldCity) {
+        citySelect.value = oldCity;
+        municipioHidden.value = oldCity;
+      }
+    } else {
+      renderCities('', '');
+    }
+  });
+  </script>
 
   <script>
   // Delegación: cualquier elemento con data-open="login" o "register" abre el modal correcto
