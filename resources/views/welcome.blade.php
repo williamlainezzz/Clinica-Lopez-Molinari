@@ -23,17 +23,19 @@
         <header class="w-full border-b border-slate-200 bg-white/80 backdrop-blur">
             <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    {{-- Logo de la clínica en el header --}}
+                    {{-- Logo de la clínica en el header (más grande) --}}
                     <img
                         src="{{ asset('images/logo_clinica.avif') }}"
                         alt="Complejo Dental López Molinari"
-                        class="h-10 w-10 rounded-full object-contain bg-white"
+                        class="h-12 w-12 rounded-full object-contain bg-white"
                     >
                     <div>
-                        <p class="text-sm font-semibold text-slate-900 leading-tight">
+                        <p class="text-base sm:text-lg font-semibold text-slate-900 leading-tight">
                             Complejo Dental <span class="text-sky-800">López Molinari</span>
                         </p>
-                        <p class="text-xs text-slate-500">Gestión clínica clara y rápida</p>
+                        <p class="text-[11px] sm:text-xs text-slate-500">
+                            Sistema de gestión clínica y agenda de citas
+                        </p>
                     </div>
                 </div>
 
@@ -69,7 +71,7 @@
                         </p>
 
                         <div class="flex flex-wrap items-center gap-3 mb-6">
-                            {{-- Estos son los ÚNICOS botones principales de acceso para invitados --}}
+                            {{-- ÚNICOS botones principales para invitados --}}
                             <button type="button"
                                     @click="openLogin()"
                                     class="inline-flex items-center rounded-full bg-sky-800 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-sky-900 transition">
@@ -85,27 +87,28 @@
                             @endif
                         </div>
 
+                        {{-- Mensajes sobre el sistema --}}
                         <ul class="space-y-2 text-sm text-slate-600">
                             <li class="flex items-start space-x-2">
                                 <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Citas en línea para pacientes y doctores.</span>
+                                <span>Plataforma para gestionar citas, pacientes y agenda clínica en un mismo sistema.</span>
                             </li>
                             <li class="flex items-start space-x-2">
                                 <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Agenda clínica centralizada y fácil de leer.</span>
+                                <span>Acceso diferenciado para pacientes y doctores, con módulos específicos para cada uno.</span>
                             </li>
                             <li class="flex items-start space-x-2">
                                 <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Seguridad reforzada con preguntas y verificación por correo.</span>
+                                <span>Consulta de citas, horarios y recordatorios desde cualquier dispositivo con Internet.</span>
                             </li>
                         </ul>
                     </div>
 
-                    {{-- Foto real de la clínica --}}
+                    {{-- Foto real de la clínica (más alta) --}}
                     <div class="relative">
-                        <div class="rounded-3xl overflow-hidden bg-slate-200 shadow-xl shadow-sky-100/50 border border-slate-100">
+                        <div class="relative h-64 sm:h-72 lg:h-80 rounded-3xl overflow-hidden bg-slate-200 shadow-xl shadow-sky-100/50 border border-slate-100">
                             <img
-                                src="{{ asset('images/clinica_exterior.jpg') }}"
+                                src="{{ asset('images/clinica_exterior.avif') }}"
                                 alt="Fachada del Complejo Dental López Molinari"
                                 class="w-full h-full object-cover"
                             >
@@ -345,7 +348,7 @@
                     <input type="hidden" name="PRIMER_APELLIDO" x-model="primerApellido">
                     <input type="hidden" name="SEGUNDO_APELLIDO" x-model="segundoApellido">
 
-                    {{-- Si el backend necesita MUNICIPIO / COLONIA, los mandamos vacíos --}}
+                    {{-- MUNICIPIO / COLONIA vacíos si el backend los requiere --}}
                     <input type="hidden" name="MUNICIPIO" value="">
                     <input type="hidden" name="COLONIA" value="">
 
@@ -564,7 +567,7 @@
                                 <p class="text-xs font-semibold text-sky-800">
                                     Usuario asignado
                                 </p>
-                                <p class="text-[11px] text-sky-700">
+                            <p class="text-[11px] text-sky-700">
                                     Este será el usuario con el que iniciarás sesión en el sistema.
                                 </p>
                             </div>
