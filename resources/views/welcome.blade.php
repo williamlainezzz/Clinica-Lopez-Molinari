@@ -1,821 +1,607 @@
-<!DOCTYPE html>
-<html lang="es" x-data="landingPage()" class="h-full">
+<!doctype html>
+<html lang="es" x-data="{ showLogin:false, showRegister:false }">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bienvenido — Clínica Dental</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bienvenido — Clínica Dental</title>
+  <link rel="icon" href="{{ asset('favicon.ico') }}">
+  <!-- Tailwind por CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js para abrir/cerrar modales (sin archivos nuevos) -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>[x-cloak]{display:none!important}</style>
 
-    {{-- TailwindCSS desde CDN --}}
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Estilos del formulario dentro de modales -->
+  <style type="text/tailwindcss">
+    @layer components {
+      /* Hace que inputs/textarea/select dentro de .modal-panel se vean definidos */
+      .modal-panel input[type="text"],
+      .modal-panel input[type="email"],
+      .modal-panel input[type="password"],
+      .modal-panel input[type="number"],
+      .modal-panel textarea,
+      .modal-panel select {
+        @apply block w-full mt-1 rounded-md
+               border border-slate-300 bg-white
+               placeholder-slate-400 text-slate-800
+               shadow-sm
+               focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500;
+      }
 
-    {{-- Alpine.js --}}
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    {{-- Favicon con el logo de la clínica --}}
-    <link rel="icon" type="image/avif" href="{{ asset('images/logo_clinica.avif') }}">
+      .modal-panel label {
+        @apply text-[13px] font-medium text-slate-700;
+      }
+    }
+  </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-900 antialiased">
+<body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50 text-slate-800 relative">
 
-    {{-- Contenedor principal --}}
-    <div class="min-h-screen flex flex-col">
+  <!-- halos decorativos -->
+  <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-28 -left-24 h-96 w-96 rounded-full bg-sky-200/45 blur-3xl"></div>
+    <div class="absolute -bottom-28 -right-24 h-96 w-96 rounded-full bg-teal-200/45 blur-3xl"></div>
+  </div>
 
-        {{-- Barra superior --}}
-        <header class="w-full border-b border-slate-200 bg-white/80 backdrop-blur">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    {{-- Logo de la clínica en el header (más grande) --}}
-                    <img
-                        src="{{ asset('images/logo_clinica.avif') }}"
-                        alt="Complejo Dental López Molinari"
-                        class="h-12 w-12 rounded-full object-contain bg-white"
-                    >
-                    <div>
-                        <p class="text-base sm:text-lg font-semibold text-slate-900 leading-tight">
-                            Complejo Dental <span class="text-sky-800">López Molinari</span>
-                        </p>
-                        <p class="text-[11px] sm:text-xs text-slate-500">
-                            Sistema de gestión clínica y agenda de citas
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-3">
-                    @if (Route::has('login'))
-                        @auth
-                            {{-- Solo cuando YA está autenticado mostramos el acceso al panel --}}
-                            <a href="{{ url('/dashboard') }}"
-                               class="inline-flex items-center rounded-full border border-sky-700 px-4 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition">
-                                Ir al panel
-                            </a>
-                        @endauth
-                    @endif
-                </div>
-            </div>
-        </header>
-
-        {{-- Sección de hero / portada --}}
-        <main class="flex-1">
-            <section class="relative overflow-hidden">
-                {{-- Fondo suave en azules --}}
-                <div class="absolute inset-0 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 pointer-events-none"></div>
-
-                <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid gap-12 lg:grid-cols-2 items-center">
-                    {{-- Texto principal --}}
-                    <div>
-                        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">
-                            Gestión clínica <span class="text-sky-800">clara y rápida</span>
-                        </h1>
-                        <p class="text-base sm:text-lg text-slate-600 mb-6">
-                            Administra citas, pacientes y agenda del <strong>Complejo Dental López Molinari</strong> desde un solo lugar.
-                            Accede como paciente o como doctor de forma segura.
-                        </p>
-
-                        <div class="flex flex-wrap items-center gap-3 mb-6">
-                            {{-- ÚNICOS botones principales para invitados --}}
-                            <button type="button"
-                                    @click="openLogin()"
-                                    class="inline-flex items-center rounded-full bg-sky-800 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-sky-900 transition">
-                                Iniciar sesión
-                            </button>
-
-                            @if (Route::has('register'))
-                                <button type="button"
-                                        @click="openRegister()"
-                                        class="inline-flex items-center rounded-full border border-sky-800 px-6 py-2.5 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition">
-                                    Registrarse
-                                </button>
-                            @endif
-                        </div>
-
-                        {{-- Mensajes sobre el sistema --}}
-                        <ul class="space-y-2 text-sm text-slate-600">
-                            <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Plataforma para gestionar citas, pacientes y agenda clínica en un mismo sistema.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Acceso diferenciado para pacientes y doctores, con módulos específicos para cada uno.</span>
-                            </li>
-                            <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
-                                <span>Consulta de citas, horarios y recordatorios desde cualquier dispositivo con Internet.</span>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {{-- Foto real de la clínica (más alta) --}}
-                    <div class="relative">
-                        <div class="relative h-64 sm:h-72 lg:h-80 rounded-3xl overflow-hidden bg-slate-200 shadow-xl shadow-sky-100/50 border border-slate-100">
-                            <img
-                                src="{{ asset('images/clinica_exterior.avif') }}"
-                                alt="Fachada del Complejo Dental López Molinari"
-                                class="w-full h-full object-cover"
-                            >
-                            {{-- Overlay con texto descriptivo --}}
-                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent px-5 py-4">
-                                <p class="text-xs font-semibold text-sky-100 uppercase tracking-wide">
-                                    Sede principal
-                                </p>
-                                <p class="text-sm text-slate-50">
-                                    Complejo Dental López Molinari — Tegucigalpa, Honduras.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        {{-- Pie de página --}}
-        <footer class="border-t border-slate-200 bg-white">
-            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-                <span>© {{ date('Y') }} Complejo Dental López Molinari. Todos los derechos reservados.</span>
-                <span>Sistema de gestión clínica desarrollado para uso académico y profesional.</span>
-            </div>
-        </footer>
-    </div>
-
-    {{-- ===================== MODAL LOGIN ===================== --}}
-    <div
-        x-cloak
-        x-show="showLogin"
-        x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 px-4 sm:px-6"
-        aria-modal="true"
-        role="dialog"
-    >
-        <div
-            x-transition
-            class="relative w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden"
+  <!-- header -->
+  <header class="mx-auto max-w-6xl px-6 py-5">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img
+          src="{{ asset('images/logo_clinica.avif') }}"
+          class="h-12 w-12 rounded-full shadow-sm ring-1 ring-white/60 object-contain bg-white"
+          alt="Logo Complejo Dental López Molinari"
         >
-            {{-- Banner superior en azules --}}
-            <div class="bg-gradient-to-r from-sky-800 via-sky-700 to-indigo-600 px-6 py-4">
-                <p class="text-xs font-semibold tracking-wide text-sky-100 uppercase">Bienvenido</p>
-                <h2 class="text-lg font-bold text-white">
-                    Inicia sesión en tu cuenta
-                </h2>
-                <p class="mt-1 text-xs text-sky-100/90">
-                    Accede a la gestión de citas del Complejo Dental López Molinari.
-                </p>
-            </div>
+        <span class="text-xl sm:text-2xl font-semibold tracking-tight">
+          Complejo Dental <span class="text-sky-800">López Molinari</span>
+        </span>
+      </div>
+      {{-- nav superior eliminado a petición --}}
+      <div></div>
+    </div>
+  </header>
 
-            {{-- Botón cerrar --}}
-            <button
-                type="button"
-                @click="showLogin = false"
-                class="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 border border-slate-200"
-            >
-                <span class="sr-only">Cerrar</span>
-                ✕
-            </button>
+  <!-- hero -->
+  <main class="mx-auto max-w-6xl px-6 py-6">
+    <div class="grid items-center gap-10 lg:grid-cols-2">
+      <section>
+        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-slate-900">
+          Gestión clínica <span class="text-sky-700">clara y rápida</span>
+        </h1>
 
-            {{-- Contenido --}}
-            <div class="px-6 pt-6 pb-5 space-y-5">
-                {{-- Mensajes de estado / error --}}
-                @if (session('status'))
-                    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                        {{ session('status') }}
-                    </div>
-                @endif
+        <p class="mt-4 text-base sm:text-lg text-slate-600">
+          Administra citas, pacientes y agenda del <strong>Complejo Dental López Molinari</strong> desde un solo lugar.
+          Accede como paciente o como doctor, con un sistema pensado para la clínica.
+        </p>
 
-                @if ($errors->any())
-                    <div class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                        <p class="font-semibold mb-1">Error al iniciar sesión</p>
-                        <ul class="list-disc list-inside space-y-0.5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+        <div class="mt-6 flex flex-wrap gap-3">
+          {{-- Abrir modales por eventos globales (funciona fuera del x-data de los modales) --}}
+          <button
+            type="button"
+            data-open="login"
+            class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-3 text-white shadow-sm ring-1 ring-sky-600/10 hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">
+            Iniciar sesión
+          </button>
 
-                <form method="POST" action="{{ route('login') }}" class="space-y-4" x-data="{ showPwd:false }">
-                    @csrf
-
-                    {{-- Usuario o correo --}}
-                    <div>
-                        <label for="login" class="block text-xs font-semibold text-slate-700 mb-1">
-                            Usuario o correo
-                        </label>
-                        <input
-                            id="login"
-                            type="text"
-                            name="login"
-                            value="{{ old('login') }}"
-                            autocomplete="username email"
-                            required
-                            class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                        >
-                    </div>
-
-                    {{-- Contraseña --}}
-                    <div>
-                        <label for="password" class="block text-xs font-semibold text-slate-700 mb-1">
-                            Contraseña
-                        </label>
-                        <div class="relative">
-                            <input
-                                id="password"
-                                name="password"
-                                x-bind:type="showPwd ? 'text' : 'password'"
-                                required
-                                autocomplete="current-password"
-                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                            >
-                            <button
-                                type="button"
-                                @click="showPwd = !showPwd"
-                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
-                                tabindex="-1"
-                            >
-                                <span class="sr-only">Mostrar u ocultar contraseña</span>
-                                👁
-                            </button>
-                        </div>
-                    </div>
-
-                    {{-- Recordarme + Olvidé contraseña --}}
-                    <div class="flex items-center justify-between text-xs">
-                        <label class="inline-flex items-center space-x-2 text-slate-600">
-                            <input
-                                type="checkbox"
-                                name="remember"
-                                class="rounded border-slate-300 text-sky-700 shadow-sm focus:ring-sky-600"
-                            >
-                            <span>Recordarme</span>
-                        </label>
-
-                        @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="font-medium text-sky-700 hover:text-sky-900">
-                                ¿Olvidaste tu contraseña?
-                            </a>
-                        @endif
-                    </div>
-
-                    {{-- Botón --}}
-                    <div class="pt-1">
-                        <button
-                            type="submit"
-                            class="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
-                        >
-                            INICIAR SESIÓN
-                        </button>
-                    </div>
-                </form>
-
-                {{-- Enlace a registro --}}
-                @if (Route::has('register'))
-                    <p class="text-[11px] text-center text-slate-500">
-                        ¿Aún no tienes cuenta?
-                        <button type="button"
-                                @click="switchToRegister()"
-                                class="font-semibold text-sky-700 hover:text-sky-900">
-                            Regístrate aquí
-                        </button>
-                    </p>
-                @endif
-            </div>
+          <button
+            type="button"
+            data-open="register"
+            class="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400">
+            Registrarse
+          </button>
         </div>
-    </div>
 
-    {{-- ===================== MODAL REGISTRO ===================== --}}
-    <div
-        x-cloak
-        x-show="showRegister"
-        x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 px-4 sm:px-6"
-        aria-modal="true"
-        role="dialog"
-    >
-        <div
-            x-transition
-            class="relative w-full max-w-4xl rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden"
-        >
-            {{-- Banner superior en azules --}}
-            <div class="bg-gradient-to-r from-indigo-600 via-sky-700 to-sky-500 px-6 py-4">
-                <p class="text-xs font-semibold tracking-wide text-sky-100 uppercase">Registro de paciente</p>
-                <h2 class="text-lg font-bold text-white">
-                    Crea tu cuenta en el Complejo Dental López Molinari
-                </h2>
-                <p class="mt-1 text-xs text-sky-50/95">
-                    Completa tus datos para agendar y gestionar tus citas en línea.
-                </p>
+        {{-- Mensajes sobre el sistema --}}
+        <ul class="mt-6 space-y-2 text-sm text-slate-600">
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
+            <span>Plataforma para gestionar citas, pacientes y agenda clínica en un mismo sistema.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
+            <span>Acceso diferenciado para pacientes y doctores, con módulos específicos para cada uno.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
+            <span>Consulta de citas, horarios y recordatorios desde cualquier dispositivo con conexión a Internet.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- tarjetón ilustrativo (ahora con foto real de la clínica) -->
+      <section aria-label="Ilustración clínica">
+        <div class="relative rounded-2xl bg-white/70 backdrop-blur p-3 shadow-sm ring-1 ring-slate-200">
+          <div class="absolute -inset-0.5 -z-10 rounded-2xl bg-gradient-to-tr from-sky-200/40 to-teal-200/40 blur-2xl"></div>
+          <img
+            src="{{ asset('images/clinica_exterior.avif') }}"
+            alt="Fachada del Complejo Dental López Molinari"
+            class="h-[320px] w-full rounded-xl object-cover sm:h-[380px] lg:h-[420px]"
+          >
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="mx-auto max-w-6xl px-6 py-10">
+    <div class="rounded-2xl bg-white/60 backdrop-blur px-5 py-4 text-center text-sm text-slate-500 ring-1 ring-slate-200">
+      © {{ date('Y') }} Complejo Dental López Molinari
+    </div>
+  </footer>
+
+  {{-- ===================== LÓGICA ORIGINAL DE LOGIN / REGISTRO ===================== --}}
+
+  <div
+    x-data="{ showLogin:false, showRegister:false }"
+    x-on:open-login.window="showLogin = true"
+    x-on:open-register.window="showRegister = true"
+    x-on:close-modals.window="showLogin = false; showRegister = false"
+    x-init="
+      @if (session('modal') === 'login') showLogin = true; @endif
+      @if (session('modal') === 'register') showRegister = true; @endif
+      @if ($errors->login->any()) showLogin = true; @endif
+      @if ($errors->register->any()) showRegister = true; @endif
+    "
+  >
+
+    <!-- ===== MODAL: LOGIN (mismo archivo) ===== -->
+    <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/60" @click="showLogin=false"></div>
+
+      <!-- Añadido: modal-panel -->
+      <div x-transition
+           class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
+          <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="p-5 max-h-[80vh] overflow-y-auto">
+
+          {{-- (Opcional) Mensaje general del modal de login --}}
+          @if ($errors->login->any())
+            <div class="mb-3 text-sm text-red-600">
+              No pudimos iniciar sesión con los datos ingresados. Verifica tu usuario o correo y tu contraseña e inténtalo nuevamente.
+            </div>
+          @endif
+
+          {{-- FORM LOGIN (usuario o correo + password) --}}
+          <form method="POST" action="{{ route('login') }}" novalidate x-data="{ showPwd:false }">
+            @csrf
+
+            <!-- Usuario o correo -->
+            <div>
+              <x-input-label for="login" :value="__('Usuario o correo')" />
+              <x-text-input
+                id="login"
+                class="block mt-1 w-full"
+                type="text"
+                name="login"
+                :value="old('login')"
+                required
+                autofocus
+                autocomplete="username email"
+              />
             </div>
 
-            {{-- Botón cerrar --}}
-            <button
-                type="button"
-                @click="showRegister = false"
-                class="absolute top-3 right-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-500 shadow-sm hover:bg-slate-50 hover:text-slate-700 border border-slate-200"
-            >
-                <span class="sr-only">Cerrar</span>
-                ✕
-            </button>
+            <!-- Contraseña -->
+            <div class="mt-4">
+              <x-input-label for="password" :value="__('Contraseña')" />
 
-            <div class="px-6 pt-6 pb-6 max-h-[85vh] overflow-y-auto text-sm">
-                {{-- Errores --}}
-                @if ($errors->any())
-                    <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-                        <p class="font-semibold mb-1">Revisa la información ingresada</p>
-                        <ul class="list-disc list-inside space-y-0.5">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+              <div class="relative">
+                <x-text-input
+                  id="password"
+                  name="password"
+                  x-bind:type="showPwd ? 'text' : 'password'"
+                  class="block mt-1 w-full pr-10"
+                  required
+                  autocomplete="current-password"
+                />
 
-                @php
-                    use App\Models\PreguntaSeguridad;
-                    $preguntasSeg = PreguntaSeguridad::where('ESTADO', 1)
-                        ->orderBy('TEXTO_PREGUNTA')
-                        ->get();
-                @endphp
-
-                <form
-                    method="POST"
-                    action="{{ route('register') }}"
-                    x-data="registroPaciente()"
-                    @submit="beforeSubmit"
-                    class="space-y-6"
+                <!-- Botón ojo -->
+                <button
+                  type="button"
+                  class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700"
+                  @click="showPwd = !showPwd"
+                  :aria-label="showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                 >
-                    @csrf
-
-                    {{-- Hidden para nombres/apellidos que espera el backend --}}
-                    <input type="hidden" name="PRIMER_NOMBRE" x-model="primerNombre">
-                    <input type="hidden" name="SEGUNDO_NOMBRE" x-model="segundoNombre">
-                    <input type="hidden" name="PRIMER_APELLIDO" x-model="primerApellido">
-                    <input type="hidden" name="SEGUNDO_APELLIDO" x-model="segundoApellido">
-
-                    {{-- MUNICIPIO / COLONIA vacíos si el backend los requiere --}}
-                    <input type="hidden" name="MUNICIPIO" value="">
-                    <input type="hidden" name="COLONIA" value="">
-
-                    {{-- ====== Bloque 1: Datos personales ====== --}}
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                            Datos personales
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Nombres
-                                </label>
-                                <input
-                                    type="text"
-                                    x-model="nombresCompletos"
-                                    @input="syncNames()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Apellidos
-                                </label>
-                                <input
-                                    type="text"
-                                    x-model="apellidosCompletos"
-                                    @input="syncNames()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                            </div>
-                            <div>
-                                <label for="TIPO_GENERO" class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Género
-                                </label>
-                                <select
-                                    id="TIPO_GENERO"
-                                    name="TIPO_GENERO"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                                    <option value="">Seleccione...</option>
-                                    <option value="1">Masculino</option>
-                                    <option value="2">Femenino</option>
-                                    <option value="3">Prefiero no decirlo</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                        Teléfono
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="NUM_TELEFONO"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                        required
-                                    >
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                        Tipo de teléfono
-                                    </label>
-                                    <select
-                                        name="TIPO_TELEFONO"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    >
-                                        <option value="Móvil">Móvil</option>
-                                        <option value="Casa">Casa</option>
-                                        <option value="Trabajo">Trabajo</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ====== Bloque 2: Dirección ====== --}}
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                            Dirección
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Departamento
-                                </label>
-                                <select
-                                    name="DEPARTAMENTO"
-                                    x-model="departamento"
-                                    @change="updateCiudades()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                                    <option value="">Seleccione...</option>
-                                    <template x-for="(ciudades, dep) in departamentos" :key="dep">
-                                        <option :value="dep" x-text="dep"></option>
-                                    </template>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Ciudad
-                                </label>
-                                <select
-                                    name="CIUDAD"
-                                    x-model="ciudad"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                                    <option value="">Seleccione un departamento primero</option>
-                                    <template x-for="c in ciudadesDisponibles" :key="c">
-                                        <option :value="c" x-text="c"></option>
-                                    </template>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mt-4">
-                            <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                Dirección / Referencia
-                            </label>
-                            <textarea
-                                name="REFERENCIA"
-                                rows="2"
-                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600 resize-y"
-                            ></textarea>
-                        </div>
-                    </div>
-
-                    {{-- ====== Bloque 3: Contacto y seguridad ====== --}}
-                    <div>
-                        <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                            Contacto y recuperación
-                        </h3>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Correo electrónico
-                                </label>
-                                <input
-                                    type="email"
-                                    name="CORREO"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                            </div>
-                        </div>
-
-                        {{-- Preguntas de seguridad --}}
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Pregunta 1
-                                </label>
-                                <select
-                                    name="PREGUNTA1"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                                    <option value="">Seleccione...</option>
-                                    @foreach($preguntasSeg as $pregunta)
-                                        <option value="{{ $pregunta->COD_PREGUNTA }}">
-                                            {{ $pregunta->TEXTO_PREGUNTA }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <label class="block text-xs font-semibold text-slate-700 mt-2 mb-1">
-                                    Respuesta a la pregunta 1
-                                </label>
-                                <input
-                                    type="text"
-                                    name="RESPUESTA1"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Pregunta 2
-                                </label>
-                                <select
-                                    name="PREGUNTA2"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                                    <option value="">Seleccione...</option>
-                                    @foreach($preguntasSeg as $pregunta)
-                                        <option value="{{ $pregunta->COD_PREGUNTA }}">
-                                            {{ $pregunta->TEXTO_PREGUNTA }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <label class="block text-xs font-semibold text-slate-700 mt-2 mb-1">
-                                    Respuesta a la pregunta 2
-                                </label>
-                                <input
-                                    type="text"
-                                    name="RESPUESTA2"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                    required
-                                >
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ====== Bloque 4: Usuario asignado y contraseña ====== --}}
-                    <div class="space-y-4">
-                        <div class="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <div>
-                                <p class="text-xs font-semibold text-sky-800">
-                                    Usuario asignado
-                                </p>
-                            <p class="text-[11px] text-sky-700">
-                                    Este será el usuario con el que iniciarás sesión en el sistema.
-                                </p>
-                            </div>
-                            <div class="px-3 py-1 rounded-full bg-white border border-sky-200 text-xs font-mono font-semibold text-sky-800">
-                                <span class="text-slate-500 mr-1">Usuario:</span>
-                                <span id="username-preview" x-text="usuarioGenerado || 'pendiente...'"></span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Contraseña
-                                </label>
-                                <div class="relative">
-                                    <input
-                                        id="password_reg"
-                                        type="password"
-                                        name="password"
-                                        x-model="password"
-                                        @input="validatePassword()"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                        required
-                                    >
-                                    <button
-                                        type="button"
-                                        @click="togglePwd('password_reg')"
-                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
-                                        tabindex="-1"
-                                    >
-                                        👁
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-700 mb-1">
-                                    Confirmar contraseña
-                                </label>
-                                <div class="relative">
-                                    <input
-                                        id="password_conf"
-                                        type="password"
-                                        name="password_confirmation"
-                                        x-model="passwordConfirm"
-                                        @input="validatePassword()"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
-                                        required
-                                    >
-                                    <button
-                                        type="button"
-                                        @click="togglePwd('password_conf')"
-                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
-                                        tabindex="-1"
-                                    >
-                                        👁
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Reglas de contraseña --}}
-                        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                            <p class="text-xs font-semibold text-slate-700 mb-1">
-                                La contraseña debe cumplir con:
-                            </p>
-                            <ul class="text-[11px] space-y-1">
-                                <li :class="rules.length ? 'text-emerald-700' : 'text-rose-600'">
-                                    • Mínimo 10 caracteres
-                                </li>
-                                <li :class="rules.case ? 'text-emerald-700' : 'text-rose-600'">
-                                    • Mayúsculas y minúsculas
-                                </li>
-                                <li :class="rules.number ? 'text-emerald-700' : 'text-rose-600'">
-                                    • Al menos un número
-                                </li>
-                                <li :class="rules.symbol ? 'text-emerald-700' : 'text-rose-600'">
-                                    • Al menos un símbolo
-                                </li>
-                                <li :class="rules.match ? 'text-emerald-700' : 'text-rose-600'">
-                                    • Las contraseñas deben coincidir
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <button
-                            type="submit"
-                            class="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition"
-                        >
-                            REGISTRARME
-                        </button>
-
-                        <p class="text-[11px] text-slate-500 text-center sm:text-right">
-                            ¿Ya tienes una cuenta?
-                            <button
-                                type="button"
-                                @click="switchToLogin()"
-                                class="font-semibold text-sky-700 hover:text-sky-900"
-                            >
-                                Inicia sesión aquí
-                            </button>
-                        </p>
-                    </div>
-                </form>
+                  <!-- ojo abierto -->
+                  <svg x-show="!showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <!-- ojo tachado -->
+                  <svg x-show="showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
+                </button>
+              </div>
             </div>
+
+            <!-- Remember -->
+            <div class="block mt-4">
+              <label for="remember_me" class="inline-flex items-center">
+                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
+                <span class="ms-2 text-sm text-gray-600">{{ __('Recordarme') }}</span>
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between mt-6">
+              @if (Route::has('password.request'))
+                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                   href="{{ route('password.request') }}">
+                  {{ __('¿Olvidaste tu contraseña?') }}
+                </a>
+              @endif
+
+              <x-primary-button>
+                {{ __('Iniciar sesión') }}
+              </x-primary-button>
+            </div>
+          </form>
         </div>
+      </div>
     </div>
 
-    {{-- ===================== SCRIPTS AUXILIARES ===================== --}}
-    <script>
-        function landingPage() {
-            return {
-                showLogin: false,
-                showRegister: false,
+    <!-- ===== MODAL: REGISTRO ===== -->
+    <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
 
-                openLogin() {
-                    this.showRegister = false;
-                    this.showLogin = true;
-                },
-                openRegister() {
-                    this.showLogin = false;
-                    this.showRegister = true;
-                },
-                switchToRegister() {
-                    this.showLogin = false;
-                    this.showRegister = true;
-                },
-                switchToLogin() {
-                    this.showRegister = false;
-                    this.showLogin = true;
-                }
-            };
+      <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+        <div class="flex items-center justify-between px-5 py-4 border-b">
+          <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
+          <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
+        </div>
+
+        <div class="p-5 max-h-[85vh] overflow-y-auto">
+
+          @php
+              use App\Models\PreguntaSeguridad;
+              $preguntasSeg = PreguntaSeguridad::where('ESTADO', 1)->orderBy('TEXTO_PREGUNTA')->get();
+          @endphp
+
+          {{-- FORM REGISTRO COMPLETO --}}
+          <form method="POST" action="{{ route('register') }}" novalidate>
+            @csrf
+
+            {{-- Header: usuario autogenerado (discreto) --}}
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
+              <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
+                <span class="font-medium text-slate-600 mr-1">Usuario:</span>
+                <code id="username-preview" class="font-semibold"></code>
+              </div>
+            </div>
+
+            {{-- Nombres --}}
+            <div class="grid gap-4 md:grid-cols-2">
+              <div>
+                <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
+                <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
+                              :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
+                <x-input-error :messages="$errors->register->get('PRIMER_NOMBRE')" class="mt-2" />
+              </div>
+              <div>
+                <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
+                <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
+                              :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
+                <x-input-error :messages="$errors->register->get('SEGUNDO_NOMBRE')" class="mt-2" />
+              </div>
+            </div>
+
+            {{-- Apellidos --}}
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
+                <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
+                              :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
+                <x-input-error :messages="$errors->register->get('PRIMER_APELLIDO')" class="mt-2" />
+              </div>
+              <div>
+                <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
+                <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
+                              :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
+                <x-input-error :messages="$errors->register->get('SEGUNDO_APELLIDO')" class="mt-2" />
+              </div>
+            </div>
+
+            {{-- Género + Teléfono --}}
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <x-input-label for="TIPO_GENERO" :value="__('Género')" />
+                <select id="TIPO_GENERO" name="TIPO_GENERO" class="block mt-1 w-full rounded-md border-slate-300" required>
+                  <option value="" disabled {{ old('TIPO_GENERO') ? '' : 'selected' }}>Seleccione...</option>
+                  <option value="1" {{ old('TIPO_GENERO')=='1' ? 'selected' : '' }}>Masculino</option>
+                  <option value="2" {{ old('TIPO_GENERO')=='2' ? 'selected' : '' }}>Femenino</option>
+                  <option value="3" {{ old('TIPO_GENERO')=='3' ? 'selected' : '' }}>Otro / Prefiero no decir</option>
+                </select>
+                <x-input-error :messages="$errors->register->get('TIPO_GENERO')" class="mt-2" />
+              </div>
+              <div>
+                <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
+                <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
+                              :value="old('NUM_TELEFONO')" placeholder="99991234" />
+                <x-input-error :messages="$errors->register->get('NUM_TELEFONO')" class="mt-2" />
+              </div>
+            </div>
+
+            {{-- Departamento + Municipio --}}
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
+                <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
+                              :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+                <x-input-error :messages="$errors->register->get('DEPARTAMENTO')" class="mt-2" />
+              </div>
+              <div>
+                <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
+                <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
+                              :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
+                <x-input-error :messages="$errors->register->get('MUNICIPIO')" class="mt-2" />
+              </div>
+            </div>
+
+            {{-- Ciudad + Colonia --}}
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <x-input-label for="CIUDAD" :value="__('Ciudad')" />
+                <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
+                              :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
+                <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
+              </div>
+              <div>
+                <x-input-label for="COLONIA" :value="__('Colonia')" />
+                <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
+                              :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
+                <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
+              </div>
+            </div>
+
+            {{-- Dirección / Referencia --}}
+            <div class="mt-4">
+              <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
+              <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
+                        class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
+                        placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
+              <x-input-error :messages="$errors->register->get('REFERENCIA')" class="mt-2" />
+            </div>
+
+            {{-- Correo --}}
+            <div class="mt-6">
+              <x-input-label for="CORREO" :value="__('Correo electrónico')" />
+
+              <x-text-input
+                id="CORREO"
+                type="email"
+                name="CORREO"
+                :value="old('CORREO')"
+                placeholder="tucorreo@ejemplo.com"
+                required
+                class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}"
+              />
+
+              <x-input-error :messages="($errors->register ?? $errors)->get('CORREO')" class="mt-2" />
+            </div>
+
+            {{-- ===== PREGUNTAS DE SEGURIDAD ===== --}}
+            <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Preguntas de seguridad</h3>
+            <p class="text-xs text-slate-600 mb-3">
+              Elige dos preguntas y escribe tus respuestas. Se usarán para verificar tu identidad al restablecer la contraseña.
+            </p>
+
+            <div
+              x-data="{
+                q1: '{{ old('PREGUNTA_1') }}' || '',
+                q2: '{{ old('PREGUNTA_2') }}' || '',
+                same() { return this.q1 && this.q2 && this.q1 === this.q2; }
+              }"
+              class="grid gap-4 md:grid-cols-2"
+            >
+              {{-- Pregunta 1 --}}
+              <div>
+                <x-input-label for="PREGUNTA_1" :value="__('Pregunta 1')" />
+                <select id="PREGUNTA_1" name="PREGUNTA_1"
+                        class="mt-1 block w-full rounded-md border-slate-300"
+                        x-model="q1" required>
+                  <option value="" disabled {{ old('PREGUNTA_1') ? '' : 'selected' }}>Seleccione...</option>
+                  @foreach ($preguntasSeg as $p)
+                    <option value="{{ $p->COD_PREGUNTA }}" {{ old('PREGUNTA_1') == $p->COD_PREGUNTA ? 'selected' : '' }}>
+                      {{ $p->TEXTO_PREGUNTA }}
+                    </option>
+                  @endforeach
+                </select>
+                <x-input-error :messages="$errors->register->get('PREGUNTA_1')" class="mt-2" />
+
+                <x-input-label for="RESPUESTA_1" :value="__('Respuesta a la pregunta 1')" class="mt-3" />
+                <x-text-input id="RESPUESTA_1" name="RESPUESTA_1" type="text"
+                              class="block mt-1 w-full" required
+                              :value="old('RESPUESTA_1')" />
+                <x-input-error :messages="$errors->register->get('RESPUESTA_1')" class="mt-2" />
+              </div>
+
+              {{-- Pregunta 2 --}}
+              <div>
+                <x-input-label for="PREGUNTA_2" :value="__('Pregunta 2')" />
+                <select id="PREGUNTA_2" name="PREGUNTA_2"
+                        class="mt-1 block w-full rounded-md border-slate-300"
+                        x-model="q2" required>
+                  <option value="" disabled {{ old('PREGUNTA_2') ? '' : 'selected' }}>Seleccione...</option>
+                  @foreach ($preguntasSeg as $p)
+                    <option value="{{ $p->COD_PREGUNTA }}" {{ old('PREGUNTA_2') == $p->COD_PREGUNTA ? 'selected' : '' }}>
+                      {{ $p->TEXTO_PREGUNTA }}
+                    </option>
+                  @endforeach
+                </select>
+                <x-input-error :messages="$errors->register->get('PREGUNTA_2')" class="mt-2" />
+
+                <x-input-label for="RESPUESTA_2" :value="__('Respuesta a la pregunta 2')" class="mt-3" />
+                <x-text-input id="RESPUESTA_2" name="RESPUESTA_2" type="text"
+                              class="block mt-1 w-full" required
+                              :value="old('RESPUESTA_2')" />
+                <x-input-error :messages="$errors->register->get('RESPUESTA_2')" class="mt-2" />
+              </div>
+
+              {{-- Aviso si eligieron la misma pregunta --}}
+              <div class="md:col-span-2" x-show="same()">
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                  Las preguntas deben ser distintas.
+                </div>
+              </div>
+            </div>
+
+            {{-- ====== CREDENCIALES ====== --}}
+            <h3 class="text-sm font-semibold text-slate-700 mt-8 mb-2">Usuario asignado</h3>
+            <div class="mb-3 text-xs text-slate-600">
+              Este será tu usuario para iniciar sesión: <code class="font-semibold" id="username-preview-inline"></code>
+            </div>
+
+            {{-- Contraseña + Confirmación (una sola columna) --}}
+            <div
+              x-data="{
+                pwd: '',
+                confirm: '',
+                showPwd: false,
+                showConfirm: false,
+                get hasLen()   { return this.pwd.length >= 10 },
+                get hasUpper() { return /[A-Z]/.test(this.pwd) },
+                get hasLower() { return /[a-z]/.test(this.pwd) },
+                get hasDigit() { return /\d/.test(this.pwd) },
+                get hasSym()   { return /[^A-Za-z0-9]/.test(this.pwd) },
+                get match()    { return this.pwd.length>0 && this.pwd === this.confirm },
+                get ok()       { return this.hasLen && this.hasUpper && this.hasLower && this.hasDigit && this.hasSym && this.match },
+              }"
+              class="space-y-4"
+            >
+              {{-- Contraseña --}}
+              <div>
+                <x-input-label for="password" :value="__('Contraseña')" />
+                <div class="relative">
+                  <x-text-input
+                    id="password"
+                    name="password"
+                    x-bind:type="showPwd ? 'text' : 'password'"
+                    class="block mt-1 w-full pr-10"
+                    required
+                    autocomplete="new-password"
+                    x-model="pwd"
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700"
+                    @click="showPwd = !showPwd"
+                    :aria-label="showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  >
+                    {{-- ojo abierto --}}
+                    <svg x-show="!showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    {{-- ojo tachado --}}
+                    <svg x-show="showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
+                  </button>
+                </div>
+
+                {{-- Checklist dinámico debajo --}}
+                <ul class="mt-3 grid gap-1 text-sm">
+                  <li :class="hasLen ? 'text-green-600' : 'text-red-600'">
+                    <span class="font-semibold" x-text="hasLen ? '✓' : '•'"></span>
+                    Mínimo 10 caracteres
+                  </li>
+                  <li :class="(hasUpper && hasLower) ? 'text-green-600' : 'text-red-600'">
+                    <span class="font-semibold" x-text="(hasUpper && hasLower) ? '✓' : '•'"></span>
+                    Mayúsculas y minúsculas
+                  </li>
+                  <li :class="hasDigit ? 'text-green-600' : 'text-red-600'">
+                    <span class="font-semibold" x-text="hasDigit ? '✓' : '•'"></span>
+                    Al menos un número
+                  </li>
+                  <li :class="hasSym ? 'text-green-600' : 'text-red-600'">
+                    <span class="font-semibold" x-text="hasSym ? '✓' : '•'"></span>
+                    Al menos un símbolo
+                  </li>
+                </ul>
+              </div>
+
+              {{-- Confirmar contraseña --}}
+              <div>
+                <x-input-label for="password_confirmation" :value="__('Confirmar contraseña')" />
+                <div class="relative">
+                  <x-text-input
+                    id="password_confirmation"
+                    name="password_confirmation"
+                    x-bind:type="showConfirm ? 'text' : 'password'"
+                    class="block mt-1 w-full pr-10"
+                    required
+                    autocomplete="new-password"
+                    x-model="confirm"
+                  />
+                  <button
+                    type="button"
+                    class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700"
+                    @click="showConfirm = !showConfirm"
+                    :aria-label="showConfirm ? 'Ocultar confirmación' : 'Mostrar confirmación'"
+                  >
+                    <svg x-show="!showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <svg x-show="showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
+                  </button>
+                </div>
+
+                <div class="mt-1 text-sm" :class="match ? 'text-green-600' : 'text-red-600'">
+                  <span class="font-semibold" x-text="match ? '✓' : '•'"></span>
+                  Las contraseñas deben coincidir
+                </div>
+
+                {{-- Errores del servidor (bag register) --}}
+                <x-input-error :messages="$errors->register->get('password')" class="mt-2" />
+                <x-input-error :messages="$errors->register->get('password_confirmation')" class="mt-2" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end mt-6">
+              <x-primary-button class="px-5">Registrarme</x-primary-button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {{-- Script: vista previa del usuario autogenerado --}}
+  <script>
+    (function () {
+      const maxLen = 50;
+      const $n = document.getElementById('PRIMER_NOMBRE');
+      const $a = document.getElementById('PRIMER_APELLIDO');
+      const $pill = document.getElementById('username-pill');
+      const $out1 = document.getElementById('username-preview');
+      const $out2 = document.getElementById('username-preview-inline');
+
+      function strip(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+      function mk(n,a){
+        const first=(n||'').trim().charAt(0);
+        const last=(a||'').trim().replace(/\s+/g,'');
+        let base=(first+last).toLowerCase();
+        base=strip(base).replace(/[^a-z0-9]/g,'');
+        return (base||'user').slice(0,maxLen);
+      }
+      function up(){
+        const u = mk($n?.value,$a?.value);
+        if(($n?.value?.trim() || $a?.value?.trim())){
+          $pill?.classList.remove('hidden');
+          if($out1) $out1.textContent=u;
+          if($out2) $out2.textContent=u;
+        }else{
+          $pill?.classList.add('hidden');
+          if($out1) $out1.textContent='';
+          if($out2) $out2.textContent='';
         }
+      }
+      ['input','change'].forEach(e=>{ $n?.addEventListener(e,up); $a?.addEventListener(e,up); });
+      up();
+    })();
+  </script>
 
-        function registroPaciente() {
-            return {
-                // Nombres
-                nombresCompletos: '',
-                apellidosCompletos: '',
-                primerNombre: '',
-                segundoNombre: '',
-                primerApellido: '',
-                segundoApellido: '',
+  <script>
+    // Delegación: cualquier elemento con data-open="login" o "register" abre el modal correcto
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-open]');
+      if (!btn) return;
+      e.preventDefault();
+      const which = btn.getAttribute('data-open');
+      if (which === 'login')   window.dispatchEvent(new CustomEvent('open-login'));
+      if (which === 'register') window.dispatchEvent(new CustomEvent('open-register'));
+    });
+  </script>
 
-                // Usuario generado
-                usuarioGenerado: '',
-
-                // Dirección
-                departamentos: {
-                    'Atlántida': ['La Ceiba', 'Tela', 'El Porvenir'],
-                    'Choluteca': ['Choluteca', 'San Marcos de Colón'],
-                    'Colón': ['Trujillo', 'Tocoa'],
-                    'Comayagua': ['Comayagua', 'Siguatepeque', 'La Libertad'],
-                    'Copán': ['Santa Rosa de Copán', 'Copán Ruinas'],
-                    'Cortés': ['San Pedro Sula', 'Puerto Cortés', 'Choloma', 'Villanueva'],
-                    'El Paraíso': ['Yuscarán', 'Danlí'],
-                    'Francisco Morazán': ['Tegucigalpa', 'Comayagüela', 'Valle de Ángeles'],
-                    'Gracias a Dios': ['Puerto Lempira'],
-                    'Intibucá': ['La Esperanza', 'Intibucá'],
-                    'Islas de la Bahía': ['Roatán', 'Coxen Hole'],
-                    'La Paz': ['La Paz', 'Marcala'],
-                    'Lempira': ['Gracias', 'La Campa'],
-                    'Ocotepeque': ['Nueva Ocotepeque'],
-                    'Olancho': ['Juticalpa', 'Catacamas'],
-                    'Santa Bárbara': ['Santa Bárbara', 'Ilama'],
-                    'Valle': ['Nacaome', 'San Lorenzo'],
-                    'Yoro': ['Yoro', 'El Progreso', 'Olanchito']
-                },
-                departamento: '',
-                ciudad: '',
-                ciudadesDisponibles: [],
-
-                // Password
-                password: '',
-                passwordConfirm: '',
-                rules: {
-                    length: false,
-                    case: false,
-                    number: false,
-                    symbol: false,
-                    match: false,
-                },
-
-                syncNames() {
-                    const clean = (str) => (str || '').trim().replace(/\s+/g, ' ');
-                    const nombres = clean(this.nombresCompletos).split(' ');
-                    const apellidos = clean(this.apellidosCompletos).split(' ');
-
-                    this.primerNombre = nombres[0] || '';
-                    this.segundoNombre = nombres.slice(1).join(' ') || '';
-
-                    this.primerApellido = apellidos[0] || '';
-                    this.segundoApellido = apellidos.slice(1).join(' ') || '';
-
-                    this.generateUsername();
-                },
-
-                generateUsername() {
-                    const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                    const pn = removeAccents((this.primerNombre || '').toLowerCase());
-                    const pa = removeAccents((this.primerApellido || '').toLowerCase());
-
-                    if (!pn && !pa) {
-                        this.usuarioGenerado = '';
-                        return;
-                    }
-
-                    let base = pn && pa ? `${pn}.${pa}` : (pn || pa);
-                    base = base.replace(/[^a-z0-9.]/g, '');
-
-                    this.usuarioGenerado = base;
-                    const preview = document.getElementById('username-preview');
-                    if (preview) preview.textContent = this.usuarioGenerado;
-                },
-
-                updateCiudades() {
-                    this.ciudadesDisponibles = this.departamentos[this.departamento] || [];
-                    if (!this.ciudadesDisponibles.includes(this.ciudad)) {
-                        this.ciudad = '';
-                    }
-                },
-
-                validatePassword() {
-                    const pwd = this.password || '';
-                    const conf = this.passwordConfirm || '';
-
-                    this.rules.length = pwd.length >= 10;
-                    this.rules.case = /[a-z]/.test(pwd) && /[A-Z]/.test(pwd);
-                    this.rules.number = /[0-9]/.test(pwd);
-                    this.rules.symbol = /[^A-Za-z0-9]/.test(pwd);
-                    this.rules.match = pwd.length > 0 && pwd === conf;
-                },
-
-                togglePwd(id) {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    el.type = el.type === 'password' ? 'text' : 'password';
-                },
-
-                beforeSubmit() {
-                    // Aseguramos sincronización final
-                    this.syncNames();
-                    this.validatePassword();
-                }
-            };
-        }
-    </script>
 </body>
 </html>
