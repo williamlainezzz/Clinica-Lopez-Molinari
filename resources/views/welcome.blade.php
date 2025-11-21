@@ -31,7 +31,7 @@
                     >
                     <div>
                         <p class="text-sm font-semibold text-slate-900 leading-tight">
-                            Complejo Dental <span class="text-teal-700">López Molinari</span>
+                            Complejo Dental <span class="text-sky-800">López Molinari</span>
                         </p>
                         <p class="text-xs text-slate-500">Gestión clínica clara y rápida</p>
                     </div>
@@ -40,23 +40,11 @@
                 <div class="flex items-center space-x-3">
                     @if (Route::has('login'))
                         @auth
+                            {{-- Solo cuando YA está autenticado mostramos el acceso al panel --}}
                             <a href="{{ url('/dashboard') }}"
-                               class="inline-flex items-center rounded-full border border-teal-600 px-4 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-50 transition">
+                               class="inline-flex items-center rounded-full border border-sky-700 px-4 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition">
                                 Ir al panel
                             </a>
-                        @else
-                            <button type="button"
-                                    @click="openLogin()"
-                                    class="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">
-                                Iniciar sesión
-                            </button>
-                            @if (Route::has('register'))
-                                <button type="button"
-                                        @click="openRegister()"
-                                        class="inline-flex items-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-700 transition">
-                                    Registrarse
-                                </button>
-                            @endif
                         @endauth
                     @endif
                 </div>
@@ -66,12 +54,14 @@
         {{-- Sección de hero / portada --}}
         <main class="flex-1">
             <section class="relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-teal-50 via-sky-50 to-slate-50 pointer-events-none"></div>
+                {{-- Fondo suave en azules --}}
+                <div class="absolute inset-0 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 pointer-events-none"></div>
 
                 <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 grid gap-12 lg:grid-cols-2 items-center">
+                    {{-- Texto principal --}}
                     <div>
                         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">
-                            Gestión clínica <span class="text-teal-700">clara y rápida</span>
+                            Gestión clínica <span class="text-sky-800">clara y rápida</span>
                         </h1>
                         <p class="text-base sm:text-lg text-slate-600 mb-6">
                             Administra citas, pacientes y agenda del <strong>Complejo Dental López Molinari</strong> desde un solo lugar.
@@ -79,16 +69,17 @@
                         </p>
 
                         <div class="flex flex-wrap items-center gap-3 mb-6">
+                            {{-- Estos son los ÚNICOS botones principales de acceso para invitados --}}
                             <button type="button"
                                     @click="openLogin()"
-                                    class="inline-flex items-center rounded-full bg-teal-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-teal-700 transition">
+                                    class="inline-flex items-center rounded-full bg-sky-800 px-6 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-sky-900 transition">
                                 Iniciar sesión
                             </button>
 
                             @if (Route::has('register'))
                                 <button type="button"
                                         @click="openRegister()"
-                                        class="inline-flex items-center rounded-full border border-teal-600 px-6 py-2.5 text-sm font-semibold text-teal-700 hover:bg-teal-50 transition">
+                                        class="inline-flex items-center rounded-full border border-sky-800 px-6 py-2.5 text-sm font-semibold text-sky-800 hover:bg-sky-50 transition">
                                     Registrarse
                                 </button>
                             @endif
@@ -96,51 +87,37 @@
 
                         <ul class="space-y-2 text-sm text-slate-600">
                             <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-teal-600"></span>
+                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
                                 <span>Citas en línea para pacientes y doctores.</span>
                             </li>
                             <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-teal-600"></span>
+                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
                                 <span>Agenda clínica centralizada y fácil de leer.</span>
                             </li>
                             <li class="flex items-start space-x-2">
-                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-teal-600"></span>
+                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-sky-700"></span>
                                 <span>Seguridad reforzada con preguntas y verificación por correo.</span>
                             </li>
                         </ul>
                     </div>
 
+                    {{-- Foto real de la clínica --}}
                     <div class="relative">
-                        <div class="rounded-3xl bg-white shadow-xl shadow-teal-100/40 border border-slate-100 p-6 sm:p-8">
-                            <p class="text-sm font-semibold text-teal-700 mb-2">
-                                Complejo Dental López Molinari
-                            </p>
-                            <p class="text-base text-slate-600 mb-4">
-                                Panel moderno para controlar citas, horarios y pacientes desde cualquier dispositivo.
-                            </p>
-
-                            <div class="grid grid-cols-2 gap-3 text-xs text-slate-500 mb-4">
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
-                                    <p class="font-semibold text-slate-800 text-sm">Agenda diaria</p>
-                                    <p>Visualiza todas las citas por doctor.</p>
-                                </div>
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
-                                    <p class="font-semibold text-slate-800 text-sm">Recordatorios</p>
-                                    <p>Notificaciones por correo a los pacientes.</p>
-                                </div>
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
-                                    <p class="font-semibold text-slate-800 text-sm">Seguridad</p>
-                                    <p>Roles separados para pacientes y doctores.</p>
-                                </div>
-                                <div class="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2">
-                                    <p class="font-semibold text-slate-800 text-sm">Disponible 24/7</p>
-                                    <p>Acceso desde móvil o computadora.</p>
-                                </div>
+                        <div class="rounded-3xl overflow-hidden bg-slate-200 shadow-xl shadow-sky-100/50 border border-slate-100">
+                            <img
+                                src="{{ asset('images/clinica_exterior.jpg') }}"
+                                alt="Fachada del Complejo Dental López Molinari"
+                                class="w-full h-full object-cover"
+                            >
+                            {{-- Overlay con texto descriptivo --}}
+                            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent px-5 py-4">
+                                <p class="text-xs font-semibold text-sky-100 uppercase tracking-wide">
+                                    Sede principal
+                                </p>
+                                <p class="text-sm text-slate-50">
+                                    Complejo Dental López Molinari — Tegucigalpa, Honduras.
+                                </p>
                             </div>
-
-                            <p class="text-xs text-slate-400">
-                                Acceso exclusivo para el personal del Complejo Dental y sus pacientes registrados.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -169,13 +146,13 @@
             x-transition
             class="relative w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden"
         >
-            {{-- Banner superior --}}
-            <div class="bg-gradient-to-r from-teal-600 via-teal-500 to-sky-500 px-6 py-4">
-                <p class="text-xs font-semibold tracking-wide text-teal-100 uppercase">Bienvenido</p>
+            {{-- Banner superior en azules --}}
+            <div class="bg-gradient-to-r from-sky-800 via-sky-700 to-indigo-600 px-6 py-4">
+                <p class="text-xs font-semibold tracking-wide text-sky-100 uppercase">Bienvenido</p>
                 <h2 class="text-lg font-bold text-white">
                     Inicia sesión en tu cuenta
                 </h2>
-                <p class="mt-1 text-xs text-teal-100/90">
+                <p class="mt-1 text-xs text-sky-100/90">
                     Accede a la gestión de citas del Complejo Dental López Molinari.
                 </p>
             </div>
@@ -225,7 +202,7 @@
                             value="{{ old('login') }}"
                             autocomplete="username email"
                             required
-                            class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                         >
                     </div>
 
@@ -241,7 +218,7 @@
                                 x-bind:type="showPwd ? 'text' : 'password'"
                                 required
                                 autocomplete="current-password"
-                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                             >
                             <button
                                 type="button"
@@ -261,13 +238,13 @@
                             <input
                                 type="checkbox"
                                 name="remember"
-                                class="rounded border-slate-300 text-teal-600 shadow-sm focus:ring-teal-500"
+                                class="rounded border-slate-300 text-sky-700 shadow-sm focus:ring-sky-600"
                             >
                             <span>Recordarme</span>
                         </label>
 
                         @if (Route::has('password.request'))
-                            <a href="{{ route('password.request') }}" class="font-medium text-teal-700 hover:text-teal-900">
+                            <a href="{{ route('password.request') }}" class="font-medium text-sky-700 hover:text-sky-900">
                                 ¿Olvidaste tu contraseña?
                             </a>
                         @endif
@@ -290,7 +267,7 @@
                         ¿Aún no tienes cuenta?
                         <button type="button"
                                 @click="switchToRegister()"
-                                class="font-semibold text-teal-700 hover:text-teal-900">
+                                class="font-semibold text-sky-700 hover:text-sky-900">
                             Regístrate aquí
                         </button>
                     </p>
@@ -312,13 +289,13 @@
             x-transition
             class="relative w-full max-w-4xl rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden"
         >
-            {{-- Banner superior --}}
-            <div class="bg-gradient-to-r from-sky-500 via-teal-500 to-emerald-500 px-6 py-4">
-                <p class="text-xs font-semibold tracking-wide text-teal-100 uppercase">Registro de paciente</p>
+            {{-- Banner superior en azules --}}
+            <div class="bg-gradient-to-r from-indigo-600 via-sky-700 to-sky-500 px-6 py-4">
+                <p class="text-xs font-semibold tracking-wide text-sky-100 uppercase">Registro de paciente</p>
                 <h2 class="text-lg font-bold text-white">
                     Crea tu cuenta en el Complejo Dental López Molinari
                 </h2>
-                <p class="mt-1 text-xs text-teal-50/95">
+                <p class="mt-1 text-xs text-sky-50/95">
                     Completa tus datos para agendar y gestionar tus citas en línea.
                 </p>
             </div>
@@ -386,7 +363,7 @@
                                     type="text"
                                     x-model="nombresCompletos"
                                     @input="syncNames()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                             </div>
@@ -398,7 +375,7 @@
                                     type="text"
                                     x-model="apellidosCompletos"
                                     @input="syncNames()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                             </div>
@@ -409,7 +386,7 @@
                                 <select
                                     id="TIPO_GENERO"
                                     name="TIPO_GENERO"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                                     <option value="">Seleccione...</option>
@@ -426,7 +403,7 @@
                                     <input
                                         type="text"
                                         name="NUM_TELEFONO"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                         required
                                     >
                                 </div>
@@ -436,7 +413,7 @@
                                     </label>
                                     <select
                                         name="TIPO_TELEFONO"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     >
                                         <option value="Móvil">Móvil</option>
                                         <option value="Casa">Casa</option>
@@ -461,7 +438,7 @@
                                     name="DEPARTAMENTO"
                                     x-model="departamento"
                                     @change="updateCiudades()"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                                     <option value="">Seleccione...</option>
@@ -477,7 +454,7 @@
                                 <select
                                     name="CIUDAD"
                                     x-model="ciudad"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                                     <option value="">Seleccione un departamento primero</option>
@@ -495,7 +472,7 @@
                             <textarea
                                 name="REFERENCIA"
                                 rows="2"
-                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-y"
+                                class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600 resize-y"
                             ></textarea>
                         </div>
                     </div>
@@ -514,7 +491,7 @@
                                 <input
                                     type="email"
                                     name="CORREO"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                             </div>
@@ -528,7 +505,7 @@
                                 </label>
                                 <select
                                     name="PREGUNTA1"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                                     <option value="">Seleccione...</option>
@@ -545,7 +522,7 @@
                                 <input
                                     type="text"
                                     name="RESPUESTA1"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                             </div>
@@ -556,7 +533,7 @@
                                 </label>
                                 <select
                                     name="PREGUNTA2"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                                     <option value="">Seleccione...</option>
@@ -573,7 +550,7 @@
                                 <input
                                     type="text"
                                     name="RESPUESTA2"
-                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                    class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                     required
                                 >
                             </div>
@@ -609,7 +586,7 @@
                                         name="password"
                                         x-model="password"
                                         @input="validatePassword()"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                         required
                                     >
                                     <button
@@ -634,7 +611,7 @@
                                         name="password_confirmation"
                                         x-model="passwordConfirm"
                                         @input="validatePassword()"
-                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                                        class="block w-full rounded-xl border border-slate-300 px-3 py-2.5 pr-10 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
                                         required
                                     >
                                     <button
@@ -687,7 +664,7 @@
                             <button
                                 type="button"
                                 @click="switchToLogin()"
-                                class="font-semibold text-teal-700 hover:text-teal-900"
+                                class="font-semibold text-sky-700 hover:text-sky-900"
                             >
                                 Inicia sesión aquí
                             </button>
