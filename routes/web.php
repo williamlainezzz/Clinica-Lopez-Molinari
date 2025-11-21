@@ -29,6 +29,7 @@ use App\Models\Usuario;
 // --- AGENDA: Citas / Calendario / Reportes ---
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\RegistroPacienteController;
+use App\Http\Controllers\ReportesController;
 
 /* =========================
 |  Público / Dashboard
@@ -86,17 +87,20 @@ Route::middleware('auth')->prefix('personas')->group(function () {
 ========================= */
 Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
 
-Route::view('/reportes', 'reportes.index')->name('reportes.index');
-Route::prefix('reportes')->group(function () {
-    Route::view('/citas-rango',        'reportes.citas-rango')->name('reportes.citas_rango');
-    Route::view('/citas-estado',       'reportes.citas-estado')->name('reportes.citas_estado');
-    Route::view('/agenda-doctor',      'reportes.agenda-doctor')->name('reportes.agenda_doctor');
-    Route::view('/pacientes-estado',   'reportes.pacientes-estado')->name('reportes.pacientes_estado');
-    Route::view('/usuarios-rol',       'reportes.usuarios-rol')->name('reportes.usuarios_rol');
-    Route::view('/citas-no-atendidas', 'reportes.citas-no-atendidas')->name('reportes.citas_no_atendidas');
-    Route::view('/procesos',           'reportes.procesos')->name('reportes.procesos');
-    Route::view('/seguridad-permisos', 'reportes.seguridad-permisos')->name('reportes.seguridad_permisos');
-});
+Route::middleware(['auth'])
+    ->prefix('reportes')
+    ->group(function () {
+        Route::get('/', [ReportesController::class, 'index'])->name('reportes.index');
+
+        Route::match(['get', 'post'], '/citas-rango',        [ReportesController::class, 'citasRango'])->name('reportes.citas_rango');
+        Route::match(['get', 'post'], '/citas-estado',       [ReportesController::class, 'citasEstado'])->name('reportes.citas_estado');
+        Route::match(['get', 'post'], '/agenda-doctor',      [ReportesController::class, 'agendaDoctor'])->name('reportes.agenda_doctor');
+        Route::match(['get', 'post'], '/pacientes-estado',   [ReportesController::class, 'pacientesEstado'])->name('reportes.pacientes_estado');
+        Route::match(['get', 'post'], '/usuarios-rol',       [ReportesController::class, 'usuariosRol'])->name('reportes.usuarios_rol');
+        Route::match(['get', 'post'], '/citas-no-atendidas', [ReportesController::class, 'citasNoAtendidas'])->name('reportes.citas_no_atendidas');
+        Route::match(['get', 'post'], '/procesos',           [ReportesController::class, 'procesos'])->name('reportes.procesos');
+        Route::match(['get', 'post'], '/seguridad-permisos', [ReportesController::class, 'seguridadPermisos'])->name('reportes.seguridad_permisos');
+    });
 
 /* =========================
 |  Reset Password
