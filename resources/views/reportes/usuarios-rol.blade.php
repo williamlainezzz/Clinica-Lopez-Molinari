@@ -6,9 +6,15 @@
 @section('content')
 <div class="card">
   <div class="card-header">
-    <form class="form-inline">
+    <form class="form-inline" action="{{ route('reportes.usuarios_rol') }}" method="POST">
+      @csrf
       <div class="form-group mr-2"><label class="mr-2">Rol</label>
-        <select class="form-control"><option>Administrador</option><option>Doctor</option><option>Paciente</option><option>Recepcionista</option></select>
+        <select name="rol" class="form-control">
+          <option value="">Todos</option>
+          @foreach($roles as $rol)
+            <option value="{{ $rol->COD_ROL }}" @selected(($filters['rol'] ?? '')==$rol->COD_ROL)>{{ $rol->NOM_ROL }}</option>
+          @endforeach
+        </select>
       </div>
       <button class="btn btn-primary">Generar</button>
     </form>
@@ -16,7 +22,19 @@
   <div class="card-body table-responsive p-0">
     <table class="table table-sm mb-0">
       <thead><tr><th>#</th><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th></tr></thead>
-      <tbody><tr><td>1</td><td>gsolis</td><td>Guillermo Solís</td><td>Administrador</td><td>Activo</td></tr></tbody>
+      <tbody>
+        @forelse($usuarios as $usuario)
+          <tr>
+            <td>{{ $loop->iteration }}</td>
+            <td>{{ $usuario->USR_USUARIO }}</td>
+            <td>{{ $usuario->nombre }}</td>
+            <td>{{ $usuario->NOM_ROL }}</td>
+            <td>{{ $usuario->ESTADO_USUARIO === 1 ? 'Activo' : 'Inactivo' }}</td>
+          </tr>
+        @empty
+          <tr><td colspan="5" class="text-center">No hay registros para los filtros seleccionados.</td></tr>
+        @endforelse
+      </tbody>
     </table>
   </div>
 </div>
