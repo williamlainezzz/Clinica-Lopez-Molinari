@@ -130,61 +130,61 @@ class ReportesController extends Controller
     }
 
     public function pacientesEstado(Request $request)
-    {
-        $filters = $request->validate([
-            'estado' => ['nullable', 'string', 'in:activos,inactivos,todos'],
-        ]);
+{
+    // 1) Leer el filtro del form (valores: activos, inactivos, todos)
+    $estado = $request->input('estado', 'activos'); // por defecto "activos"
 
-        $estadoSeleccionado = $filters['estado'] ?? 'activos';
-        $pacientes          = collect();
+    $query = DB::table('tbl_persona as p')
+        ->leftJoin('tbl_usuario as u', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+        ->leftJoin('tbl_rol as r', 'r.COD_ROL', '=', 'u.FK_COD_ROL')
+        ->leftJoin('tbl_telefono as t', 't.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+        ->leftJoin(DB::raw('(
+            SELECT FK_COD_PACIENTE, MAX(FEC_CITA) AS ultima_cita
+            FROM tbl_cita
+            GROUP BY FK_COD_PACIENTE
+        ) AS c'), 'c.FK_COD_PACIENTE', '=', 'p.COD_PERSONA')
+        ->whereRaw("UPPER(TRIM(r.NOM_ROL)) = 'PACIENTE'");
 
-        if ($this->tableExists('tbl_persona')) {
-            $pacientes = DB::table('tbl_persona as p')
-                ->leftJoin('tbl_usuario as u', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
-                ->leftJoin('tbl_rol as r', 'r.COD_ROL', '=', 'u.FK_COD_ROL')
-                ->leftJoin('tbl_telefono as t', 't.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
-                ->leftJoin(DB::raw('(
-                    SELECT FK_COD_PACIENTE, MAX(FEC_CITA) AS ultima_cita
-                    FROM tbl_cita
-                    GROUP BY FK_COD_PACIENTE
-                ) as c'), 'c.FK_COD_PACIENTE', '=', 'p.COD_PERSONA')
-                ->whereRaw('UPPER(TRIM(r.NOM_ROL)) = ?', ['PACIENTE'])
-                ->groupBy(
-                    'p.COD_PERSONA',
-                    'p.PRIMER_NOMBRE',
-                    'p.SEGUNDO_NOMBRE',
-                    'p.PRIMER_APELLIDO',
-                    'p.SEGUNDO_APELLIDO',
-                    'u.ESTADO_USUARIO'
-                )
-                ->select([
-                    'p.COD_PERSONA',
-                    'p.PRIMER_NOMBRE',
-                    'p.SEGUNDO_NOMBRE',
-                    'p.PRIMER_APELLIDO',
-                    'p.SEGUNDO_APELLIDO',
-                    'u.ESTADO_USUARIO',
-                    DB::raw('COALESCE(c.ultima_cita, NULL) as ultima_cita'),
-                    DB::raw("GROUP_CONCAT(DISTINCT t.NUM_TELEFONO ORDER BY t.NUM_TELEFONO SEPARATOR ', ') as telefonos"),
-                ]);
-
-            if ($estadoSeleccionado === 'activos') {
-                $pacientes->where('u.ESTADO_USUARIO', 1);
-            } elseif ($estadoSeleccionado === 'inactivos') {
-                $pacientes->where('u.ESTADO_USUARIO', 0);
-            }
-
-            $pacientes = $pacientes
-                ->orderBy('p.PRIMER_NOMBRE')
-                ->orderBy('p.PRIMER_APELLIDO')
-                ->get();
-        }
-
-        return view('reportes.pacientes-estado', [
-            'pacientes' => $pacientes,
-            'filters'   => ['estado' => $estadoSeleccionado],
-        ]);
+    // 2) Traducir el filtro del select a 1/0 (porque ESTADO_USUARIO en tu BD es numérico)
+    if ($estado === 'activos') {
+        $query->where('u.ESTADO_USUARIO', 1);
+    } elseif ($estado === 'inactivos') {
+        $query->where('u.ESTADO_USUARIO', 0);
     }
+    // si es "todos", no filtramos por estado
+
+    // 3) SELECT + GROUP BY (corregido para ONLY_FULL_GROUP_BY)
+    $pacientes = $query
+        ->select(
+            'p.COD_PERSONA',
+            'p.PRIMER_NOMBRE',
+            'p.SEGUNDO_NOMBRE',
+            'p.PRIMER_APELLIDO',
+            'p.SEGUNDO_APELLIDO',
+            'u.ESTADO_USUARIO',
+            DB::raw('MAX(c.ultima_cita) AS ultima_cita'),
+            DB::raw("GROUP_CONCAT(DISTINCT t.NUM_TELEFONO ORDER BY t.NUM_TELEFONO SEPARATOR ', ') AS telefonos")
+        )
+        ->groupBy(
+            'p.COD_PERSONA',
+            'p.PRIMER_NOMBRE',
+            'p.SEGUNDO_NOMBRE',
+            'p.PRIMER_APELLIDO',
+            'p.SEGUNDO_APELLIDO',
+            'u.ESTADO_USUARIO'
+        )
+        ->orderBy('p.PRIMER_NOMBRE')
+        ->orderBy('p.PRIMER_APELLIDO')
+        ->get();
+
+    // 4) Array de filtros para que la vista marque el <select>
+    $filters = [
+        'estado' => $estado,
+    ];
+
+    return view('reportes.pacientes-estado', compact('pacientes', 'filters'));
+}
+
 
     public function usuariosRol(Request $request)
     {
