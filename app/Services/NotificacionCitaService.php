@@ -14,24 +14,40 @@ use Illuminate\Contracts\Auth\Authenticatable;
 
 class NotificacionCitaService
 {
+    /**
+     * Notificación cuando se crea la cita.
+     */
     public function enviarNotificacionCreacionCita(int $codCita): void
     {
         $this->enviarNotificacionCita($codCita, 'CREACION');
     }
 
+    /**
+     * Recordatorio 24 horas antes.
+     */
     public function enviarRecordatorio24H(int $codCita): void
     {
         $this->enviarNotificacionCita($codCita, 'RECORDATORIO_24H');
     }
 
+    /**
+     * Recordatorio 1 hora antes.
+     */
     public function enviarRecordatorio1H(int $codCita): void
     {
         $this->enviarNotificacionCita($codCita, 'RECORDATORIO_1H');
     }
 
+    /**
+     * Cuenta notificaciones no leídas para la campana del navbar.
+     */
     public function contarNoLeidasParaUsuario(?Authenticatable $user): int
     {
-        if (!$user || !Schema::hasTable('tbl_notificacion') || !Schema::hasTable('tbl_cita')) {
+        if (
+            !$user ||
+            !Schema::hasTable('tbl_notificacion') ||
+            !Schema::hasTable('tbl_cita')
+        ) {
             return 0;
         }
 
@@ -43,6 +59,9 @@ class NotificacionCitaService
         return (int) $query->count();
     }
 
+    /**
+     * Query base para listar notificaciones (joins con cita/paciente/doctor/estado).
+     */
     public function baseNotificacionQuery()
     {
         return DB::table('tbl_notificacion as n')
@@ -52,6 +71,9 @@ class NotificacionCitaService
             ->leftJoin('tbl_persona as d', 'c.FK_COD_DOCTOR', '=', 'd.COD_PERSONA');
     }
 
+    /**
+     * Filtro por rol para DOCTOR y PACIENTE.
+     */
     public function aplicarFiltroPorRol($query, $user): void
     {
         $rolNombre = strtoupper(optional($user->rol)->NOM_ROL ?? '');
@@ -64,8 +86,12 @@ class NotificacionCitaService
         if ($rolNombre === 'PACIENTE' && $personaId > 0) {
             $query->where('c.FK_COD_PACIENTE', $personaId);
         }
+        // ADMIN y RECEPCIONISTA ven todas las notificaciones (sin filtro extra).
     }
 
+    /**
+     * Lógica central: registra historial y envía correos (paciente + doctor).
+     */
     private function enviarNotificacionCita(int $codCita, string $tipo): void
     {
         if (!Schema::hasTable('tbl_cita') || !Schema::hasTable('tbl_persona')) {
@@ -78,13 +104,26 @@ class NotificacionCitaService
             return;
         }
 
-        $payload = $this->construirPayload($cita, $tipo);
-        $mensaje = $payload['mensaje'] ?? '';
+        // Payloads separados para paciente y doctor
+        $payloadPaciente = $this->construirPayload($cita, $tipo, 'paciente');
+        $payloadDoctor   = $this->construirPayload($cita, $tipo, 'doctor');
 
+        // Para el historial usamos el mensaje pensado para el paciente
+        $mensaje = $payloadPaciente['mensaje'] ?? '';
+
+        // 1) Registrar una sola fila en tbl_notificacion
         $this->registrarNotificacion($codCita, $mensaje, $tipo);
-        $this->enviarCorreo($cita->paciente_persona_id, $payload);
+
+        // 2) Enviar correo al PACIENTE
+        $this->enviarCorreo($cita->paciente_persona_id, $payloadPaciente);
+
+        // 3) Enviar correo al DOCTOR (si existe usuario/correo)
+        $this->enviarCorreo($cita->doctor_persona_id, $payloadDoctor);
     }
 
+    /**
+     * Crea el registro en tbl_notificacion (historial).
+     */
     private function registrarNotificacion(int $codCita, string $mensaje, string $tipo): void
     {
         if (!Schema::hasTable('tbl_notificacion')) {
@@ -100,14 +139,22 @@ class NotificacionCitaService
                 'LEIDA'             => 0,
             ]);
         } catch (\Throwable $e) {
-            // Silenciar para no interrumpir el flujo principal.
+            // No interrumpir el flujo principal si falla el historial
         }
     }
 
-    private function enviarCorreo(int $pacientePersonaId, array $payload): void
+    /**
+     * Envía el correo a la persona indicada (paciente o doctor),
+     * buscando primero Usuario y luego correo directo.
+     */
+    private function enviarCorreo(int $personaId, array $payload): void
     {
-        $usuario = Usuario::where('FK_COD_PERSONA', $pacientePersonaId)->first();
-        $correo  = $this->buscarCorreoPersona($pacientePersonaId);
+        if ($personaId <= 0) {
+            return;
+        }
+
+        $usuario = Usuario::where('FK_COD_PERSONA', $personaId)->first();
+        $correo  = $this->buscarCorreoPersona($personaId);
 
         if ($usuario) {
             $usuario->notify(new CitaNotificacion($payload));
@@ -119,6 +166,9 @@ class NotificacionCitaService
         }
     }
 
+    /**
+     * Busca la cita con joins a paciente, doctor y estado.
+     */
     private function buscarCita(int $codCita): ?object
     {
         return DB::table('tbl_cita as c')
@@ -144,7 +194,11 @@ class NotificacionCitaService
             ->first();
     }
 
-    private function construirPayload(object $cita, string $tipo): array
+    /**
+     * Construye el payload para la notificación de correo.
+     * $destinatario: 'paciente' | 'doctor'
+     */
+    private function construirPayload(object $cita, string $tipo, string $destinatario = 'paciente'): array
     {
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora  = $this->formatearHora($cita->HOR_CITA ?? null);
@@ -152,16 +206,33 @@ class NotificacionCitaService
         $tipoLegible = $this->tipoLegible($tipo);
         $clinica     = config('app.name', 'Clínica');
 
-        $mensaje = sprintf(
-            'Su cita con %s está programada para el %s a las %s.',
-            $cita->doctor_nombre,
-            $fecha,
-            $hora
-        );
+        if ($destinatario === 'doctor') {
+            // Correo para el DOCTOR
+            $mensaje = sprintf(
+                'Tiene una cita con el paciente %s programada para el %s a las %s.',
+                $cita->paciente_nombre,
+                $fecha,
+                $hora
+            );
+
+            $subject = "{$clinica} - Nueva cita con paciente";
+            $titulo  = "{$tipoLegible} (para el doctor)";
+        } else {
+            // Correo para el PACIENTE (comportamiento original)
+            $mensaje = sprintf(
+                'Su cita con %s está programada para el %s a las %s.',
+                $cita->doctor_nombre,
+                $fecha,
+                $hora
+            );
+
+            $subject = "{$clinica} - {$tipoLegible}";
+            $titulo  = $tipoLegible;
+        }
 
         return [
-            'subject'      => "{$clinica} - {$tipoLegible}",
-            'titulo'       => $tipoLegible,
+            'subject'      => $subject,
+            'titulo'       => $titulo,
             'paciente'     => $cita->paciente_nombre,
             'doctor'       => $cita->doctor_nombre,
             'clinica'      => $clinica,
@@ -200,6 +271,9 @@ class NotificacionCitaService
         }
     }
 
+    /**
+     * Busca el último correo de una persona en tbl_correo.
+     */
     private function buscarCorreoPersona(int $personaId): ?string
     {
         return DB::table('tbl_correo')
@@ -208,6 +282,9 @@ class NotificacionCitaService
             ->value('CORREO');
     }
 
+    /**
+     * Traduce el tipo técnico a texto legible.
+     */
     private function tipoLegible(string $tipo): string
     {
         return match ($tipo) {
@@ -218,6 +295,9 @@ class NotificacionCitaService
         };
     }
 
+    /**
+     * Busca citas para recordatorio 24h / 1h.
+     */
     public function citasParaRecordatorio(string $tipo): Collection
     {
         if (!Schema::hasTable('tbl_cita')) {
@@ -230,6 +310,7 @@ class NotificacionCitaService
             $inicio = $now->copy()->addHours(23)->addMinutes(30);
             $fin    = $now->copy()->addHours(24)->addMinutes(30);
         } else {
+            // RECORDATORIO_1H (o cualquier otro que se use como 1h)
             $inicio = $now->copy()->addMinutes(45);
             $fin    = $now->copy()->addMinutes(75);
         }
