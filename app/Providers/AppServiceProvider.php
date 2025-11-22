@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Services\NotificacionCitaService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,6 +53,23 @@ class AppServiceProvider extends ServiceProvider
 
             // Usa el método que agregamos en App\Models\Usuario
             return $user->tienePermiso($objeto, $accion);
+        });
+
+        // 4) Campana global de notificaciones de citas en el navbar
+        View::composer('adminlte::page', function ($view) {
+            $user = Auth::user();
+
+            if (!$user) {
+                return;
+            }
+
+            $service = app(NotificacionCitaService::class);
+            $unread  = $service->contarNoLeidasParaUsuario($user);
+
+            $factory = $view->getFactory();
+            $factory->startSection('content_top_nav_right');
+            echo view('layouts.partials.navbar-notifications', compact('unread'))->render();
+            $factory->stopSection();
         });
     }
 }

@@ -225,5 +225,13 @@ class AuthServiceProvider extends ServiceProvider
 
             return $has($user, 'AGENDA_REPORTES', 'VER');
         });
+
+        Gate::define('agenda.notificaciones.ver', function ($user) use ($isAdmin, $roleIs) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $roleIs($user, ['DOCTOR', 'PACIENTE', 'RECEPCIONISTA', 'ADMIN']);
+        });
     }
 }

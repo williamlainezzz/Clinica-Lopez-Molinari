@@ -30,6 +30,7 @@ use App\Models\Usuario;
 use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\RegistroPacienteController;
 use App\Http\Controllers\ReportesController;
+use App\Http\Controllers\NotificacionController;
 
 /* =========================
 |  Público / Dashboard
@@ -85,7 +86,11 @@ Route::middleware('auth')->prefix('personas')->group(function () {
 /* =========================
 |  Notificaciones / Reportes (vistas)
 ========================= */
-Route::view('/notificaciones', 'notificaciones.index')->name('notificaciones.index');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notificaciones', [NotificacionController::class, 'index'])
+        ->name('notificaciones.index')
+        ->middleware('can:agenda.notificaciones.ver');
+});
 
 Route::middleware(['auth'])
     ->prefix('reportes')
