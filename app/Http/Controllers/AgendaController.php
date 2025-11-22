@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificacionCitaService;
 
 class AgendaController extends Controller
 {
+    public function __construct(private NotificacionCitaService $notificacionCitaService)
+    {
+    }
+
     public function citas(Request $request)
     {
         return $this->render('Citas', $request);
@@ -1457,6 +1462,14 @@ class AgendaController extends Controller
             $id = DB::table('tbl_cita')->insertGetId($payload);
         } catch (\Throwable $e) {
             $id = 0;
+        }
+
+        if ($id > 0) {
+            try {
+                $this->notificacionCitaService->enviarNotificacionCreacionCita($id);
+            } catch (\Throwable $e) {
+                // No interrumpir el flujo de creación de la cita.
+            }
         }
 
         return $this->respondAgendaAction(

@@ -243,8 +243,15 @@ return [
             'active' => ['agenda/reportes*'],
             'can'    => 'agenda.reportes.ver', // ← NUEVO
         ],
-    ],
+        ],
 ],
+
+        [
+            'text'  => 'Notificaciones',
+            'route' => 'notificaciones.index',
+            'icon'  => 'far fa-bell',
+            'can'   => 'agenda.notificaciones.ver',
+        ],
 
 
         // PERSONAS & USUARIOS
