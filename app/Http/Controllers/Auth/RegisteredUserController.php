@@ -7,7 +7,6 @@ use App\Models\Persona;
 use App\Models\Usuario;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -185,11 +184,12 @@ class RegisteredUserController extends Controller
         }
 
         event(new Registered($usuario));
-        Auth::login($usuario);
 
-        session()->flash('username_generado', $usuario->USR_USUARIO);
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()
+            ->route('login')
+            ->with('modal', 'login')
+            ->with('username_generado', $usuario->USR_USUARIO)
+            ->with('registro_exitoso', true);
     }
 
     private function resolveDoctorPersonaId(Request $request): ?int
