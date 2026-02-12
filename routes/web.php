@@ -31,6 +31,7 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\RegistroPacienteController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\NotificacionController;
+use App\Http\Controllers\Usuario\UsuarioModuleController;
 
 /* =========================
 |  Público / Dashboard
@@ -133,8 +134,18 @@ Route::middleware('guest')->group(function () {
 });
 
 /* =========================
-|  Perfil (auth)
+|  Perfil / Usuario (auth)
 ========================= */
+Route::middleware(['auth', 'password.expiry'])->prefix('usuario')->group(function () {
+    Route::get('/perfil', [UsuarioModuleController::class, 'profile'])->name('usuario.perfil');
+    Route::get('/preguntas-seguridad', [UsuarioModuleController::class, 'securityQuestions'])->name('usuario.preguntas');
+});
+
+Route::middleware('auth')->prefix('usuario')->group(function () {
+    Route::get('/cambiar-password', [UsuarioModuleController::class, 'editPassword'])->name('usuario.password.edit');
+    Route::put('/cambiar-password', [UsuarioModuleController::class, 'updatePassword'])->name('usuario.password.update');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');

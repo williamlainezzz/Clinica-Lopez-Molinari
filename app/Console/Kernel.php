@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\EnviarRecordatoriosCitas;
 use App\Console\Commands\EnviarResumenCitasManana;
 use App\Console\Commands\GenerarAlertasRecepcionCitas;
+use App\Console\Commands\EnviarRecordatoriosCaducidadPassword;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -17,6 +18,7 @@ class Kernel extends ConsoleKernel
         EnviarRecordatoriosCitas::class,
         EnviarResumenCitasManana::class,
         GenerarAlertasRecepcionCitas::class,
+        EnviarRecordatoriosCaducidadPassword::class,
     ];
 
     /**
@@ -32,6 +34,9 @@ class Kernel extends ConsoleKernel
 
         // Alertas internas para recepción 30 minutos antes de cada cita
         $schedule->command('citas:generar-alertas-recepcion')->everyFiveMinutes();
+
+        // Recordatorio de caducidad de contraseña (no ejecuta si columnas aún no existen)
+        $schedule->command('seguridad:recordar-caducidad-password')->dailyAt('08:00');
     }
 
     /**
