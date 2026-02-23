@@ -21,6 +21,16 @@ class EnsurePasswordIsNotExpired
             return $next($request);
         }
 
+        if ($request->routeIs('usuario.perfil', 'usuario.password.edit', 'usuario.password.update', 'usuario.preguntas', 'logout')) {
+            return $next($request);
+        }
+
+        if ($this->passwordSecurityService->shouldForcePasswordChange($user)) {
+            return redirect()
+                ->route('usuario.password.edit')
+                ->with('warning', 'Por seguridad, debes cambiar tu contraseña temporal antes de continuar.');
+        }
+
         if ($this->passwordSecurityService->shouldEnforceExpiry($user)) {
             return redirect()
                 ->route('usuario.password.edit')

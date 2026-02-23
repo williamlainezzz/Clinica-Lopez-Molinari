@@ -150,6 +150,7 @@ class UsuarioController extends Controller
 
             if ($plainPassword !== null) {
                 $passwordSecurityService->markPasswordChanged((int) $id);
+                $passwordSecurityService->markTemporaryPassword((int) $id);
             }
         });
 

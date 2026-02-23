@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" x-data="{ showLogin:false, showRegister:false }">
+<html lang="es" x-data="{ showLogin:false, showRegister:false, showRegisterSuccess:false }">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -108,19 +108,40 @@
 
   
   <div
-  x-data="{ showLogin:false, showRegister:false }"
+  x-data="{ showLogin:false, showRegister:false, showRegisterSuccess:false }"
   x-on:open-login.window="showLogin = true"
   x-on:open-register.window="showRegister = true"
-  x-on:close-modals.window="showLogin = false; showRegister = false"
+  x-on:close-modals.window="showLogin = false; showRegister = false; showRegisterSuccess = false"
   x-init="
-    @if (session('modal') === 'login') showLogin = true; @endif
-    @if (session('modal') === 'register') showRegister = true; @endif
+    @if (session('modal') === 'login' || request()->query('modal') === 'login') showLogin = true; @endif
+    @if (session('modal') === 'register' || request()->query('modal') === 'register') showRegister = true; @endif
+    @if (session('modal') === 'welcome-register-success') showRegisterSuccess = true; @endif
     @if ($errors->login->any()) showLogin = true; @endif
     @if ($errors->register->any()) showRegister = true; @endif
   "
 >
 
 
+
+  <!-- ===== MODAL: BIENVENIDA POST REGISTRO ===== -->
+  <div x-cloak x-show="showRegisterSuccess" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/60" @click="showRegisterSuccess=false"></div>
+
+    <div x-transition class="modal-panel relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
+      <div class="flex items-center justify-between px-5 py-4 border-b">
+        <h3 class="text-base font-semibold text-slate-800">Bienvenida al sistema</h3>
+        <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegisterSuccess=false" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="p-5">
+        <p class="text-sm text-slate-700 mb-2">Tu cuenta fue creada correctamente.</p>
+        <p class="text-sm text-slate-700 mb-4">Usuario generado: <span class="font-semibold">{{ session('username_generado') }}</span></p>
+        <p class="text-sm text-slate-600">Por seguridad, debes iniciar sesión manualmente con tus credenciales desde el modal de inicio de sesión.</p>
+      </div>
+      <div class="px-5 py-4 border-t flex justify-end gap-2">
+        <button type="button" class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-white hover:bg-sky-700" @click="showRegisterSuccess=false">Aceptar</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== MODAL: LOGIN (mismo archivo) ===== -->
   <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">

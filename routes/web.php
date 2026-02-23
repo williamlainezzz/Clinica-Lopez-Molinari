@@ -37,7 +37,7 @@ use App\Http\Controllers\Usuario\UsuarioModuleController;
 |  Público / Dashboard
 ========================= */
 Route::get('/', fn() => view('welcome'))->name('welcome');
-Route::view('/dashboard', 'dashboard')->middleware('auth')->name('dashboard');
+Route::view('/dashboard', 'dashboard')->middleware(['auth', 'password.expiry'])->name('dashboard');
 
 Route::middleware('guest')->get('/registro/paciente', [RegistroPacienteController::class, 'create'])
     ->name('registro.paciente');
@@ -87,13 +87,13 @@ Route::middleware('auth')->prefix('personas')->group(function () {
 /* =========================
 |  Notificaciones / Reportes (vistas)
 ========================= */
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'password.expiry'])->group(function () {
     Route::get('/notificaciones', [NotificacionController::class, 'index'])
         ->name('notificaciones.index')
         ->middleware('can:agenda.notificaciones.ver');
 });
 
-Route::middleware(['auth'])
+Route::middleware(['auth', 'password.expiry'])
     ->prefix('reportes')
     ->group(function () {
         Route::get('/', [ReportesController::class, 'index'])->name('reportes.index');
@@ -146,7 +146,7 @@ Route::middleware('auth')->prefix('usuario')->group(function () {
     Route::put('/cambiar-password', [UsuarioModuleController::class, 'updatePassword'])->name('usuario.password.update');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'password.expiry'])->group(function () {
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',[ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile',[ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -155,7 +155,7 @@ Route::middleware('auth')->group(function () {
 /* =========================
 |  Seguridad (CONTROLADORES) bajo auth + permiso
 ========================= */
-Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(function () {
+Route::middleware(['auth', 'password.expiry'])->prefix('seguridad')->name('seguridad.')->group(function () {
 
     /* ---- Backups (objeto: SEGURIDAD_BACKUPS) ---- */
     Route::get('/backups',                [BackupController::class, 'index'])
@@ -209,7 +209,7 @@ Route::middleware(['auth'])->prefix('seguridad')->name('seguridad.')->group(func
 /* =========================
 |  Alias de compatibilidad
 ========================= */
-Route::middleware('auth')->get('/alias/usuarios', function () {
+Route::middleware(['auth', 'password.expiry'])->get('/alias/usuarios', function () {
     return redirect()->route('seguridad.usuarios.index');
 })->name('usuarios.index');
 
@@ -229,7 +229,7 @@ Route::get('/db-check', function () {
 |  AGENDA: Citas / Calendario / Reportes (por ROL)
 |  Protegido con gates: agenda.citas.ver, agenda.calendario.ver, agenda.reportes.ver
 ======================================================= */
-Route::middleware(['auth'])->prefix('agenda')->group(function () {
+Route::middleware(['auth', 'password.expiry'])->prefix('agenda')->group(function () {
 
     // Vistas principales
     Route::get('/citas', [AgendaController::class, 'citas'])
