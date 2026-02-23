@@ -32,6 +32,7 @@ class PasswordChangedNotification extends Notification
             ->line('**Usuario:** ' . $this->username)
             ->line('**Nueva contraseña:** ' . $this->newPassword)
             ->line('Por seguridad, esta contraseña vence en ' . $months . ' meses.')
+            ->line('Recomendación: no compartas tu contraseña con nadie y cámbiala inmediatamente si no reconoces este cambio.')
             ->line('Si no reconoces este cambio, comunícate de inmediato con soporte.')
             ->salutation('Clínica Dental López Molinari');
     }

@@ -29,7 +29,8 @@ class PasswordExpiryReminderNotification extends Notification
             ->line('Tu contraseña del sistema clínico está próxima a vencer.')
             ->line('**Usuario:** ' . $this->username)
             ->line('Te recomendamos cambiarla antes de los próximos ' . $days . ' días.')
-            ->line('Ingresa al módulo Usuario > Cambiar contraseña para actualizarla.')
+            ->line('Ingresa al sistema para renovarla antes del vencimiento.')
+            ->action('Ir al sistema', url('/usuario/perfil'))
             ->salutation('Clínica Dental López Molinari');
     }
 }
