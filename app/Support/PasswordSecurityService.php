@@ -16,6 +16,21 @@ class PasswordSecurityService
             && Schema::hasColumn('tbl_usuario', 'PWD_RECORDATORIO_ENVIADO_EN');
     }
 
+    public function temporaryPasswordColumnExists(): bool
+    {
+        return Schema::hasTable('tbl_usuario')
+            && Schema::hasColumn('tbl_usuario', 'FORZAR_CAMBIO_PWD');
+    }
+
+    public function shouldForcePasswordChange(Usuario $usuario): bool
+    {
+        if (!$this->temporaryPasswordColumnExists()) {
+            return false;
+        }
+
+        return (bool) ($usuario->FORZAR_CAMBIO_PWD ?? false);
+    }
+
     public function shouldEnforceExpiry(Usuario $usuario): bool
     {
         if (!$this->passwordMetadataColumnsExist()) {
@@ -57,15 +72,36 @@ class PasswordSecurityService
 
     public function markPasswordChanged(int $userId): void
     {
-        if (!$this->passwordMetadataColumnsExist()) {
+        if (!$this->passwordMetadataColumnsExist() && !$this->temporaryPasswordColumnExists()) {
+            return;
+        }
+
+        $data = [];
+
+        if ($this->passwordMetadataColumnsExist()) {
+            $data['PWD_ACTUALIZADA_EN'] = now();
+            $data['PWD_RECORDATORIO_ENVIADO_EN'] = null;
+        }
+
+        if ($this->temporaryPasswordColumnExists()) {
+            $data['FORZAR_CAMBIO_PWD'] = 0;
+        }
+
+        DB::table('tbl_usuario')
+            ->where('COD_USUARIO', $userId)
+            ->update($data);
+    }
+
+    public function markTemporaryPassword(int $userId): void
+    {
+        if (!$this->temporaryPasswordColumnExists()) {
             return;
         }
 
         DB::table('tbl_usuario')
             ->where('COD_USUARIO', $userId)
             ->update([
-                'PWD_ACTUALIZADA_EN' => now(),
-                'PWD_RECORDATORIO_ENVIADO_EN' => null,
+                'FORZAR_CAMBIO_PWD' => 1,
             ]);
     }
 

@@ -18,13 +18,16 @@ class UsuarioModuleController extends Controller
         $user = $request->user();
 
         $correo = $user?->getEmailForPasswordReset();
+        $preguntas = UsuarioPregunta::with('pregunta')
+            ->where('FK_COD_USUARIO', $user->COD_USUARIO)
+            ->get();
 
-        return view('usuario.perfil', compact('user', 'correo'));
+        return view('usuario.perfil', compact('user', 'correo', 'preguntas'));
     }
 
     public function editPassword()
     {
-        return view('usuario.cambiar-password');
+        return redirect()->route('usuario.perfil');
     }
 
     public function updatePassword(Request $request, PasswordSecurityService $passwordSecurityService): RedirectResponse
@@ -48,12 +51,6 @@ class UsuarioModuleController extends Controller
 
     public function securityQuestions(Request $request)
     {
-        $user = $request->user();
-
-        $preguntas = UsuarioPregunta::with('pregunta')
-            ->where('FK_COD_USUARIO', $user->COD_USUARIO)
-            ->get();
-
-        return view('usuario.preguntas', compact('preguntas'));
+        return redirect()->route('usuario.perfil');
     }
 }

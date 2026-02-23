@@ -186,10 +186,10 @@ class RegisteredUserController extends Controller
         event(new Registered($usuario));
 
         return redirect()
-            ->route('login')
-            ->with('modal', 'login')
+            ->route('welcome')
             ->with('username_generado', $usuario->USR_USUARIO)
-            ->with('registro_exitoso', true);
+            ->with('registro_exitoso', true)
+            ->with('modal', 'welcome-register-success');
     }
 
     private function resolveDoctorPersonaId(Request $request): ?int

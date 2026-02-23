@@ -294,29 +294,6 @@ return [
             ],
         ],
 
-
-        ['header' => ''],
-        [
-            'text' => 'Usuario',
-            'icon' => 'fas fa-user-cog',
-            'submenu' => [
-                [
-                    'text' => 'Mi perfil',
-                    'route' => 'usuario.perfil',
-                    'icon' => 'far fa-circle',
-                ],
-                [
-                    'text' => 'Cambiar contraseña',
-                    'route' => 'usuario.password.edit',
-                    'icon' => 'far fa-circle',
-                ],
-                [
-                    'text' => 'Mis preguntas de seguridad',
-                    'route' => 'usuario.preguntas',
-                    'icon' => 'far fa-circle',
-                ],
-            ],
-        ],
         // SEGURIDAD
         ['header' => ''],
         [
@@ -393,6 +370,14 @@ return [
                     'icon'  => 'far fa-circle',
                 ],
             ],
+        ],
+
+        ['header' => ''],
+        [
+            'text'  => 'Usuario',
+            'route' => 'usuario.perfil',
+            'icon'  => 'fas fa-user-cog',
+            'active' => ['usuario/*'],
         ],
 
     ],
