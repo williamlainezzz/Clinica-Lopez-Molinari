@@ -5,71 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bienvenido — Clínica Dental</title>
   <link rel="icon" href="{{ asset('favicon.ico') }}">
-  <!-- Tailwind por CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            clinic: {
-              primary: '#1B4D3E',
-              secondary: '#4A90E2',
-              accent: '#F5A623',
-              dark: '#111827',
-            }
-          },
-          borderRadius: {
-            'xl': '0.75rem',
-            '2xl': '1rem',
-            '3xl': '1.5rem',
-          }
-        }
-      }
-    }
-  </script>
+
+  <!-- Fonts & Styles via Vite -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
+
   <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>[x-cloak]{display:none!important}</style>
 
-  <!-- Estilos del formulario dentro de modales -->
-  <style type="text/tailwindcss">
-    @layer components {
-      .modal-panel input[type="text"],
-      .modal-panel input[type="email"],
-      .modal-panel input[type="password"],
-      .modal-panel input[type="number"],
-      .modal-panel textarea,
-      .modal-panel select {
-        @apply block w-full mt-1 rounded-xl
-               border border-slate-200 bg-white
-               placeholder-slate-400 text-slate-800
-               shadow-sm transition-all duration-200
-               focus:outline-none focus:ring-2 focus:ring-clinic-primary/20 focus:border-clinic-primary;
-      }
 
-      .modal-panel label {
-        @apply text-[13px] font-semibold text-slate-600 uppercase tracking-tight mb-1;
-      }
-
-      .btn-primary {
-        @apply inline-flex items-center justify-center rounded-xl bg-clinic-primary px-6 py-3 text-white shadow-md transition-all duration-200 hover:bg-[#153a2f] hover:shadow-lg active:scale-[0.98];
-      }
-
-      .btn-secondary {
-        @apply inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-slate-800 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:bg-slate-50 active:scale-[0.98];
-      }
-    }
-
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .animate-modal-in {
-      animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-  </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50 text-slate-800 relative">
 
