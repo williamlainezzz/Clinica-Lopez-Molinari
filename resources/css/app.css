@@ -29,15 +29,18 @@
         opacity: 0;
         transform: scale(0.95);
     }
+
     .modal-enter-active {
         opacity: 1;
         transform: scale(1);
         transition: opacity 300ms, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+
     .modal-exit {
         opacity: 1;
         transform: scale(1);
     }
+
     .modal-exit-active {
         opacity: 0;
         transform: scale(0.95);
@@ -57,11 +60,7 @@
     .modal-panel input[type="number"],
     .modal-panel textarea,
     .modal-panel select {
-        @apply block w-full mt-1 rounded-xl
-               border border-slate-200 bg-white
-               placeholder-slate-400 text-slate-800
-               shadow-sm transition-all duration-200
-               focus:outline-none focus:ring-2 focus:ring-clinic-primary/20 focus:border-clinic-primary;
+        @apply block w-full mt-1 rounded-xl border border-slate-200 bg-white placeholder-slate-400 text-slate-800 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-clinic-primary/20 focus:border-clinic-primary;
     }
 
     .modal-panel label {
@@ -77,8 +76,15 @@
     }
 
     @keyframes modalIn {
-        from { opacity: 0; transform: scale(0.95) translateY(-10px); }
-        to { opacity: 1; transform: scale(1) translateY(0); }
+        from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
     }
 
     .animate-modal-in {
@@ -87,8 +93,15 @@
 }
 
 @keyframes slideDown {
-    from { transform: translateY(-20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .animate-slide-down {
@@ -103,13 +116,16 @@
 .small-box.bg-info {
     background-color: var(--clinic-secondary) !important;
 }
+
 .small-box.bg-success {
     background-color: var(--clinic-primary) !important;
 }
+
 .small-box.bg-warning {
     background-color: var(--clinic-accent) !important;
     color: #fff !important;
 }
+
 .small-box.bg-danger {
     background-color: #ef4444 !important;
 }
@@ -124,5 +140,5 @@
 }
 
 .card-header {
-    border-bottom: 1px solid rgba(0,0,0,.05) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, .05) !important;
 }
