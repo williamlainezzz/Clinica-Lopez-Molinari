@@ -7,30 +7,67 @@
   <link rel="icon" href="{{ asset('favicon.ico') }}">
   <!-- Tailwind por CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js para abrir/cerrar modales (sin archivos nuevos) -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            clinic: {
+              primary: '#1B4D3E',
+              secondary: '#4A90E2',
+              accent: '#F5A623',
+              dark: '#111827',
+            }
+          },
+          borderRadius: {
+            'xl': '0.75rem',
+            '2xl': '1rem',
+            '3xl': '1.5rem',
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Alpine.js -->
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>[x-cloak]{display:none!important}</style>
 
   <!-- Estilos del formulario dentro de modales -->
   <style type="text/tailwindcss">
     @layer components {
-      /* Hace que inputs/textarea/select dentro de .modal-panel se vean definidos */
       .modal-panel input[type="text"],
       .modal-panel input[type="email"],
       .modal-panel input[type="password"],
       .modal-panel input[type="number"],
       .modal-panel textarea,
       .modal-panel select {
-        @apply block w-full mt-1 rounded-md
-               border border-slate-300 bg-white
+        @apply block w-full mt-1 rounded-xl
+               border border-slate-200 bg-white
                placeholder-slate-400 text-slate-800
-               shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500;
+               shadow-sm transition-all duration-200
+               focus:outline-none focus:ring-2 focus:ring-clinic-primary/20 focus:border-clinic-primary;
       }
 
       .modal-panel label {
-        @apply text-[13px] font-medium text-slate-700;
+        @apply text-[13px] font-semibold text-slate-600 uppercase tracking-tight mb-1;
       }
+
+      .btn-primary {
+        @apply inline-flex items-center justify-center rounded-xl bg-clinic-primary px-6 py-3 text-white shadow-md transition-all duration-200 hover:bg-[#153a2f] hover:shadow-lg active:scale-[0.98];
+      }
+
+      .btn-secondary {
+        @apply inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-slate-800 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:bg-slate-50 active:scale-[0.98];
+      }
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .animate-modal-in {
+      animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
   </style>
 </head>
@@ -69,14 +106,14 @@
           <button
             type="button"
             data-open="login"
-            class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-3 text-white shadow-sm ring-1 ring-sky-600/10 hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">
+            class="btn-primary">
             Iniciar sesión
           </button>
 
           <button
             type="button"
             data-open="register"
-            class="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400">
+            class="btn-secondary">
             Registrarse
           </button>
         </div>
@@ -116,35 +153,73 @@
   >
 
     <!-- ===== MODAL: BIENVENIDA POST REGISTRO ===== -->
-    <div x-cloak x-show="showRegisterSuccess" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showRegisterSuccess=false"></div>
+    <div x-cloak x-show="showRegisterSuccess" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRegisterSuccess=false"></div>
 
-      <div x-transition class="modal-panel relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Bienvenido al sistema</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegisterSuccess=false" aria-label="Cerrar">✕</button>
+      <div x-show="showRegisterSuccess"
+           x-transition:enter="transition ease-out duration-300 select-none"
+           x-transition:enter-start="opacity-0 scale-95 -translate-y-4"
+           x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+           x-transition:leave="transition ease-in duration-200"
+           x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+           x-transition:leave-end="opacity-0 scale-95 -translate-y-4"
+           class="modal-panel relative w-full max-w-lg rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h3 class="text-lg font-bold text-slate-800">¡Bienvenido al sistema!</h3>
+          <button class="p-2 rounded-full hover:bg-slate-200 transition-colors" @click="showRegisterSuccess=false" aria-label="Cerrar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
-        <div class="p-5">
-          <p class="text-sm text-slate-700 mb-2">Tu cuenta fue creada correctamente.</p>
-          <p class="text-sm text-slate-700 mb-4">Usuario generado: <span class="font-semibold">{{ session('username_generado') }}</span></p>
-          <p class="text-sm text-slate-600">Por seguridad, ahora inicia sesión con tus credenciales.</p>
+        <div class="p-8">
+          <div class="mb-6 flex justify-center">
+            <div class="rounded-full bg-green-100 p-3">
+              <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+          </div>
+          <p class="text-center text-slate-700 mb-2">Tu cuenta fue creada correctamente.</p>
+          <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
+            <p class="text-sm text-center text-slate-500 uppercase font-bold tracking-wider mb-1">Usuario generado</p>
+            <p class="text-2xl text-center font-black text-clinic-primary tracking-tight">{{ session('username_generado') }}</p>
+          </div>
+          <p class="text-center text-sm text-slate-500">Por seguridad, ahora inicia sesión con tus credenciales.</p>
         </div>
-        <div class="px-5 py-4 border-t flex justify-end gap-2">
-          <button type="button" class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-white hover:bg-sky-700" @click="showRegisterSuccess=false">Aceptar</button>
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-center">
+          <button type="button" class="btn-primary w-full" @click="showRegisterSuccess=false">Comenzar ahora</button>
         </div>
       </div>
     </div>
 
-    <!-- ===== MODAL: LOGIN (mismo archivo) ===== -->
-    <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showLogin=false"></div>
+    <!-- ===== MODAL: LOGIN ===== -->
+    <div x-cloak x-show="showLogin" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showLogin=false"></div>
 
-      <!-- Añadido: modal-panel -->
-      <div x-transition
-           class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
+      <div x-show="showLogin"
+           x-transition:enter="transition ease-out duration-300"
+           x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+           x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+           x-transition:leave="transition ease-in duration-200"
+           x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+           x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+           class="modal-panel relative w-full max-w-md rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h3 class="text-lg font-bold text-slate-800">Iniciar sesión</h3>
+          <button class="p-2 rounded-full hover:bg-slate-200 transition-colors" @click="showLogin=false" aria-label="Cerrar">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
         <div class="p-5 max-h-[80vh] overflow-y-auto">
 
@@ -227,13 +302,29 @@
     </div>
 
     <!-- ===== MODAL: REGISTRO ===== -->
-    <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
+    <div x-cloak x-show="showRegister" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showRegister=false"></div>
 
-      <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
+      <div x-show="showRegister"
+           x-transition:enter="transition ease-out duration-300"
+           x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+           x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+           x-transition:leave="transition ease-in duration-200"
+           x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+           x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+           class="modal-panel relative w-full max-w-5xl rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <h3 class="text-lg font-bold text-slate-800">Crear cuenta nueva</h3>
+          <button class="p-2 rounded-full hover:bg-slate-200 transition-colors" @click="showRegister=false" aria-label="Cerrar">
+             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
 
         <div class="p-5 max-h-[85vh] overflow-y-auto">

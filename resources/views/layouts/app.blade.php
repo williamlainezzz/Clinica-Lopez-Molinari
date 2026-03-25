@@ -14,18 +14,9 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        {{-- Quitar fondo/figura azul heredada de otros estilos --}}
-        <style>
-            body {
-                background-image: none !important;
-                background-color: #f4f6f9 !important; /* estilo tipo AdminLTE */
-                background-repeat: no-repeat;
-                background-size: auto;
-            }
-        </style>
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+    <body class="font-sans antialiased text-gray-900 bg-[#F9FAFB]">
+        <div class="min-h-screen bg-gray-50/50">
             @include('layouts.navigation')
 
             <!-- Page Heading -->

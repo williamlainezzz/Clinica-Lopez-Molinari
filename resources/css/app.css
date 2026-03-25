@@ -1,3 +1,93 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --clinic-primary: #1B4D3E;
+        --clinic-secondary: #4A90E2;
+        --clinic-accent: #F5A623;
+        --clinic-bg: #F9FAFB;
+        --clinic-text: #111827;
+        --clinic-surface: #FFFFFF;
+        --clinic-radius: 0.75rem;
+    }
+
+    body {
+        @apply antialiased text-gray-900 bg-gray-50;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+}
+
+@layer components {
+    .btn-clinic-primary {
+        @apply inline-flex items-center px-4 py-2 bg-[#1B4D3E] border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-[#153a2f] focus:bg-[#153a2f] active:bg-[#0e271f] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150;
+    }
+
+    /* Modal Transitions */
+    .modal-enter {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    .modal-enter-active {
+        opacity: 1;
+        transform: scale(1);
+        transition: opacity 300ms, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-exit {
+        opacity: 1;
+        transform: scale(1);
+    }
+    .modal-exit-active {
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 200ms, transform 200ms ease-in;
+    }
+
+    /* Smooth Backdrop */
+    .modal-backdrop {
+        @apply fixed inset-0 bg-gray-900/60 transition-opacity duration-300;
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-down {
+    animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.card-premium {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-md;
+}
+
+/* AdminLTE Overrides for Clinic Branding */
+.small-box.bg-info {
+    background-color: var(--clinic-secondary) !important;
+}
+.small-box.bg-success {
+    background-color: var(--clinic-primary) !important;
+}
+.small-box.bg-warning {
+    background-color: var(--clinic-accent) !important;
+    color: #fff !important;
+}
+.small-box.bg-danger {
+    background-color: #ef4444 !important;
+}
+
+.main-sidebar {
+    background-color: var(--clinic-primary) !important;
+}
+
+.nav-sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,.05) !important;
+}
