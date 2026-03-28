@@ -233,5 +233,9 @@ class AuthServiceProvider extends ServiceProvider
 
             return $roleIs($user, ['DOCTOR', 'PACIENTE', 'RECEPCIONISTA', 'ADMIN']);
         });
+
+        Gate::define('centro-ayuda.manual-tecnico.ver', function ($user) use ($isAdmin) {
+            return $isAdmin($user);
+        });
     }
 }

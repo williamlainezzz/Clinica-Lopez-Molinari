@@ -32,6 +32,7 @@ use App\Http\Controllers\RegistroPacienteController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\Usuario\UsuarioModuleController;
+use Illuminate\Support\Facades\Gate;
 
 /* =========================
 |  Público / Dashboard
@@ -91,6 +92,35 @@ Route::middleware(['auth', 'password.expiry'])->group(function () {
     Route::get('/notificaciones', [NotificacionController::class, 'index'])
         ->name('notificaciones.index')
         ->middleware('can:agenda.notificaciones.ver');
+
+    Route::get('/centro-ayuda/manual/{tipo}', function (string $tipo) {
+        $manuales = [
+            'usuario' => [
+                'path' => public_path('manuales/manual-usuario.pdf'),
+                'name' => 'manual-usuario.pdf',
+            ],
+            'tecnico' => [
+                'path' => public_path('manuales/manual-tecnico.pdf'),
+                'name' => 'manual-tecnico.pdf',
+                'requires_admin' => true,
+            ],
+        ];
+
+        abort_unless(array_key_exists($tipo, $manuales), 404);
+
+        $manual = $manuales[$tipo];
+
+        if (($manual['requires_admin'] ?? false) && Gate::denies('centro-ayuda.manual-tecnico.ver')) {
+            abort(403);
+        }
+
+        abort_unless(file_exists($manual['path']), 404, 'El manual solicitado no está disponible.');
+
+        return response()->file($manual['path'], [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$manual['name'].'"',
+        ]);
+    })->name('centro-ayuda.manual');
 });
 
 Route::middleware(['auth', 'password.expiry'])
