@@ -91,6 +91,19 @@ Route::middleware(['auth', 'password.expiry'])->group(function () {
     Route::get('/notificaciones', [NotificacionController::class, 'index'])
         ->name('notificaciones.index')
         ->middleware('can:agenda.notificaciones.ver');
+
+    Route::post('/heartbeat', function () {
+        $user = auth()->user();
+
+        abort_unless($user, 401);
+
+        \App\Http\Middleware\EnsureSingleSession::storeSessionMeta(
+            $user->getAuthIdentifier(),
+            request()->session()->getId()
+        );
+
+        return response()->json(['ok' => true]);
+    })->name('heartbeat');
 });
 
 Route::middleware(['auth', 'password.expiry'])

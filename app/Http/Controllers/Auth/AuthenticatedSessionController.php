@@ -86,7 +86,7 @@ class AuthenticatedSessionController extends Controller
 
         if ($user) {
             $cacheKey = EnsureSingleSession::cacheKey($user->getAuthIdentifier());
-            $activeSessionId = Cache::get($cacheKey);
+            $activeSessionId = EnsureSingleSession::normalizeSessionMeta(Cache::get($cacheKey))['session_id'];
 
             if ($activeSessionId && hash_equals((string) $activeSessionId, (string) $currentSessionId)) {
                 Cache::forget($cacheKey);

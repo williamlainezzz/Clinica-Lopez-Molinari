@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Seguridad;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureSingleSession;
 use App\Models\Usuario;
 use App\Notifications\PasswordChangedNotification;
 use App\Support\PasswordSecurityService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -59,6 +62,39 @@ class UsuarioController extends Controller
             ->orderBy('p.PRIMER_NOMBRE')
             ->paginate(10)
             ->appends($request->query());
+
+        $usuarios->getCollection()->transform(function ($usuario) {
+            $meta = EnsureSingleSession::normalizeSessionMeta(
+                Cache::get(EnsureSingleSession::cacheKey($usuario->COD_USUARIO))
+            );
+
+            $lastSeenAt = !empty($meta['last_seen_at']) ? Carbon::parse($meta['last_seen_at']) : null;
+
+            $usuario->conexion_estado = 'Desconectado';
+            $usuario->conexion_clase = 'secondary';
+            $usuario->conexion_icono = 'fa-power-off';
+            $usuario->conexion_titulo = 'Sin actividad reciente';
+
+            if ($lastSeenAt) {
+                $minutes = $lastSeenAt->diffInRealMinutes(now());
+
+                if ($minutes < EnsureSingleSession::ONLINE_WINDOW_MINUTES) {
+                    $usuario->conexion_estado = 'En linea';
+                    $usuario->conexion_clase = 'success';
+                    $usuario->conexion_icono = 'fa-circle';
+                    $usuario->conexion_titulo = 'Activo hace unos segundos';
+                } elseif ($minutes < EnsureSingleSession::AWAY_WINDOW_MINUTES) {
+                    $usuario->conexion_estado = 'Ausente';
+                    $usuario->conexion_clase = 'warning';
+                    $usuario->conexion_icono = 'fa-clock';
+                    $usuario->conexion_titulo = 'Ultima actividad '.$lastSeenAt->diffForHumans();
+                } else {
+                    $usuario->conexion_titulo = 'Ultima actividad '.$lastSeenAt->diffForHumans();
+                }
+            }
+
+            return $usuario;
+        });
 
         $roles = DB::table('tbl_rol')->select('COD_ROL', 'NOM_ROL')->orderBy('NOM_ROL')->get();
 

@@ -100,11 +100,7 @@ class TwoFactorEmailController extends Controller
         // Seguridad: regenerar la sesión
         $request->session()->regenerate();
 
-        Cache::put(
-            EnsureSingleSession::cacheKey($userId),
-            $request->session()->getId(),
-            now()->addMinutes(config('session.lifetime'))
-        );
+        EnsureSingleSession::storeSessionMeta($userId, $request->session()->getId());
 
         // Redirigir al intended o dashboard
         return redirect()->intended(route('dashboard', absolute: false))

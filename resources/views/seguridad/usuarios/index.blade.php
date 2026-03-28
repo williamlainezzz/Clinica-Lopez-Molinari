@@ -102,6 +102,7 @@
                             <th>Correo</th>
                             <th>Teléfono</th>
                             <th>Rol</th>
+                            <th class="text-center">Conexion</th>
                             <th class="text-center">Estado</th>
                             <th class="text-right" style="width: 120px;">Acciones</th>
                         </tr>
@@ -126,6 +127,11 @@
                                     @else
                                         <span class="text-muted">—</span>
                                     @endif
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-{{ $u->conexion_clase }}" title="{{ $u->conexion_titulo }}">
+                                        <i class="fas {{ $u->conexion_icono }} mr-1"></i>{{ $u->conexion_estado }}
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     @if((int)$u->ESTADO_USUARIO === 1)
@@ -158,7 +164,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">Sin resultados</td>
+                                <td colspan="9" class="text-center text-muted py-4">Sin resultados</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -171,4 +177,34 @@
         </div>
     </div>
 
+@stop
+
+@section('js')
+<script>
+    (function () {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        if (!token) {
+            return;
+        }
+
+        const sendHeartbeat = () => {
+            fetch('{{ route('heartbeat') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ screen: 'usuarios' })
+            }).catch(() => {});
+        };
+
+        sendHeartbeat();
+        window.setInterval(sendHeartbeat, 30000);
+        window.setInterval(() => window.location.reload(), 60000);
+    })();
+</script>
 @stop
