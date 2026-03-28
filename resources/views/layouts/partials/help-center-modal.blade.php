@@ -18,7 +18,7 @@
 
                 <div class="list-group list-group-flush">
                     <a
-                        href="{{ route('centro-ayuda.manual', 'usuario') }}"
+                        href="https://docs.google.com/document/d/1Ee8XcnWBRsZRncl9hAf7niF3LvdMzggA/edit?usp=sharing&ouid=117234764860920015272&rtpof=true&sd=true"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
@@ -32,7 +32,7 @@
 
                     @can('centro-ayuda.manual-tecnico.ver')
                         <a
-                            href="{{ route('centro-ayuda.manual', 'tecnico') }}"
+                            href="https://docs.google.com/document/d/1xHSB0HH6QedYl0G37JETnUxzYfcHxpBW/edit?usp=sharing&ouid=117234764860920015272&rtpof=true&sd=true"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="list-group-item list-group-item-action d-flex align-items-center justify-content-between"
