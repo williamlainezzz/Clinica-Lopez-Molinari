@@ -18,6 +18,7 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use App\Http\Middleware\EnsureSingleSession;
 use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 
@@ -51,6 +52,7 @@ class Kernel extends HttpKernel
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             AuthenticateSession::class, // si no usas sesiones persistentes, puedes quitarlo
+            EnsureSingleSession::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
             SubstituteBindings::class,
@@ -70,6 +72,7 @@ class Kernel extends HttpKernel
         'bindings' => SubstituteBindings::class,
         'throttle' => ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'single.session' => EnsureSingleSession::class,
 
         // Alias propio para permisos
         'permiso'  => CheckObjetoPermission::class,
@@ -83,9 +86,9 @@ class Kernel extends HttpKernel
         'bindings' => SubstituteBindings::class,
         'throttle' => ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'single.session' => EnsureSingleSession::class,
 
         // Alias propio para permisos
         'permiso'  => CheckObjetoPermission::class,
     ];
 }
-

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureSingleSession;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+        $currentSessionId = $request->session()->getId();
+
+        if ($user) {
+            $cacheKey = EnsureSingleSession::cacheKey($user->getAuthIdentifier());
+            $activeSessionId = Cache::get($cacheKey);
+
+            if ($activeSessionId && hash_equals((string) $activeSessionId, (string) $currentSessionId)) {
+                Cache::forget($cacheKey);
+            }
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

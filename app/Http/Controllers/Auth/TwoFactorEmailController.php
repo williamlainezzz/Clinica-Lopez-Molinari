@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureSingleSession;
 use App\Models\Usuario;
 use App\Notifications\LoginEmailOtp;
 use Illuminate\Http\Request;
@@ -99,6 +100,12 @@ class TwoFactorEmailController extends Controller
         // Seguridad: regenerar la sesión
         $request->session()->regenerate();
 
+        Cache::put(
+            EnsureSingleSession::cacheKey($userId),
+            $request->session()->getId(),
+            now()->addMinutes(config('session.lifetime'))
+        );
+
         // Redirigir al intended o dashboard
         return redirect()->intended(route('dashboard', absolute: false))
             ->with('status', 'Inicio de sesión verificado.');
@@ -140,4 +147,3 @@ class TwoFactorEmailController extends Controller
         return back()->with('status', 'Te enviamos un nuevo código a tu correo.');
     }
 }
-
