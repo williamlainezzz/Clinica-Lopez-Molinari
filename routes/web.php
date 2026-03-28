@@ -177,6 +177,8 @@ Route::middleware(['auth', 'password.expiry'])->prefix('seguridad')->name('segur
         ->middleware('permiso:CREAR')->name('backups.store');
     Route::get('/backups/{id}/descargar', [BackupController::class, 'download'])
         ->middleware('permiso:VER')->name('backups.download');
+    Route::post('/backups/{id}/restaurar', [BackupController::class, 'restore'])
+        ->middleware('permiso:EDITAR')->name('backups.restore');
 
     /* ---- Bitácora (objeto: SEGURIDAD_BITACORA) ---- */
     Route::get('/bitacora', [BitacoraController::class, 'index'])
