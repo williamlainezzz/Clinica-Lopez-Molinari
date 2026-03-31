@@ -394,7 +394,11 @@ class ReportesController extends Controller
         return $this->estadosCita()
             ->filter(function ($row) {
                 $nombre = strtoupper($row->NOM_ESTADO ?? '');
-                return str_contains($nombre, 'AUSEN') || str_contains($nombre, 'NO AT') || str_contains($nombre, 'NO ASIST');
+                return str_contains($nombre, 'AUSEN')
+                    || str_contains($nombre, 'NO AT')
+                    || str_contains($nombre, 'NO ASIST')
+                    || str_contains($nombre, 'NO_SHOW')
+                    || str_contains($nombre, 'NO SHOW');
             })
             ->pluck('COD_ESTADO')
             ->map(fn($id) => (int) $id)
@@ -438,6 +442,9 @@ class ReportesController extends Controller
         return match (true) {
             str_contains($estado, 'PEND')      => 'bg-warning',
             str_contains($estado, 'CONFIRM')   => 'bg-info',
+            str_contains($estado, 'EN_CURSO')  => 'bg-primary',
+            str_contains($estado, 'COMPLET')   => 'bg-success',
+            str_contains($estado, 'NO_SHOW') || str_contains($estado, 'NO SHOW') => 'bg-dark',
             str_contains($estado, 'CANCEL')    => 'bg-danger',
             str_contains($estado, 'REPROG')    => 'bg-secondary',
             default                            => 'bg-primary',

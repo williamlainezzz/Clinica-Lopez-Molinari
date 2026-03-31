@@ -30,13 +30,14 @@ class NotificacionController extends Controller
             ]);
         }
 
+        $tieneLeida = Schema::hasColumn('tbl_notificacion', 'LEIDA');
+        $tieneTipo = Schema::hasColumn('tbl_notificacion', 'TIPO_NOTIFICACION');
+
         $query = $service->baseNotificacionQuery()
             ->select([
                 'n.COD_NOTIFICACION',
                 'n.FEC_ENVIO',
                 'n.MSG_NOTIFICACION',
-                'n.TIPO_NOTIFICACION',
-                'n.LEIDA',
                 'c.COD_CITA',
                 'c.FEC_CITA',
                 'c.HOR_CITA',
@@ -50,14 +51,26 @@ class NotificacionController extends Controller
         $service->aplicarFiltroPorRol($query, $user);
         $this->aplicarFiltros($query, $request);
 
-        $idsPorMarcar = (clone $query)
-            ->where('n.LEIDA', 0)
-            ->pluck('n.COD_NOTIFICACION');
+        if ($tieneTipo) {
+            $query->addSelect('n.TIPO_NOTIFICACION');
+        } else {
+            $query->addSelect(DB::raw("'MANUAL' as TIPO_NOTIFICACION"));
+        }
 
-        if ($idsPorMarcar->isNotEmpty()) {
-            DB::table('tbl_notificacion')
-                ->whereIn('COD_NOTIFICACION', $idsPorMarcar)
-                ->update(['LEIDA' => 1]);
+        if ($tieneLeida) {
+            $query->addSelect('n.LEIDA');
+
+            $idsPorMarcar = (clone $query)
+                ->where('n.LEIDA', 0)
+                ->pluck('n.COD_NOTIFICACION');
+
+            if ($idsPorMarcar->isNotEmpty()) {
+                DB::table('tbl_notificacion')
+                    ->whereIn('COD_NOTIFICACION', $idsPorMarcar)
+                    ->update(['LEIDA' => 1]);
+            }
+        } else {
+            $query->addSelect(DB::raw('1 as LEIDA'));
         }
 
         $notificaciones = $query->paginate(10)->appends($request->query());

@@ -31,6 +31,13 @@
         $eventCollection = collect($calendarEvents ?? []);
         $eventListCollection = collect($eventList ?? []);
         $nextEvent = $eventListCollection
+            ->filter(function ($event) {
+                try {
+                    return \Carbon\Carbon::parse(trim(($event['fecha'] ?? '') . ' ' . ($event['hora'] ?? '')))->gte(now());
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            })
             ->sortBy(fn($event) => trim(($event['fecha'] ?? '') . ' ' . ($event['hora'] ?? '')))
             ->first();
     @endphp

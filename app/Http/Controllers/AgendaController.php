@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use App\Services\NotificacionCitaService;
 
 class AgendaController extends Controller
@@ -104,7 +105,7 @@ class AgendaController extends Controller
                     $activeDoctor = $doctorPanels[0] ?? null;
 
                     // Paciente destacado = el de la cita más cercana
-                    $primerCita        = $citas->sortBy(['FEC_CITA', 'HOR_CITA'])->first();
+                    $primerCita        = $this->selectRelevantCita($citas);
                     $pacientePersonaId = (int) ($primerCita->paciente_persona_id ?? 0);
 
                     if ($pacientePersonaId > 0) {
@@ -523,20 +524,14 @@ class AgendaController extends Controller
             $contacto = "Usuario: {$usuario}";
 
             // helper para normalizar el estado
-            $normalizeEstado = function ($nombreEstado = null) {
-                if (!$nombreEstado) {
-                    return 'Pendiente';
-                }
-                $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
-                return str_replace('_', ' ', $nombreEstado);
-            };
+            $normalizeEstado = fn ($nombreEstado = null) => $this->normalizeEstadoLabel($nombreEstado);
 
             // Resumen por paciente (para la tabla principal)
             $pacientes = $rows
                 ->groupBy('paciente_persona_id')
                 ->map(function ($pRows) use ($normalizeEstado) {
                     $pRows = $pRows->sortBy(['FEC_CITA', 'HOR_CITA']);
-                    $first = $pRows->first();
+                    $first = $this->selectRelevantCita($pRows) ?? $pRows->first();
 
                     return [
                         'persona_id' => $first->paciente_persona_id,
@@ -1273,20 +1268,25 @@ class AgendaController extends Controller
                     'nombre'            => $first->doctor_nombre ?? 'Doctor sin nombre',
                     'especialidad'      => 'Odontología',
                     'contacto'          => '',
-                    'pacientes'         => $rows->map(function ($row) {
-                        $estadoNombre = strtoupper($row->estado_nombre ?? '');
+                    'pacientes'         => $rows
+                        ->groupBy('paciente_persona_id')
+                        ->map(function ($patientRows) {
+                            $row = $this->selectRelevantCita($patientRows) ?? $patientRows->sortBy(['FEC_CITA', 'HOR_CITA'])->first();
+                            $estadoNombre = strtoupper($row->estado_nombre ?? '');
 
-                        return [
-                            'persona_id' => $row->paciente_persona_id,
-                            'cita_id' => $row->COD_CITA,
-                            'nombre'  => $row->paciente_nombre,
-                            'motivo'  => $row->MOT_CITA,
-                            'fecha'   => $row->FEC_CITA,
-                            'hora'    => substr($row->HOR_CITA, 0, 5),
-                            'estado'  => $estadoNombre,
-                            'nota'    => $row->OBSERVACIONES,
-                        ];
-                    })->all(),
+                            return [
+                                'persona_id' => $row->paciente_persona_id,
+                                'cita_id' => $row->COD_CITA,
+                                'nombre'  => $row->paciente_nombre,
+                                'motivo'  => $row->MOT_CITA,
+                                'fecha'   => $row->FEC_CITA,
+                                'hora'    => substr($row->HOR_CITA, 0, 5),
+                                'estado'  => $estadoNombre,
+                                'nota'    => $row->OBSERVACIONES,
+                            ];
+                        })
+                        ->values()
+                        ->all(),
                     'agenda'            => $rows->map(function ($row) {
                         $estadoNombre = $row->estado_nombre ?? 'Pendiente';
                         $estadoLabel = ucfirst(strtolower(str_replace('_', ' ', $estadoNombre)));
@@ -1337,40 +1337,31 @@ class AgendaController extends Controller
             ];
         }
 
-        $proxima = $misCitas
-            ->sortBy(['FEC_CITA', 'HOR_CITA'])
-            ->first();
-
-        $normalizeEstado = function ($nombreEstado = null) {
-            if (!$nombreEstado) {
-                return 'Pendiente';
-            }
-            $nombreEstado = ucfirst(strtolower(trim($nombreEstado)));
-            return str_replace('_', ' ', $nombreEstado);
-        };
+        $referencia = $this->selectRelevantCita($misCitas) ?? $misCitas->first();
+        $proxima = $this->selectNextFutureCita($misCitas);
 
         $profile = [
             'codigo'       => 'PAC-' . str_pad($pacientePersonaId, 4, '0', STR_PAD_LEFT),
-            'nombre'       => $proxima->paciente_nombre,
-            'doctor'       => $proxima->doctor_nombre,
+            'nombre'       => $referencia->paciente_nombre,
+            'doctor'       => $referencia->doctor_nombre,
             'especialidad' => 'Odontología',
             'estado'       => 'Activo',
             'correo'       => null,
             'telefono'     => null,
             'proxima'      => [
-                'fecha'  => $proxima->FEC_CITA,
-                'hora'   => $proxima->HOR_CITA,
-                'motivo' => $proxima->MOT_CITA,
-                'estado' => $normalizeEstado($proxima->estado_nombre),
+                'fecha'  => $proxima->FEC_CITA ?? null,
+                'hora'   => $proxima->HOR_CITA ?? null,
+                'motivo' => $proxima->MOT_CITA ?? null,
+                'estado' => $proxima ? $this->normalizeEstadoLabel($proxima->estado_nombre) : 'Sin citas programadas',
             ],
         ];
 
         $historial = $misCitas
-            ->sortByDesc('FEC_CITA')
-            ->map(function ($cita) use ($normalizeEstado) {
+            ->sortByDesc(fn ($cita) => sprintf('%s %s', $cita->FEC_CITA, $cita->HOR_CITA))
+            ->map(function ($cita) {
                 return [
                     'fecha'   => $cita->FEC_CITA,
-                    'estado'  => $normalizeEstado($cita->estado_nombre),
+                    'estado'  => $this->normalizeEstadoLabel($cita->estado_nombre),
                     'motivo'  => $cita->MOT_CITA,
                     'doctor'  => $cita->doctor_nombre,
                     'detalle' => $cita->OBSERVACIONES,
@@ -1385,6 +1376,91 @@ class AgendaController extends Controller
         ];
     }
 
+    private function normalizeEstadoLabel($nombreEstado = null): string
+    {
+        if (!$nombreEstado) {
+            return 'Pendiente';
+        }
+
+        $nombreEstado = ucfirst(strtolower(trim((string) $nombreEstado)));
+
+        return str_replace('_', ' ', $nombreEstado);
+    }
+
+    private function selectRelevantCita($citas)
+    {
+        $citasCollection = collect($citas);
+        $proxima = $this->selectNextFutureCita($citasCollection);
+
+        if ($proxima) {
+            return $proxima;
+        }
+
+        return $citasCollection
+            ->sortByDesc(fn ($cita) => sprintf('%s %s', $cita->FEC_CITA ?? '', $cita->HOR_CITA ?? ''))
+            ->first();
+    }
+
+    private function selectNextFutureCita($citas)
+    {
+        return collect($citas)
+            ->filter(function ($cita) {
+                $fechaHora = $this->appointmentDateTime($cita);
+
+                if (!$fechaHora || $fechaHora->lt(now())) {
+                    return false;
+                }
+
+                return !$this->isEstadoFinal($cita->estado_nombre ?? null);
+            })
+            ->sortBy(fn ($cita) => sprintf('%s %s', $cita->FEC_CITA ?? '', $cita->HOR_CITA ?? ''))
+            ->first();
+    }
+
+    private function appointmentDateTime($cita): ?Carbon
+    {
+        $fecha = data_get($cita, 'FEC_CITA');
+        $hora = data_get($cita, 'HOR_CITA');
+
+        if (!$fecha || !$hora) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse(sprintf('%s %s', $fecha, $hora));
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function appointmentEndDateTime($cita): ?Carbon
+    {
+        $inicio = $this->appointmentDateTime($cita);
+
+        if (!$inicio) {
+            return null;
+        }
+
+        $horaFin = data_get($cita, 'HOR_FIN');
+
+        if (!$horaFin) {
+            return $inicio->copy()->addMinutes(30);
+        }
+
+        try {
+            return Carbon::parse(sprintf('%s %s', data_get($cita, 'FEC_CITA'), $horaFin));
+        } catch (\Throwable $e) {
+            return $inicio->copy()->addMinutes(30);
+        }
+    }
+
+    private function isEstadoFinal(?string $estadoNombre): bool
+    {
+        $estado = strtoupper(trim((string) $estadoNombre));
+
+        return in_array($estado, ['CANCELADA', 'COMPLETADA', 'NO_SHOW'], true);
+    }
+
     /* =========================================================
      *  ACCIONES SOBRE CITAS
      * =======================================================*/
@@ -1392,6 +1468,13 @@ class AgendaController extends Controller
     public function confirmar(Request $request, int $id)
     {
         $ok = $this->updateEstadoCita($id, 'CONFIRMADA');
+
+        if ($ok) {
+            try {
+                $this->notificacionCitaService->enviarNotificacionCambioEstadoCita($id, 'CONFIRMADA');
+            } catch (\Throwable $e) {
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => $ok]);
@@ -1406,6 +1489,13 @@ class AgendaController extends Controller
     public function cancelar(Request $request, int $id)
     {
         $ok = $this->updateEstadoCita($id, 'CANCELADA');
+
+        if ($ok) {
+            try {
+                $this->notificacionCitaService->enviarNotificacionCambioEstadoCita($id, 'CANCELADA');
+            } catch (\Throwable $e) {
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => $ok]);
@@ -1428,8 +1518,8 @@ class AgendaController extends Controller
     {
         $request->validate([
             'fecha'       => ['required', 'date'],
-            'hora_inicio' => ['required'],
-            'hora_fin'    => ['nullable'],
+            'hora_inicio' => ['required', 'date_format:H:i'],
+            'hora_fin'    => ['nullable', 'date_format:H:i'],
         ]);
 
         $ok = $this->updateEstadoCita(
@@ -1439,6 +1529,13 @@ class AgendaController extends Controller
             $request->input('hora_inicio'),
             $request->input('hora_fin')
         );
+
+        if ($ok) {
+            try {
+                $this->notificacionCitaService->enviarNotificacionReprogramacionCita($id);
+            } catch (\Throwable $e) {
+            }
+        }
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => $ok]);
@@ -1457,6 +1554,8 @@ class AgendaController extends Controller
         }
 
         $payload = $this->prepareCitaPayload($request);
+        $payload['ORIGEN'] = strtoupper((string) (optional(auth()->user()->rol)->NOM_ROL ?? 'RECEPCION'));
+        $payload['USUARIO_CREA'] = auth()->id();
 
         try {
             $id = DB::table('tbl_cita')->insertGetId($payload);
@@ -1486,7 +1585,8 @@ class AgendaController extends Controller
             return $this->respondAgendaAction($request, false, '', 'La tabla de citas no está disponible.');
         }
 
-        $payload = $this->prepareCitaPayload($request);
+        $payload = $this->prepareCitaPayload($request, $id);
+        $payload['USUARIO_MOD'] = auth()->id();
 
         try {
             $updated = DB::table('tbl_cita')
@@ -1494,6 +1594,13 @@ class AgendaController extends Controller
                 ->update($payload) > 0;
         } catch (\Throwable $e) {
             $updated = false;
+        }
+
+        if ($updated) {
+            try {
+                $this->notificacionCitaService->enviarNotificacionActualizacionCita($id);
+            } catch (\Throwable $e) {
+            }
         }
 
         return $this->respondAgendaAction(
@@ -1542,7 +1649,7 @@ class AgendaController extends Controller
         return DB::table('tbl_estado_cita')->orderBy('COD_ESTADO')->value('COD_ESTADO');
     }
 
-    private function prepareCitaPayload(Request $request): array
+    private function prepareCitaPayload(Request $request, ?int $ignoreCitaId = null): array
     {
         $data = $request->validate([
             'doctor_persona_id'   => ['required', 'integer', 'exists:tbl_persona,COD_PERSONA'],
@@ -1560,9 +1667,23 @@ class AgendaController extends Controller
             $estadoNombre = 'PENDIENTE';
         }
 
+        if (!empty($data['hora_fin']) && $data['hora_fin'] <= $data['hora_inicio']) {
+            throw ValidationException::withMessages([
+                'hora_fin' => 'La hora de fin debe ser mayor a la hora de inicio.',
+            ]);
+        }
+
+        $this->ensureNoOverlappingAppointment(
+            (int) $data['doctor_persona_id'],
+            (string) $data['fecha'],
+            (string) $data['hora_inicio'],
+            $data['hora_fin'] ?? null,
+            $ignoreCitaId
+        );
+
         $estadoId = $this->findEstadoId($estadoNombre) ?? $this->defaultEstadoId();
 
-        return array_filter([
+        $payload = [
             'FK_COD_DOCTOR'   => $data['doctor_persona_id'],
             'FK_COD_PACIENTE' => $data['paciente_persona_id'],
             'FEC_CITA'        => $data['fecha'],
@@ -1571,9 +1692,66 @@ class AgendaController extends Controller
             'MOT_CITA'        => $data['motivo'],
             'OBSERVACIONES'   => $data['observaciones'] ?? null,
             'ESTADO_CITA'     => $estadoId,
-        ], function ($value) {
-            return $value !== null;
+        ];
+
+        if ($payload['ESTADO_CITA'] === null) {
+            unset($payload['ESTADO_CITA']);
+        }
+
+        return $payload;
+    }
+
+    private function ensureNoOverlappingAppointment(
+        int $doctorPersonaId,
+        string $fecha,
+        string $horaInicio,
+        ?string $horaFin = null,
+        ?int $ignoreCitaId = null
+    ): void {
+        if (!$this->citaTableExists()) {
+            return;
+        }
+
+        $propuestaInicio = Carbon::parse("{$fecha} {$horaInicio}");
+        $propuestaFin = $horaFin
+            ? Carbon::parse("{$fecha} {$horaFin}")
+            : $propuestaInicio->copy()->addMinutes(30);
+
+        $query = DB::table('tbl_cita as c')
+            ->leftJoin('tbl_estado_cita as e', 'e.COD_ESTADO', '=', 'c.ESTADO_CITA')
+            ->where('c.FK_COD_DOCTOR', $doctorPersonaId)
+            ->where('c.FEC_CITA', $fecha)
+            ->where(function ($builder) {
+                $builder->whereNull('e.NOM_ESTADO')
+                    ->orWhereNotIn(DB::raw('UPPER(TRIM(e.NOM_ESTADO))'), ['CANCELADA', 'COMPLETADA', 'NO_SHOW']);
+            })
+            ->select([
+                'c.COD_CITA',
+                'c.FEC_CITA',
+                'c.HOR_CITA',
+                'c.HOR_FIN',
+            ]);
+
+        if ($ignoreCitaId) {
+            $query->where('c.COD_CITA', '<>', $ignoreCitaId);
+        }
+
+        $conflicto = collect($query->get())->first(function ($cita) use ($propuestaInicio, $propuestaFin) {
+            $inicio = $this->appointmentDateTime($cita);
+            $fin = $this->appointmentEndDateTime($cita);
+
+            if (!$inicio || !$fin) {
+                return false;
+            }
+
+            return $propuestaInicio->lt($fin) && $propuestaFin->gt($inicio);
         });
+
+        if ($conflicto) {
+            throw ValidationException::withMessages([
+                'hora_inicio' => 'El doctor ya tiene una cita programada en ese rango de horario.',
+            ]);
+        }
     }
 
     private function citaTableExists(): bool
@@ -1600,10 +1778,39 @@ class AgendaController extends Controller
         ?string $nuevaHoraInicio = null,
         ?string $nuevaHoraFin = null
     ): bool {
+        $actualizarHorario = func_num_args() >= 5;
         $estadoId = $this->findEstadoId($estadoNombre);
 
         if (!$estadoId) {
             return false;
+        }
+
+        $citaActual = DB::table('tbl_cita')
+            ->where('COD_CITA', $codCita)
+            ->first();
+
+        if (!$citaActual) {
+            return false;
+        }
+
+        $fecha = $nuevaFecha ?? $citaActual->FEC_CITA;
+        $horaInicio = $nuevaHoraInicio ?? $citaActual->HOR_CITA;
+        $horaFin = $nuevaHoraFin ?? $citaActual->HOR_FIN;
+
+        if ($horaFin !== null && $horaFin <= $horaInicio) {
+            throw ValidationException::withMessages([
+                'hora_fin' => 'La hora de fin debe ser mayor a la hora de inicio.',
+            ]);
+        }
+
+        if ($actualizarHorario) {
+            $this->ensureNoOverlappingAppointment(
+                (int) $citaActual->FK_COD_DOCTOR,
+                (string) $fecha,
+                (string) $horaInicio,
+                $horaFin ? (string) $horaFin : null,
+                $codCita
+            );
         }
 
         $data = [
@@ -1611,16 +1818,10 @@ class AgendaController extends Controller
             'USUARIO_MOD' => auth()->id(),
         ];
 
-        if ($nuevaFecha !== null) {
-            $data['FEC_CITA'] = $nuevaFecha;
-        }
-
-        if ($nuevaHoraInicio !== null) {
-            $data['HOR_CITA'] = $nuevaHoraInicio;
-        }
-
-        if ($nuevaHoraFin !== null) {
-            $data['HOR_FIN'] = $nuevaHoraFin;
+        if ($actualizarHorario) {
+            $data['FEC_CITA'] = $fecha;
+            $data['HOR_CITA'] = $horaInicio;
+            $data['HOR_FIN'] = $horaFin;
         }
 
         return DB::table('tbl_cita')

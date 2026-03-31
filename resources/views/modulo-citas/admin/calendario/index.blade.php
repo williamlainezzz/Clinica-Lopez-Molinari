@@ -112,7 +112,16 @@
                     <span class="badge badge-light">{{ ($eventList instanceof \Illuminate\Support\Collection ? $eventList->count() : count($eventList ?? [])) }}</span>
                 </div>
                 <div class="list-group list-group-flush" style="max-height: 420px; overflow-y: auto;">
-                    @forelse(($eventList instanceof \Illuminate\Support\Collection ? $eventList : collect($eventList ?? []))->take(8) as $event)
+                    @forelse(($eventList instanceof \Illuminate\Support\Collection ? $eventList : collect($eventList ?? []))
+                        ->filter(function ($event) {
+                            try {
+                                return \Carbon\Carbon::parse(trim(($event['fecha'] ?? '') . ' ' . ($event['hora'] ?? '')))->gte(now());
+                            } catch (\Throwable $e) {
+                                return false;
+                            }
+                        })
+                        ->sortBy(fn($event) => trim(($event['fecha'] ?? '') . ' ' . ($event['hora'] ?? '')))
+                        ->take(8) as $event)
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between">
                                 <strong>{{ $event['paciente'] ?? 'Paciente' }}</strong>
