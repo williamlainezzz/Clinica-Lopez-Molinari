@@ -46,9 +46,9 @@
     .main-sidebar .nav-sidebar > .nav-item > .nav-link {
         width: calc(100% - 0.65rem);
         border-radius: 0.95rem;
-        margin: 0.12rem 0.3rem;
-        padding-top: 0.6rem;
-        padding-bottom: 0.6rem;
+        margin: 0.04rem 0.3rem;
+        padding-top: 0.52rem;
+        padding-bottom: 0.52rem;
         padding-right: 0.7rem;
         color: rgba(255, 255, 255, 0.86);
     }
