@@ -46,7 +46,9 @@
     .main-sidebar .nav-sidebar > .nav-item > .nav-link {
         width: calc(100% - 0.65rem);
         border-radius: 0.95rem;
-        margin: 0.18rem 0.3rem;
+        margin: 0.12rem 0.3rem;
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
         padding-right: 0.7rem;
         color: rgba(255, 255, 255, 0.86);
     }
@@ -54,7 +56,9 @@
     .main-sidebar .nav-treeview > .nav-item > .nav-link {
         width: calc(100% - 0.9rem);
         border-radius: 0.85rem;
-        margin: 0.12rem 0.4rem 0.12rem 0.5rem;
+        margin: 0.08rem 0.4rem 0.08rem 0.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
     }
 
     .main-sidebar .nav-sidebar > .nav-item > .nav-link.active,
