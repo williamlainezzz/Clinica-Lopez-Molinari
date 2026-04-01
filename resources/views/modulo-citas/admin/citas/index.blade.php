@@ -50,7 +50,7 @@
                     $doctorId       = $doctor['doctor_persona_id'] ?? null;
                     $pacientes      = $doctor['pacientes'] ?? [];
                     $proximo        = collect($pacientes)->sortBy(fn($p) => ($p['fecha'] ?? '') . ' ' . ($p['hora'] ?? ''))->first();
-                    $proximaEtiqueta = $proximo ? (($proximo['fecha'] ?? '') . ((($proximo['hora'] ?? '') !== '') ? ' · ' . ($proximo['hora'] ?? '') : '')) : 'Sin programar';
+                    $proximaEtiqueta = $proximo ? (($proximo['fecha'] ?? '') . ((($proximo['hora'] ?? '') !== '') ? ' · ' . ($proximo['hora'] ?? '') : '')) : 'Sin cita programada';
                 @endphp
                 <div class="card border-0 shadow-sm mb-3">
                     <div class="card-body d-flex flex-wrap justify-content-between align-items-center">
@@ -428,4 +428,5 @@
     })();
 </script>
 @endsection
+
 

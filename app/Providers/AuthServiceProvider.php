@@ -234,6 +234,29 @@ class AuthServiceProvider extends ServiceProvider
             return $roleIs($user, ['DOCTOR', 'PACIENTE', 'RECEPCIONISTA', 'ADMIN']);
         });
 
+        // ==========================================================
+        // REPORTES GENERALES
+        // ==========================================================
+        Gate::define('reportes.menu', function ($user) use ($isAdmin, $roleIs) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $roleIs($user, ['DOCTOR', 'RECEPCIONISTA']);
+        });
+
+        Gate::define('reportes.ver', function ($user) use ($isAdmin, $roleIs) {
+            if ($isAdmin($user)) {
+                return true;
+            }
+
+            return $roleIs($user, ['DOCTOR', 'RECEPCIONISTA']);
+        });
+
+        Gate::define('reportes.seguridad.ver', function ($user) use ($isAdmin) {
+            return $isAdmin($user);
+        });
+
         Gate::define('centro-ayuda.manual-tecnico.ver', function ($user) use ($isAdmin) {
             return $isAdmin($user);
         });

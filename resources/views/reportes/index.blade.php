@@ -45,7 +45,9 @@
       <div class="col-md-6 mb-2"><a class="btn btn-outline-primary btn-block" href="{{ route('reportes.usuarios_rol') }}">Usuarios por rol</a></div>
       <div class="col-md-6 mb-2"><a class="btn btn-outline-primary btn-block" href="{{ route('reportes.citas_no_atendidas') }}">Citas no atendidas/ausencia</a></div>
       <div class="col-md-6 mb-2"><a class="btn btn-outline-primary btn-block" href="{{ route('reportes.procesos') }}">Procesos</a></div>
+      @can('reportes.seguridad.ver')
       <div class="col-md-6 mb-2"><a class="btn btn-outline-primary btn-block" href="{{ route('reportes.seguridad_permisos') }}">Seguridad / permisos</a></div>
+      @endcan
     </div>
   </div>
 </div>

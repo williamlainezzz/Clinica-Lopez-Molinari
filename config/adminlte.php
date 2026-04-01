@@ -342,6 +342,7 @@ return [
             'text'  => 'Reportes',
             'icon'  => 'fas fa-chart-bar',
             'route' => 'reportes.index',
+            'can'   => 'reportes.menu',
             'submenu' => [
 
                 // Subbotón 1: contiene las 6 opciones

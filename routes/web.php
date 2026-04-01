@@ -109,16 +109,34 @@ Route::middleware(['auth', 'password.expiry'])->group(function () {
 Route::middleware(['auth', 'password.expiry'])
     ->prefix('reportes')
     ->group(function () {
-        Route::get('/', [ReportesController::class, 'index'])->name('reportes.index');
+        Route::get('/', [ReportesController::class, 'index'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.index');
 
-        Route::match(['get', 'post'], '/citas-rango',        [ReportesController::class, 'citasRango'])->name('reportes.citas_rango');
-        Route::match(['get', 'post'], '/citas-estado',       [ReportesController::class, 'citasEstado'])->name('reportes.citas_estado');
-        Route::match(['get', 'post'], '/agenda-doctor',      [ReportesController::class, 'agendaDoctor'])->name('reportes.agenda_doctor');
-        Route::match(['get', 'post'], '/pacientes-estado',   [ReportesController::class, 'pacientesEstado'])->name('reportes.pacientes_estado');
-        Route::match(['get', 'post'], '/usuarios-rol',       [ReportesController::class, 'usuariosRol'])->name('reportes.usuarios_rol');
-        Route::match(['get', 'post'], '/citas-no-atendidas', [ReportesController::class, 'citasNoAtendidas'])->name('reportes.citas_no_atendidas');
-        Route::match(['get', 'post'], '/procesos',           [ReportesController::class, 'procesos'])->name('reportes.procesos');
-        Route::match(['get', 'post'], '/seguridad-permisos', [ReportesController::class, 'seguridadPermisos'])->name('reportes.seguridad_permisos');
+        Route::match(['get', 'post'], '/citas-rango',        [ReportesController::class, 'citasRango'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.citas_rango');
+        Route::match(['get', 'post'], '/citas-estado',       [ReportesController::class, 'citasEstado'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.citas_estado');
+        Route::match(['get', 'post'], '/agenda-doctor',      [ReportesController::class, 'agendaDoctor'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.agenda_doctor');
+        Route::match(['get', 'post'], '/pacientes-estado',   [ReportesController::class, 'pacientesEstado'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.pacientes_estado');
+        Route::match(['get', 'post'], '/usuarios-rol',       [ReportesController::class, 'usuariosRol'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.usuarios_rol');
+        Route::match(['get', 'post'], '/citas-no-atendidas', [ReportesController::class, 'citasNoAtendidas'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.citas_no_atendidas');
+        Route::match(['get', 'post'], '/procesos',           [ReportesController::class, 'procesos'])
+            ->middleware('can:reportes.ver')
+            ->name('reportes.procesos');
+        Route::match(['get', 'post'], '/seguridad-permisos', [ReportesController::class, 'seguridadPermisos'])
+            ->middleware('can:reportes.seguridad.ver')
+            ->name('reportes.seguridad_permisos');
     });
 
 /* =========================
