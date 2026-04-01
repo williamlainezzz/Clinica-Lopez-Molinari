@@ -1,1 +1,1 @@
-<img src="{{ asset('images/logo_clinica.avif') }}" alt="Logo Clínica" style="width: 100px; height: auto;">
+<img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" style="width: 180px; height: auto;">

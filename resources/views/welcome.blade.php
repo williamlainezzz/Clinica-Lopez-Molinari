@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bienvenido — Clínica Dental</title>
+  <title>Bienvenido - Clinica Dental</title>
   <link rel="icon" href="{{ asset('favicon.ico') }}">
   <!-- Tailwind por CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,85 +21,109 @@
       .modal-panel input[type="number"],
       .modal-panel textarea,
       .modal-panel select {
-        @apply block w-full mt-1 rounded-md
+        @apply block w-full mt-1 rounded-xl
                border border-slate-300 bg-white
                placeholder-slate-400 text-slate-800
                shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500;
+               focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
       }
 
       .modal-panel label {
-        @apply text-[13px] font-medium text-slate-700;
+        @apply text-[13px] font-semibold tracking-[0.02em] text-slate-700;
+      }
+
+      .modal-card {
+        @apply rounded-[28px] border border-white/70 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur;
+      }
+
+      .section-kicker {
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700;
       }
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-sky-50 via-white to-teal-50 text-slate-800 relative">
+<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,78,216,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_34%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_48%,_#f8fbff_100%)] text-slate-800 relative">
 
-  <!-- halos decorativos -->
   <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-    <div class="absolute -top-28 -left-24 h-96 w-96 rounded-full bg-sky-200/45 blur-3xl"></div>
-    <div class="absolute -bottom-28 -right-24 h-96 w-96 rounded-full bg-teal-200/45 blur-3xl"></div>
+    <div class="absolute left-[-8rem] top-[-7rem] h-80 w-80 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl"></div>
+    <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
-  <!-- header -->
-  <header class="mx-auto max-w-6xl px-6 py-5">
-    <div class="flex items-center justify-between">
+  <header class="mx-auto max-w-7xl px-6 py-4 lg:px-8">
+    <div class="flex items-center justify-between rounded-full border border-white/80 bg-white/75 px-5 py-3 shadow-lg shadow-slate-900/5 backdrop-blur">
       <div class="flex items-center gap-3">
-        <img src="{{ asset('images/logo_clinica.avif') }}" class="h-10 w-10 rounded-full shadow-sm ring-1 ring-white/60" alt="Logo">
-        <span class="text-lg sm:text-xl font-semibold tracking-tight">
-          Complejo Dental <span class="text-slate-500">López Molinari</span>
-        </span>
+        <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-blue-700">Sistema Clinico</p>
+          <p class="text-base font-semibold text-slate-900 sm:text-lg">Complejo Dental <span class="text-slate-500">Lopez Molinari</span></p>
+        </div>
       </div>
-      {{-- nav superior eliminado a petición --}}
-      <div></div>
+      <div class="hidden items-center gap-3 md:flex">
+        <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+          Iniciar sesion
+        </button>
+        <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
+          Crear cuenta
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- hero -->
-  <main class="mx-auto max-w-6xl px-6 py-6">
-    <div class="grid items-center gap-10 lg:grid-cols-2">
-      <section>
-        <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-slate-900">
-          Gestión clínica <span class="text-sky-700">simple</span>, clara y rápida
-        </h1>
-
-        <div class="mt-8 flex flex-wrap gap-3">
-          {{-- Abrir modales por eventos globales (funciona fuera del x-data de los modales) --}}
-          <button
-            type="button"
-            data-open="login"
-            class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-6 py-3 text-white shadow-sm ring-1 ring-sky-600/10 hover:bg-sky-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-600">
-            Iniciar sesión
-          </button>
-
-          <button
-            type="button"
-            data-open="register"
-            class="inline-flex items-center justify-center rounded-xl bg-white px-6 py-3 text-slate-800 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400">
-            Registrarse
-          </button>
+  <main class="mx-auto max-w-7xl px-6 pb-4 pt-2 lg:px-8">
+    <section class="grid items-center gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.88fr)]">
+      <div class="space-y-6">
+        <div class="space-y-3">
+          <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
+            <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+            Clinica dental
+          </span>
+          <div class="space-y-2">
+            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-16 w-auto sm:h-20">
+            <h1 class="max-w-3xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-[3.35rem]">
+              Gestion clinica simple, clara y rapida.
+            </h1>
+            <p class="max-w-xl text-[15px] leading-6 text-slate-600">
+              Inicia sesion, registra tu cuenta y ubica facilmente el local.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
+          <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
+        </div>
+      </div>
+      <section aria-label="Resumen visual de la clinica">
+        <div class="rounded-[28px] border border-white/70 bg-white/95 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600 p-4 text-white shadow-lg shadow-blue-700/20">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Bienvenida</p>
+              <h2 class="mt-1 text-[1.75rem] font-bold leading-tight">Complejo Dental Lopez Molinari</h2>
+              <p class="mt-1 text-[13px] text-blue-50/90">Acceso, registro y ubicacion en un solo lugar.</p>
+            </div>
+            <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-12 w-12 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
+          </div>
+          <div class="space-y-4">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[300px] w-full rounded-2xl object-cover sm:h-[390px]">
+            </div>
+            <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-4 sm:p-5">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
+                  <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
+                </div>
+                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white sm:min-w-[250px]">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
+                  Ver ubicacion en Google Maps
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-
-      <!-- tarjetón ilustrativo -->
-      <section aria-label="Ilustración clínica">
-        <div class="relative rounded-2xl bg-white/70 backdrop-blur p-3 shadow-sm ring-1 ring-slate-200">
-          <div class="absolute -inset-0.5 -z-10 rounded-2xl bg-gradient-to-tr from-sky-200/40 to-teal-200/40 blur-2xl"></div>
-          <img
-            src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1200&auto=format&fit=crop"
-            alt="Ilustración clínica"
-            class="h-[320px] w-full rounded-xl object-cover sm:h-[380px] lg:h-[420px]">
-        </div>
-      </section>
-    </div>
+    </section>
   </main>
-
-  <footer class="mx-auto max-w-6xl px-6 py-10">
-    <div class="rounded-2xl bg-white/60 backdrop-blur px-5 py-4 text-center text-sm text-slate-500 ring-1 ring-slate-200">
-      © {{ date('Y') }} Complejo Dental López Molinari
-    </div>
-  </footer>
 
   <div
     x-data="{ showLogin:false, showRegister:false, showRegisterSuccess:false }"
@@ -115,110 +139,87 @@
     "
   >
 
-    <!-- ===== MODAL: BIENVENIDA POST REGISTRO ===== -->
-    <div x-cloak x-show="showRegisterSuccess" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showRegisterSuccess=false"></div>
+    <div x-cloak x-show="showRegisterSuccess" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" @click="showRegisterSuccess=false"></div>
 
-      <div x-transition class="modal-panel relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Bienvenido al sistema</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegisterSuccess=false" aria-label="Cerrar">✕</button>
+      <div x-transition class="modal-panel modal-card relative w-full max-w-lg">
+        <div class="border-b border-slate-200 px-6 py-5">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="section-kicker">Cuenta creada</p>
+              <h3 class="mt-2 text-xl font-bold text-slate-900">Bienvenido al sistema</h3>
+            </div>
+            <button class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" @click="showRegisterSuccess=false" aria-label="Cerrar">x</button>
+          </div>
         </div>
-        <div class="p-5">
-          <p class="text-sm text-slate-700 mb-2">Tu cuenta fue creada correctamente.</p>
-          <p class="text-sm text-slate-700 mb-4">Usuario generado: <span class="font-semibold">{{ session('username_generado') }}</span></p>
-          <p class="text-sm text-slate-600">Por seguridad, ahora inicia sesión con tus credenciales.</p>
+        <div class="space-y-4 px-6 py-6">
+          <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">Tu cuenta fue creada correctamente.</div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Usuario generado</p>
+            <p class="mt-2 font-mono text-lg font-semibold text-slate-900">{{ session('username_generado') }}</p>
+          </div>
+          <p class="text-sm leading-6 text-slate-600">Por seguridad, ahora inicia sesion con tus credenciales para continuar.</p>
         </div>
-        <div class="px-5 py-4 border-t flex justify-end gap-2">
-          <button type="button" class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-2 text-white hover:bg-sky-700" @click="showRegisterSuccess=false">Aceptar</button>
+        <div class="flex justify-end border-t border-slate-200 px-6 py-4">
+          <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800" @click="showRegisterSuccess=false">Aceptar</button>
         </div>
       </div>
     </div>
 
-    <!-- ===== MODAL: LOGIN (mismo archivo) ===== -->
-    <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showLogin=false"></div>
+    <div x-cloak x-show="showLogin" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" @click="showLogin=false"></div>
 
-      <!-- Añadido: modal-panel -->
-      <div x-transition
-           class="modal-panel relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Iniciar sesión</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showLogin=false" aria-label="Cerrar">✕</button>
+      <div x-transition class="modal-panel modal-card relative w-full max-w-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-5 text-white">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Acceso seguro</p>
+              <h3 class="mt-2 text-xl font-bold">Iniciar sesion</h3>
+              <p class="mt-2 text-sm text-blue-50/90">Ingresa con tu usuario o correo y continua en el sistema.</p>
+            </div>
+            <button class="rounded-xl p-2 text-white/80 transition hover:bg-white/10 hover:text-white" @click="showLogin=false" aria-label="Cerrar">x</button>
+          </div>
         </div>
-        <div class="p-5 max-h-[80vh] overflow-y-auto">
-
-          {{-- (Opcional) Mensaje general del modal de login --}}
+        <div class="p-6">
           @if ($errors->login->any())
-            <div class="mb-3 text-sm text-red-600">No pudimos iniciar sesión con los datos ingresados. Verifica tu usuario o correo y tu contraseña e inténtalo nuevamente.</div>
+            <div class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">No pudimos iniciar sesion con los datos ingresados. Verifica tu usuario o correo y tu contrasena e intentalo nuevamente.</div>
           @endif
 
-          {{-- FORM LOGIN (usuario o correo + password) --}}
-          <form method="POST" action="{{ route('login') }}" novalidate x-data="{ showPwd:false }">
+          <form method="POST" action="{{ route('login') }}" novalidate x-data="{ showPwd:false }" class="space-y-5">
             @csrf
 
-            <!-- Usuario o correo -->
             <div>
               <x-input-label for="login" :value="__('Usuario o correo')" />
-              <x-text-input
-                id="login"
-                class="block mt-1 w-full"
-                type="text"
-                name="login"
-                :value="old('login')"
-                required
-                autofocus
-                autocomplete="username email"
-              />
+              <x-text-input id="login" class="block mt-1 w-full" type="text" name="login" :value="old('login')" required autofocus autocomplete="username email" />
             </div>
 
-            <!-- Contraseña -->
-            <div class="mt-4">
-              <x-input-label for="password" :value="__('Contraseña')" />
-
+            <div>
+              <x-input-label for="password" :value="__('Contrasena')" />
               <div class="relative">
-                <x-text-input
-                  id="password"
-                  name="password"
-                  x-bind:type="showPwd ? 'text' : 'password'"
-                  class="block mt-1 w-full pr-10"
-                  required
-                  autocomplete="current-password"
-                />
-
-                <!-- Botón ojo -->
-                <button
-                  type="button"
-                  class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700"
-                  @click="showPwd = !showPwd"
-                  :aria-label="showPwd ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                >
-                  <!-- ojo abierto -->
+                <x-text-input id="password" name="password" x-bind:type="showPwd ? 'text' : 'password'" class="block mt-1 w-full pr-10" required autocomplete="current-password" />
+                <button type="button" class="absolute inset-y-0 right-3 flex items-center text-slate-500 transition hover:text-slate-700" @click="showPwd = !showPwd" :aria-label="showPwd ? 'Ocultar contrasena' : 'Mostrar contrasena'">
                   <svg x-show="!showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <!-- ojo tachado -->
                   <svg x-show="showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
                 </button>
               </div>
             </div>
 
-            <!-- Remember -->
-            <div class="block mt-4">
-              <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Recordarme') }}</span>
+            <div class="flex items-center justify-between gap-3">
+              <label for="remember_me" class="inline-flex items-center gap-2 text-sm text-slate-600">
+                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-700 shadow-sm focus:ring-blue-500" name="remember">
+                <span>{{ __('Recordarme') }}</span>
               </label>
-            </div>
 
-            <div class="flex items-center justify-between mt-6">
               @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                   href="{{ route('password.request') }}">
-                  {{ __('¿Olvidaste tu contraseña?') }}
+                <a class="text-sm font-medium text-blue-700 transition hover:text-blue-800" href="{{ route('password.request') }}">
+                  {{ __('Olvide mi contrasena') }}
                 </a>
               @endif
+            </div>
 
-              <x-primary-button>
-                {{ __('Iniciar sesión') }}
+            <div class="pt-2">
+              <x-primary-button class="w-full justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold shadow-lg shadow-slate-900/15 hover:bg-slate-800">
+                {{ __('Iniciar sesion') }}
               </x-primary-button>
             </div>
           </form>
@@ -227,16 +228,16 @@
     </div>
 
     <!-- ===== MODAL: REGISTRO ===== -->
-    <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-slate-900/60" @click="showRegister=false"></div>
+    <div x-cloak x-show="showRegister" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" @click="showRegister=false"></div>
 
-      <div x-transition class="modal-panel relative w-full max-w-5xl mx-4 rounded-2xl bg-white shadow-xl ring-1 ring-slate-200">
-        <div class="flex items-center justify-between px-5 py-4 border-b">
-          <h3 class="text-base font-semibold text-slate-800">Crear cuenta</h3>
-          <button class="p-2 rounded-md hover:bg-slate-100" @click="showRegister=false" aria-label="Cerrar">✕</button>
+      <div x-transition class="modal-panel modal-card relative w-full max-w-6xl overflow-hidden">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div><p class="section-kicker">Nuevo registro</p><h3 class="mt-2 text-xl font-bold text-slate-900">Crear cuenta</h3></div>
+          <button class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" @click="showRegister=false" aria-label="Cerrar">x</button>
         </div>
 
-        <div class="p-5 max-h-[85vh] overflow-y-auto">
+        <div class="max-h-[85vh] overflow-y-auto p-6">
 
           @php
             use App\Models\PreguntaSeguridad;
@@ -248,10 +249,10 @@
             @csrf
 
             {{-- Header: usuario autogenerado (discreto) --}}
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-slate-700">Datos personales</h2>
-              <div id="username-pill" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-slate-700">
-                <span class="font-medium text-slate-600 mr-1">Usuario:</span>
+            <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div><p class="section-kicker">Seccion 1</p><h2 class="mt-2 text-lg font-bold text-slate-900">Datos personales</h2><p class="mt-1 text-sm text-slate-600">Ingresa tu informacion principal para crear tu perfil dentro del sistema.</p></div>
+              <div id="username-pill" class="hidden rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                <span class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">Usuario asignado</span>
                 <code id="username-preview" class="font-semibold"></code>
               </div>
             </div>
@@ -260,14 +261,14 @@
             <div class="grid gap-4 md:grid-cols-2">
               <div>
                 <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
-                <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
-                              :value="old('PRIMER_NOMBRE')" placeholder="Ej. Ana" required autofocus />
+                  <x-text-input id="PRIMER_NOMBRE" class="block mt-1 w-full" type="text" name="PRIMER_NOMBRE"
+                                :value="old('PRIMER_NOMBRE')" required autofocus />
                 <x-input-error :messages="$errors->register->get('PRIMER_NOMBRE')" class="mt-2" />
               </div>
               <div>
                 <x-input-label for="SEGUNDO_NOMBRE" :value="__('Segundo nombre (opcional)')" />
-                <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
-                              :value="old('SEGUNDO_NOMBRE')" placeholder="Ej. María" />
+                  <x-text-input id="SEGUNDO_NOMBRE" class="block mt-1 w-full" type="text" name="SEGUNDO_NOMBRE"
+                                :value="old('SEGUNDO_NOMBRE')" />
                 <x-input-error :messages="$errors->register->get('SEGUNDO_NOMBRE')" class="mt-2" />
               </div>
             </div>
@@ -276,14 +277,14 @@
             <div class="mt-4 grid gap-4 md:grid-cols-2">
               <div>
                 <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
-                <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
-                              :value="old('PRIMER_APELLIDO')" placeholder="Ej. Rivera" required />
+                  <x-text-input id="PRIMER_APELLIDO" class="block mt-1 w-full" type="text" name="PRIMER_APELLIDO"
+                                :value="old('PRIMER_APELLIDO')" required />
                 <x-input-error :messages="$errors->register->get('PRIMER_APELLIDO')" class="mt-2" />
               </div>
               <div>
                 <x-input-label for="SEGUNDO_APELLIDO" :value="__('Segundo apellido (opcional)')" />
-                <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
-                              :value="old('SEGUNDO_APELLIDO')" placeholder="Ej. López" />
+                  <x-text-input id="SEGUNDO_APELLIDO" class="block mt-1 w-full" type="text" name="SEGUNDO_APELLIDO"
+                                :value="old('SEGUNDO_APELLIDO')" />
                 <x-input-error :messages="$errors->register->get('SEGUNDO_APELLIDO')" class="mt-2" />
               </div>
             </div>
@@ -302,8 +303,8 @@
               </div>
               <div>
                 <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
-                <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
-                              :value="old('NUM_TELEFONO')" placeholder="99991234" />
+                  <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
+                                :value="old('NUM_TELEFONO')" />
                 <x-input-error :messages="$errors->register->get('NUM_TELEFONO')" class="mt-2" />
               </div>
             </div>
@@ -312,14 +313,14 @@
             <div class="mt-4 grid gap-4 md:grid-cols-2">
               <div>
                 <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
-                <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
-                              :value="old('DEPARTAMENTO')" placeholder="Ej. Cortés" />
+                  <x-text-input id="DEPARTAMENTO" class="block mt-1 w-full" type="text" name="DEPARTAMENTO"
+                                :value="old('DEPARTAMENTO')" />
                 <x-input-error :messages="$errors->register->get('DEPARTAMENTO')" class="mt-2" />
               </div>
               <div>
                 <x-input-label for="MUNICIPIO" :value="__('Municipio')" />
-                <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
-                              :value="old('MUNICIPIO')" placeholder="Ej. San Pedro Sula" />
+                  <x-text-input id="MUNICIPIO" class="block mt-1 w-full" type="text" name="MUNICIPIO"
+                                :value="old('MUNICIPIO')" />
                 <x-input-error :messages="$errors->register->get('MUNICIPIO')" class="mt-2" />
               </div>
             </div>
@@ -328,14 +329,14 @@
             <div class="mt-4 grid gap-4 md:grid-cols-2">
               <div>
                 <x-input-label for="CIUDAD" :value="__('Ciudad')" />
-                <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
-                              :value="old('CIUDAD')" placeholder="Ej. San Pedro Sula" />
+                  <x-text-input id="CIUDAD" class="block mt-1 w-full" type="text" name="CIUDAD"
+                                :value="old('CIUDAD')" />
                 <x-input-error :messages="$errors->register->get('CIUDAD')" class="mt-2" />
               </div>
               <div>
                 <x-input-label for="COLONIA" :value="__('Colonia')" />
-                <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
-                              :value="old('COLONIA')" placeholder="Ej. Rivera Hernández" />
+                  <x-text-input id="COLONIA" class="block mt-1 w-full" type="text" name="COLONIA"
+                                :value="old('COLONIA')" />
                 <x-input-error :messages="$errors->register->get('COLONIA')" class="mt-2" />
               </div>
             </div>
@@ -343,9 +344,8 @@
             {{-- Dirección / Referencia --}}
             <div class="mt-4">
               <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
-              <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
-                        class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
-                        placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
+                  <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
+                        class="mt-1 block w-full rounded-md border-slate-300 focus:border-blue-500 focus:ring-blue-500">{{ old('REFERENCIA') }}</textarea>
               <x-input-error :messages="$errors->register->get('REFERENCIA')" class="mt-2" />
             </div>
 
@@ -358,7 +358,6 @@
                   type="email"
                   name="CORREO"
                   :value="old('CORREO')"
-                  placeholder="tucorreo@ejemplo.com"
                   required
                   class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}"
               />
@@ -594,3 +593,4 @@
 
 </body>
 </html>
+

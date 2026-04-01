@@ -37,15 +37,13 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block">
-  <b>Complejo Dental</b><br>López Molinari
-</span>',
+    'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block"><b>Complejo Dental</b><br>Lopez Molinari</span>',
 
-    'logo_img' => 'images/logo_clinica.avif',
+    'logo_img' => 'images/logo-icon.jpg',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Clínica Dental',
+    'logo_img_alt' => 'Clinica Dental',
 
     /*
     |--------------------------------------------------------------------------
@@ -54,13 +52,13 @@ return [
     */
 
     'auth_logo' => [
-        'enabled' => false,
+        'enabled' => true,
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'Auth Logo',
+            'path' => 'images/logo-horizontal.jpg',
+            'alt' => 'Complejo Dental Lopez Molinari',
             'class' => '',
-            'width' => 50,
-            'height' => 50,
+            'width' => 220,
+            'height' => 84,
         ],
     ],
 
@@ -74,8 +72,8 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'AdminLTE Preloader Image',
+            'path' => 'images/logo-icon.jpg',
+            'alt' => 'Complejo Dental Lopez Molinari',
             'effect' => 'animation__shake',
             'width' => 60,
             'height' => 60,
@@ -114,7 +112,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'classes_auth_card' => 'card-outline card-primary',
+    'classes_auth_card' => 'card-outline card-primary shadow-sm border-0',
     'classes_auth_header' => '',
     'classes_auth_body' => '',
     'classes_auth_footer' => '',
@@ -127,15 +125,15 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'classes_body' => '',
-    'classes_brand' => '',
-    'classes_brand_text' => '',
+    'classes_body' => 'brand-theme-body',
+    'classes_brand' => 'brand-theme-link',
+    'classes_brand_text' => 'brand-theme-text',
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
     'classes_content' => '',
-    'classes_sidebar' => 'sidebar-dark-primary elevation-4',
+    'classes_sidebar' => 'sidebar-dark-primary elevation-4 brand-theme-sidebar',
     'classes_sidebar_nav' => 'nav-flat nav-compact nav-child-indent',
-    'classes_topnav' => 'navbar-white navbar-light',
+    'classes_topnav' => 'navbar-white navbar-light brand-theme-topnav',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
 
@@ -409,3 +407,4 @@ return [
 
     'livewire' => false,
 ];
+
