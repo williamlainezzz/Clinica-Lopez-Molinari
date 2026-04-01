@@ -107,7 +107,7 @@
               </span>
               <span>
                 <span class="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Ubicacion</span>
-                <span class="block text-sm font-semibold text-slate-900">Visitanos en nuestra sede principal</span>
+                <span class="block text-sm font-bold text-slate-900">Haz clic para ver la direccion de la clinica</span>
               </span>
             </a>
           </div>
