@@ -649,7 +649,33 @@ class AgendaController extends Controller
             $rows = DB::table('tbl_usuario as u')
                 ->join('tbl_rol as r', 'u.FK_COD_ROL', '=', 'r.COD_ROL')
                 ->join('tbl_persona as p', 'u.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
-                ->where('r.NOM_ROL', 'DOCTOR')
+                ->where(function ($query) {
+                    $query->whereIn(DB::raw('UPPER(TRIM(r.NOM_ROL))'), [
+                        'DOCTOR',
+                        'DOCTORA',
+                        'ODONTOLOGO',
+                        'ODONTOLOGA',
+                        'MEDICO',
+                        'MEDICA',
+                    ]);
+
+                    if (DB::getSchemaBuilder()->hasTable('tbl_cita')) {
+                        $query->orWhereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw('1'))
+                                ->from('tbl_cita as c')
+                                ->whereColumn('c.FK_COD_DOCTOR', 'p.COD_PERSONA');
+                        });
+                    }
+
+                    if (DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente')) {
+                        $query->orWhereExists(function ($subQuery) {
+                            $subQuery->select(DB::raw('1'))
+                                ->from('tbl_doctor_paciente as dp')
+                                ->whereColumn('dp.FK_COD_DOCTOR', 'p.COD_PERSONA')
+                                ->where('dp.ACTIVO', 1);
+                        });
+                    }
+                })
                 ->orderBy('p.PRIMER_NOMBRE')
                 ->orderBy('p.PRIMER_APELLIDO')
                 ->select([
@@ -664,7 +690,10 @@ class AgendaController extends Controller
                 return [];
             }
 
-            return $rows->map(function ($row) {
+            return $rows
+                ->unique('COD_PERSONA')
+                ->values()
+                ->map(function ($row) {
                 return [
                     'persona_id' => (int) $row->COD_PERSONA,
                     'nombre'     => $row->PRIMER_NOMBRE . ' ' . $row->PRIMER_APELLIDO,
