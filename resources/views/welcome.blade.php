@@ -50,13 +50,14 @@
     <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
-  <header class="mx-auto max-w-7xl px-6 py-3 lg:px-8">
-    <div class="flex items-center justify-between rounded-full border border-white/80 bg-white/75 px-5 py-3 shadow-lg shadow-slate-900/5 backdrop-blur">
-      <div class="flex items-center gap-3">
+  <header class="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+    <div class="rounded-[28px] border border-white/80 bg-white/75 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur sm:rounded-full sm:px-5">
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-3">
         <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
-        <div>
+        <div class="min-w-0">
           <p class="text-xs font-semibold uppercase tracking-[0.28em] text-blue-700">Sistema Clinico</p>
-          <p class="text-base font-semibold text-slate-900 sm:text-lg">Complejo Dental <span class="text-slate-500">Lopez Molinari</span></p>
+          <p class="text-sm font-semibold leading-tight text-slate-900 sm:text-lg">Complejo Dental <span class="text-slate-500">Lopez Molinari</span></p>
         </div>
       </div>
       <div class="hidden items-center gap-3 md:flex">
@@ -64,6 +65,16 @@
           Iniciar sesion
         </button>
         <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
+          Crear cuenta
+        </button>
+      </div>
+      </div>
+
+      <div class="mt-3 grid grid-cols-2 gap-2 md:hidden">
+        <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+          Iniciar sesion
+        </button>
+        <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
           Crear cuenta
         </button>
       </div>
