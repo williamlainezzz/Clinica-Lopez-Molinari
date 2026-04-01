@@ -50,7 +50,7 @@
     <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
-  <header class="mx-auto max-w-7xl px-6 py-6 lg:px-8">
+  <header class="mx-auto max-w-7xl px-6 py-4 lg:px-8">
     <div class="flex items-center justify-between rounded-full border border-white/80 bg-white/75 px-5 py-3 shadow-lg shadow-slate-900/5 backdrop-blur">
       <div class="flex items-center gap-3">
         <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
@@ -70,50 +70,50 @@
     </div>
   </header>
 
-  <main class="mx-auto max-w-7xl px-6 pb-10 pt-4 lg:px-8">
-    <section class="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
-      <div class="space-y-8">
-        <div class="space-y-4">
-          <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
+  <main class="mx-auto max-w-7xl px-6 pb-4 pt-2 lg:px-8">
+    <section class="grid items-center gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.88fr)]">
+      <div class="space-y-6">
+        <div class="space-y-3">
+          <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
             <span class="h-2 w-2 rounded-full bg-blue-500"></span>
             Clinica dental
           </span>
-          <div class="space-y-3">
-            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-20 w-auto sm:h-24">
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">
+          <div class="space-y-2">
+            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-16 w-auto sm:h-20">
+            <h1 class="max-w-3xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-[3.35rem]">
               Gestion clinica simple, clara y rapida.
             </h1>
-            <p class="max-w-xl text-base leading-7 text-slate-600">
+            <p class="max-w-xl text-[15px] leading-6 text-slate-600">
               Inicia sesion, registra tu cuenta y ubica facilmente el local.
             </p>
           </div>
         </div>
         <div class="flex flex-wrap gap-3">
-          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
-          <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
+          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
+          <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
         </div>
       </div>
       <section aria-label="Resumen visual de la clinica">
-        <div class="rounded-[28px] border border-white/70 bg-white/95 p-5 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-6">
-          <div class="mb-5 flex items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600 p-5 text-white shadow-lg shadow-blue-700/20">
+        <div class="rounded-[28px] border border-white/70 bg-white/95 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-5">
+          <div class="mb-4 flex items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600 p-4 text-white shadow-lg shadow-blue-700/20">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Bienvenida</p>
-              <h2 class="mt-2 text-2xl font-bold">Complejo Dental Lopez Molinari</h2>
-              <p class="mt-1 text-sm text-blue-50/90">Acceso, registro y ubicacion en un solo lugar.</p>
+              <h2 class="mt-1 text-[1.75rem] font-bold leading-tight">Complejo Dental Lopez Molinari</h2>
+              <p class="mt-1 text-[13px] text-blue-50/90">Acceso, registro y ubicacion en un solo lugar.</p>
             </div>
-            <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-14 w-14 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
+            <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-12 w-12 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
           </div>
           <div class="space-y-4">
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-              <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[360px] w-full rounded-2xl object-cover sm:h-[500px]">
+              <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[300px] w-full rounded-2xl object-cover sm:h-[390px]">
             </div>
-            <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-5 sm:p-6">
+            <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-4 sm:p-5">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
                   <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
                 </div>
-                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white sm:min-w-[260px]">
+                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white sm:min-w-[250px]">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
                   Ver ubicacion en Google Maps
                 </a>
@@ -124,17 +124,6 @@
       </section>
     </section>
   </main>
-
-  <footer class="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
-      <div class="rounded-[28px] border border-white/80 bg-white/75 px-6 py-5 text-sm text-slate-500 shadow-lg shadow-slate-900/5 backdrop-blur">
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p>&copy; {{ date('Y') }} Complejo Dental Lopez Molinari</p>
-        <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 transition hover:text-blue-800">
-          Abrir ubicacion del local
-        </a>
-      </div>
-    </div>
-  </footer>
 
   <div
     x-data="{ showLogin:false, showRegister:false, showRegisterSuccess:false }"
