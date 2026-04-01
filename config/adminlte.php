@@ -361,7 +361,7 @@ return [
 
                 // Subbotón 2: Procesos (aparte, sin submenu)
                 [
-                    'text'  => 'Procesos',
+                    'text'  => 'Flujo de citas',
                     'route' => 'reportes.procesos',
                     'icon'  => 'far fa-circle',
                 ],

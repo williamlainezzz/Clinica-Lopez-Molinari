@@ -258,7 +258,7 @@ class ReportesController extends Controller
     public function procesos(Request $request)
     {
         $kpis        = collect();
-        $movimientos = collect();
+        $ultimasCitas = collect();
 
         if ($this->tableExists('tbl_cita')) {
             $kpis = DB::table('tbl_cita as c')
@@ -277,27 +277,17 @@ class ReportesController extends Controller
                         'class'  => $this->estadoColor($row->estado),
                     ];
                 });
-        }
 
-        if ($this->tableExists('tbl_bitacora')) {
-            $movimientos = DB::table('tbl_bitacora as b')
-                ->leftJoin('tbl_usuario as u', 'u.COD_USUARIO', '=', 'b.FK_COD_USUARIO')
-                ->leftJoin('tbl_persona as p', 'p.COD_PERSONA', '=', 'u.FK_COD_PERSONA')
-                ->select([
-                    'b.created_at',
-                    'b.OBJETO',
-                    'b.ACCION',
-                    'b.DESCRIPCION',
-                    DB::raw("CONCAT(p.PRIMER_NOMBRE,' ',p.PRIMER_APELLIDO) as usuario"),
-                ])
-                ->orderByDesc('b.created_at')
+            $ultimasCitas = $this->citasQuery()
+                ->orderByDesc('c.FEC_CITA')
+                ->orderByDesc('c.HOR_CITA')
                 ->limit(20)
                 ->get();
         }
 
         return view('reportes.procesos', [
-            'kpis'        => $kpis,
-            'movimientos' => $movimientos,
+            'kpis'         => $kpis,
+            'ultimasCitas' => $ultimasCitas,
         ]);
     }
 
