@@ -79,9 +79,9 @@
             Clinica dental
           </span>
           <div class="space-y-3">
-            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-14 w-auto sm:h-16">
+            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-20 w-auto sm:h-24">
             <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">
-              Acceso rapido y profesional para tu clinica.
+              Gestion clinica simple, clara y rapida.
             </h1>
             <p class="max-w-xl text-base leading-7 text-slate-600">
               Inicia sesion, registra tu cuenta y ubica facilmente el local.
@@ -91,23 +91,6 @@
         <div class="flex flex-wrap gap-3">
           <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
           <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
-        </div>
-        <div class="grid gap-4 md:grid-cols-3">
-          <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Acceso</p>
-            <h3 class="mt-3 text-lg font-bold text-slate-900">Ingreso simple</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Usuario o correo en una vista clara y directa.</p>
-          </div>
-          <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Ubicacion</p>
-            <h3 class="mt-3 text-lg font-bold text-slate-900">Encuentranos facil</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Acceso directo a Google Maps del local.</p>
-          </div>
-          <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Imagen</p>
-            <h3 class="mt-3 text-lg font-bold text-slate-900">Identidad visual</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Una bienvenida alineada al logo y al local.</p>
-          </div>
         </div>
       </div>
       <section aria-label="Resumen visual de la clinica">
@@ -120,32 +103,20 @@
             </div>
             <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-14 w-14 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
           </div>
-          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <div class="space-y-4">
-              <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[260px] w-full rounded-2xl object-cover sm:h-[340px]">
-              </div>
-              <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-4">
-                <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
-                <p class="mt-1 text-sm text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
-                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white">
+          <div class="space-y-4">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[360px] w-full rounded-2xl object-cover sm:h-[500px]">
+            </div>
+            <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-5 sm:p-6">
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
+                  <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
+                </div>
+                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white sm:min-w-[260px]">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
                   Ver ubicacion en Google Maps
                 </a>
-              </div>
-            </div>
-            <div class="space-y-4">
-              <div class="rounded-3xl bg-slate-900 p-5 text-white shadow-xl shadow-slate-900/20">
-                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-300">Acceso</p>
-                <p class="mt-3 text-sm leading-6 text-slate-300">Ingreso seguro y registro ordenado para pacientes del sistema.</p>
-              </div>
-              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-semibold text-slate-900">Que puedes hacer aqui</p>
-                <ul class="mt-3 space-y-3 text-sm text-slate-600">
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600"></span><span>Iniciar sesion rapidamente</span></li>
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-sky-500"></span><span>Crear una nueva cuenta</span></li>
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-slate-400"></span><span>Ubicar el local desde Google Maps</span></li>
-                </ul>
               </div>
             </div>
           </div>
