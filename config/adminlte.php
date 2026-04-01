@@ -134,7 +134,7 @@ return [
     'classes_content_header' => '',
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
-    'classes_sidebar_nav' => '',
+    'classes_sidebar_nav' => 'nav-flat nav-compact nav-child-indent',
     'classes_topnav' => 'navbar-white navbar-light',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
@@ -256,9 +256,6 @@ return [
 
         // PERSONAS & USUARIOS
         [
-            'header' => '',
-        ],
-        [
             'text' => 'Personas & Usuarios',
             'icon' => 'fas fa-users',
             'can'  => 'personas.menu',
@@ -295,7 +292,6 @@ return [
         ],
 
         // SEGURIDAD
-        ['header' => ''],
         [
             'text'    => 'Seguridad',
             'icon'    => 'fas fa-shield-alt',
@@ -342,7 +338,6 @@ return [
         ],
 
         // REPORTES
-        ['header' => ''],
         [
             'text'  => 'Reportes',
             'icon'  => 'fas fa-chart-bar',
@@ -372,7 +367,6 @@ return [
             ],
         ],
 
-        ['header' => ''],
         [
             'text'  => 'Usuario',
             'route' => 'usuario.perfil',
