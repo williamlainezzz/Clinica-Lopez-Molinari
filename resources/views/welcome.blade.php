@@ -50,7 +50,7 @@
     <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
-  <header class="mx-auto max-w-7xl px-6 py-4 lg:px-8">
+  <header class="mx-auto max-w-7xl px-6 py-3 lg:px-8">
     <div class="flex items-center justify-between rounded-full border border-white/80 bg-white/75 px-5 py-3 shadow-lg shadow-slate-900/5 backdrop-blur">
       <div class="flex items-center gap-3">
         <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
@@ -70,58 +70,129 @@
     </div>
   </header>
 
-  <main class="mx-auto max-w-7xl px-6 pb-4 pt-2 lg:px-8">
-    <section class="grid items-center gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(400px,0.88fr)]">
-      <div class="space-y-6">
-        <div class="space-y-3">
-          <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
-            <span class="h-2 w-2 rounded-full bg-blue-500"></span>
-            Clinica dental
-          </span>
-          <div class="space-y-2">
-            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-16 w-auto sm:h-20">
-            <h1 class="max-w-3xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-[3.35rem]">
-              Gestion clinica simple, clara y rapida.
-            </h1>
-            <p class="max-w-xl text-[15px] leading-6 text-slate-600">
-              Inicia sesion, registra tu cuenta y ubica facilmente el local.
-            </p>
-          </div>
-        </div>
-        <div class="flex flex-wrap gap-3">
-          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
-          <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
-        </div>
-      </div>
-      <section aria-label="Resumen visual de la clinica">
-        <div class="rounded-[28px] border border-white/70 bg-white/95 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-5">
-          <div class="mb-4 flex items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600 p-4 text-white shadow-lg shadow-blue-700/20">
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Bienvenida</p>
-              <h2 class="mt-1 text-[1.75rem] font-bold leading-tight">Complejo Dental Lopez Molinari</h2>
-              <p class="mt-1 text-[13px] text-blue-50/90">Acceso, registro y ubicacion en un solo lugar.</p>
-            </div>
-            <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-12 w-12 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
-          </div>
+  <main class="mx-auto max-w-7xl px-6 pb-3 pt-3 lg:px-8">
+    <section class="rounded-[26px] border border-blue-200/80 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur sm:min-h-[880px] sm:p-6">
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-center">
+        <div class="space-y-5 pt-3">
           <div class="space-y-4">
-            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-              <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[300px] w-full rounded-2xl object-cover sm:h-[390px]">
+            <div class="flex items-center">
+              <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-18 w-auto sm:h-24">
             </div>
-            <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-4 sm:p-5">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
-                  <p class="mt-1 max-w-xl text-sm leading-6 text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
-                </div>
-                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white sm:min-w-[250px]">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
-                  Ver ubicacion en Google Maps
-                </a>
+
+            <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
+              <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+              Clinica odontologica
+            </span>
+
+            <div class="space-y-3 pt-2">
+              <h1 class="max-w-3xl text-4xl font-black leading-[0.96] tracking-tight text-slate-950 sm:text-[4.2rem]">
+                Tu Sonrisa en un
+                <span class="text-blue-600">Santuario</span>
+                de Precision.
+              </h1>
+              <p class="max-w-2xl text-base leading-8 text-slate-600">
+                Combinamos tecnologia dental de vanguardia con un entorno disenado para tu tranquilidad. Experimenta el futuro de la salud oral en Complejo Dental Lopez Molinari.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <section aria-label="Foto del local" class="pt-4">
+          <div class="relative rounded-[26px] border border-blue-100 bg-white p-3 shadow-lg shadow-slate-900/8">
+            <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[250px] w-full rounded-[22px] object-cover sm:h-[325px]">
+
+            <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="absolute bottom-2 right-2 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-xl shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-2xl">
+              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
+              </span>
+              <span>
+                <span class="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Ubicacion</span>
+                <span class="block text-sm font-semibold text-slate-900">Visitanos en nuestra sede principal</span>
+              </span>
+            </a>
+          </div>
+        </section>
+      </div>
+
+      <div class="mt-10 grid gap-4 lg:grid-cols-[minmax(0,1fr)_270px]">
+        <section class="rounded-[22px] border border-blue-100 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-[1.95rem] font-bold text-slate-950">Nuestros Servicios Especializados</h2>
+            </div>
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
+            </span>
+          </div>
+
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <div class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 13c0-1.657 2.239-3 5-3s5 1.343 5 3-2.239 6-5 6-5-4.343-5-6Zm3.5-5.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5S12.828 9 12 9s-1.5-.672-1.5-1.5Z"/></svg>
+              </span>
+              <div>
+                <h3 class="font-semibold text-slate-900">Implantes Dentales</h3>
+                <p class="mt-1 text-sm leading-5 text-slate-600">Restauracion permanente con estetica natural y duradera.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h8M9 12h6M8 17h8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 5h.01M6 12h.01M6 19h.01M18 5h.01M18 12h.01M18 19h.01"/></svg>
+              </span>
+              <div>
+                <h3 class="font-semibold text-slate-900">Ortodoncia</h3>
+                <p class="mt-1 text-sm leading-5 text-slate-600">Alineacion perfecta con tecnicas invisibles y tradicionales.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 8l8 8M16 8l-8 8"/></svg>
+              </span>
+              <div>
+                <h3 class="font-semibold text-slate-900">Estetica Dental</h3>
+                <p class="mt-1 text-sm leading-5 text-slate-600">Carillas y blanqueamiento para una sonrisa radiante.</p>
+              </div>
+            </div>
+
+            <div class="flex gap-4">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3l7 4v5c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V7l7-4Z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10 12l1.5 1.5L14 11"/></svg>
+              </span>
+              <div>
+                <h3 class="font-semibold text-slate-900">Odontologia Preventiva</h3>
+                <p class="mt-1 text-sm leading-5 text-slate-600">El cuidado proactivo es la base de una salud oral optima.</p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <section class="rounded-[22px] bg-[#0b2c61] p-5 text-white shadow-xl shadow-blue-900/20">
+          <h2 class="text-[1.95rem] font-bold leading-tight">Horarios de Atencion</h2>
+          <p class="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-200">Atencion personalizada</p>
+
+          <div class="mt-6 space-y-4 text-sm">
+            <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
+              <span class="font-semibold">Lunes - Viernes</span>
+              <span class="font-bold">08:00 - 19:00</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
+              <span class="font-semibold">Sabados</span>
+              <span class="font-bold">08:00 - 19:00</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 border-b border-white/10 pb-3 text-blue-100">
+              <span class="font-semibold">Domingos</span>
+              <span class="font-bold">CERRADO</span>
+            </div>
+          </div>
+
+          <div class="mt-6 border-t border-white/10 pt-4">
+            <p class="text-xs text-blue-200">Telefono de contacto</p>
+            <p class="mt-2 text-[1.9rem] font-bold tracking-tight">+504 9985-5489</p>
+          </div>
+        </section>
+      </div>
     </section>
   </main>
 
@@ -593,4 +664,3 @@
 
 </body>
 </html>
-
