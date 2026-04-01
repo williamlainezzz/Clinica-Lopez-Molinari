@@ -25,6 +25,17 @@
         background: linear-gradient(180deg, #0f172a 0%, #132144 45%, #1d4ed8 100%) !important;
     }
 
+    .main-sidebar,
+    .main-sidebar::before {
+        width: 270px;
+    }
+
+    .content-wrapper,
+    .main-footer,
+    .main-header {
+        margin-left: 270px;
+    }
+
     .brand-theme-link {
         border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         background: rgba(255, 255, 255, 0.05);
@@ -44,9 +55,17 @@
     }
 
     .main-sidebar .nav-sidebar > .nav-item > .nav-link {
+        width: calc(100% - 1rem);
         border-radius: 0.95rem;
-        margin: 0.15rem 0.55rem;
+        margin: 0.18rem 0.5rem;
+        padding-right: 0.9rem;
         color: rgba(255, 255, 255, 0.86);
+    }
+
+    .main-sidebar .nav-treeview > .nav-item > .nav-link {
+        width: calc(100% - 1.2rem);
+        border-radius: 0.85rem;
+        margin: 0.12rem 0.6rem 0.12rem 0.6rem;
     }
 
     .main-sidebar .nav-sidebar > .nav-item > .nav-link.active,
