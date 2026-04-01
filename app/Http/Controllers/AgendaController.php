@@ -262,6 +262,10 @@ class AgendaController extends Controller
             );
         }
 
+        if (in_array($rolSlug, ['admin', 'recepcionista'], true) && $sectionKey === 'citas') {
+            $doctorPanels = $this->syncDoctorPanelsWithAssignments($doctorPanels, $doctorPatientMap);
+        }
+
         // ===========================================
         // Enlace / código para registro de pacientes
         // ===========================================
@@ -752,6 +756,34 @@ class AgendaController extends Controller
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    private function syncDoctorPanelsWithAssignments(array $doctorPanels, array $doctorPatientMap): array
+    {
+        if (empty($doctorPanels) || empty($doctorPatientMap)) {
+            return $doctorPanels;
+        }
+
+        return collect($doctorPanels)->map(function ($panel) use ($doctorPatientMap) {
+            $doctorId = (string) ($panel['doctor_persona_id'] ?? '');
+
+            if ($doctorId === '' || !isset($doctorPatientMap[$doctorId]['patients'])) {
+                return $panel;
+            }
+
+            $panel['pacientes'] = collect($doctorPatientMap[$doctorId]['patients'])
+                ->map(function ($patient) {
+                    return [
+                        'persona_id' => $patient['persona_id'],
+                        'codigo'     => $patient['codigo'],
+                        'nombre'     => $patient['nombre'],
+                    ];
+                })
+                ->values()
+                ->all();
+
+            return $panel;
+        })->all();
     }
 
     /* =========================================================
