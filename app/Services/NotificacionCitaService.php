@@ -134,9 +134,34 @@ class NotificacionCitaService
         if (
             !$user ||
             !Schema::hasTable('tbl_notificacion') ||
-            !Schema::hasTable('tbl_cita') ||
-            !Schema::hasColumn('tbl_notificacion', 'LEIDA')
+            !Schema::hasTable('tbl_cita')
         ) {
+            return 0;
+        }
+
+        $userId = (int) ($user?->getAuthIdentifier() ?? 0);
+
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        if (Schema::hasTable('tbl_notificacion_usuario')) {
+            $query = $this->baseNotificacionQuery()
+                ->leftJoin('tbl_notificacion_usuario as nu', function ($join) use ($userId) {
+                    $join->on('nu.FK_COD_NOTIFICACION', '=', 'n.COD_NOTIFICACION')
+                        ->where('nu.FK_COD_USUARIO', '=', $userId);
+                })
+                ->where(function ($q) {
+                    $q->whereNull('nu.COD_NU')
+                        ->orWhere('nu.LEIDA', 0);
+                });
+
+            $this->aplicarFiltroPorRol($query, $user);
+
+            return (int) $query->count();
+        }
+
+        if (!Schema::hasColumn('tbl_notificacion', 'LEIDA')) {
             return 0;
         }
 

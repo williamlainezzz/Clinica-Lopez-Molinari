@@ -32,6 +32,8 @@ class NotificacionController extends Controller
 
         $tieneLeida = Schema::hasColumn('tbl_notificacion', 'LEIDA');
         $tieneTipo = Schema::hasColumn('tbl_notificacion', 'TIPO_NOTIFICACION');
+        $tieneLeidaPorUsuario = Schema::hasTable('tbl_notificacion_usuario');
+        $userId = (int) ($user?->getAuthIdentifier() ?? 0);
 
         $query = $service->baseNotificacionQuery()
             ->select([
@@ -49,7 +51,7 @@ class NotificacionController extends Controller
             ->orderByDesc('n.FEC_ENVIO');
 
         $service->aplicarFiltroPorRol($query, $user);
-        $this->aplicarFiltros($query, $request);
+        $this->aplicarFiltros($query, $request, $tieneTipo);
 
         if ($tieneTipo) {
             $query->addSelect('n.TIPO_NOTIFICACION');
@@ -57,7 +59,39 @@ class NotificacionController extends Controller
             $query->addSelect(DB::raw("'MANUAL' as TIPO_NOTIFICACION"));
         }
 
-        if ($tieneLeida) {
+        if ($tieneLeidaPorUsuario && $userId > 0) {
+            $query->leftJoin('tbl_notificacion_usuario as nu', function ($join) use ($userId) {
+                $join->on('nu.FK_COD_NOTIFICACION', '=', 'n.COD_NOTIFICACION')
+                    ->where('nu.FK_COD_USUARIO', '=', $userId);
+            });
+
+            $query->addSelect(DB::raw('COALESCE(nu.LEIDA, 0) as LEIDA'));
+
+            $idsPorMarcar = (clone $query)
+                ->where(function ($q) {
+                    $q->whereNull('nu.COD_NU')
+                        ->orWhere('nu.LEIDA', 0);
+                })
+                ->pluck('n.COD_NOTIFICACION')
+                ->all();
+
+            if (!empty($idsPorMarcar)) {
+                $rows = array_map(function ($id) use ($userId) {
+                    return [
+                        'FK_COD_NOTIFICACION' => (int) $id,
+                        'FK_COD_USUARIO' => $userId,
+                        'LEIDA' => 1,
+                        'FEC_LEIDA' => now(),
+                    ];
+                }, $idsPorMarcar);
+
+                DB::table('tbl_notificacion_usuario')->upsert(
+                    $rows,
+                    ['FK_COD_NOTIFICACION', 'FK_COD_USUARIO'],
+                    ['LEIDA', 'FEC_LEIDA']
+                );
+            }
+        } elseif ($tieneLeida) {
             $query->addSelect('n.LEIDA');
 
             $idsPorMarcar = (clone $query)
@@ -84,7 +118,7 @@ class NotificacionController extends Controller
         ]);
     }
 
-    private function aplicarFiltros($query, Request $request): void
+    private function aplicarFiltros($query, Request $request, bool $tieneTipoColumna): void
     {
         if ($request->filled('fecha_desde')) {
             $query->whereDate('n.FEC_ENVIO', '>=', $request->input('fecha_desde'));
@@ -98,7 +132,11 @@ class NotificacionController extends Controller
             $query->where('c.ESTADO_CITA', $request->input('estado_cita'));
         }
 
-        if ($request->filled('tipo') && array_key_exists($request->input('tipo'), $this->tipos)) {
+        if (
+            $tieneTipoColumna &&
+            $request->filled('tipo') &&
+            array_key_exists($request->input('tipo'), $this->tipos)
+        ) {
             $query->where('n.TIPO_NOTIFICACION', $request->input('tipo'));
         }
 

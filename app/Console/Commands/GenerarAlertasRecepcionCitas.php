@@ -27,9 +27,10 @@ class GenerarAlertasRecepcionCitas extends Command
 
         $timestampExpr = DB::raw("TIMESTAMP(c.FEC_CITA, c.HOR_CITA)");
 
-        $citas = DB::table('tbl_cita as c')
+        $query = DB::table('tbl_cita as c')
             ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'c.FK_COD_PACIENTE')
             ->join('tbl_persona as d', 'd.COD_PERSONA', '=', 'c.FK_COD_DOCTOR')
+            ->leftJoin('tbl_estado_cita as e', 'e.COD_ESTADO', '=', 'c.ESTADO_CITA')
             ->select([
                 'c.COD_CITA',
                 'c.FEC_CITA',
@@ -39,11 +40,20 @@ class GenerarAlertasRecepcionCitas extends Command
                 'p.PRIMER_APELLIDO as pac_ape',
                 'd.PRIMER_NOMBRE as doc_nom',
                 'd.PRIMER_APELLIDO as doc_ape',
+                'e.NOM_ESTADO as estado_nombre',
             ])
             ->whereBetween($timestampExpr, [$inicio, $fin])
             ->orderBy('c.FEC_CITA')
-            ->orderBy('c.HOR_CITA')
-            ->get();
+            ->orderBy('c.HOR_CITA');
+
+        if (Schema::hasTable('tbl_estado_cita')) {
+            $query->where(function ($q) {
+                $q->whereNull('e.NOM_ESTADO')
+                    ->orWhereIn(DB::raw('UPPER(TRIM(e.NOM_ESTADO))'), ['PENDIENTE', 'CONFIRMADA']);
+            });
+        }
+
+        $citas = $query->get();
 
         if ($citas->isEmpty()) {
             $this->info('No hay citas en la ventana de 30 minutos.');
