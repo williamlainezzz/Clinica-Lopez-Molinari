@@ -25,7 +25,7 @@
                border border-slate-300 bg-white
                placeholder-slate-400 text-slate-800
                shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500;
+               focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
       }
 
       .modal-panel label {
@@ -37,25 +37,25 @@
       }
 
       .section-kicker {
-        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700;
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700;
       }
     }
   </style>
 </head>
-<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(34,197,94,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(6,182,212,0.16),_transparent_34%),linear-gradient(180deg,_#f8fafc_0%,_#eef7f7_48%,_#f8fafc_100%)] text-slate-800 relative">
+<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,78,216,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_34%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_48%,_#f8fbff_100%)] text-slate-800 relative">
 
   <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-    <div class="absolute left-[-8rem] top-[-7rem] h-80 w-80 rounded-full bg-cyan-200/40 blur-3xl"></div>
-    <div class="absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl"></div>
-    <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-sky-100/50 blur-3xl"></div>
+    <div class="absolute left-[-8rem] top-[-7rem] h-80 w-80 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl"></div>
+    <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
   <header class="mx-auto max-w-7xl px-6 py-6 lg:px-8">
     <div class="flex items-center justify-between rounded-full border border-white/80 bg-white/75 px-5 py-3 shadow-lg shadow-slate-900/5 backdrop-blur">
       <div class="flex items-center gap-3">
-        <img src="{{ asset('images/logo_clinica.avif') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-cyan-50" alt="Logo">
+        <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700">Sistema Clinico</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-blue-700">Sistema Clinico</p>
           <p class="text-base font-semibold text-slate-900 sm:text-lg">Complejo Dental <span class="text-slate-500">Lopez Molinari</span></p>
         </div>
       </div>
@@ -63,7 +63,7 @@
         <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
           Iniciar sesion
         </button>
-        <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800">
+        <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
           Crear cuenta
         </button>
       </div>
@@ -73,74 +73,78 @@
   <main class="mx-auto max-w-7xl px-6 pb-10 pt-4 lg:px-8">
     <section class="grid items-center gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)]">
       <div class="space-y-8">
-        <div class="space-y-5">
-          <span class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-800">
-            <span class="h-2 w-2 rounded-full bg-cyan-500"></span>
-            Plataforma de atencion dental
+        <div class="space-y-4">
+          <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
+            <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+            Clinica dental
           </span>
-          <div class="space-y-4">
-            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl xl:text-6xl">Gestion profesional para una experiencia clinica mas ordenada y confiable.</h1>
-            <p class="max-w-2xl text-lg leading-8 text-slate-600">Centraliza pacientes, accesos y procesos del sistema en un entorno claro, rapido y pensado para el trabajo diario de la clinica.</p>
+          <div class="space-y-3">
+            <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-14 w-auto sm:h-16">
+            <h1 class="max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">
+              Acceso rapido y profesional para tu clinica.
+            </h1>
+            <p class="max-w-xl text-base leading-7 text-slate-600">
+              Inicia sesion, registra tu cuenta y ubica facilmente el local.
+            </p>
           </div>
         </div>
         <div class="flex flex-wrap gap-3">
-          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-cyan-600 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-cyan-600/20 transition hover:bg-cyan-700">Entrar al sistema</button>
+          <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-6 py-3.5 text-sm font-semibold text-white shadow-xl shadow-blue-700/20 transition hover:bg-blue-800">Entrar al sistema</button>
           <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 shadow-lg shadow-slate-900/5 transition hover:border-slate-300 hover:bg-slate-50">Registrar nuevo usuario</button>
         </div>
         <div class="grid gap-4 md:grid-cols-3">
           <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700">Acceso</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Acceso</p>
             <h3 class="mt-3 text-lg font-bold text-slate-900">Ingreso simple</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Inicio de sesion con usuario o correo en una interfaz clara y directa.</p>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Usuario o correo en una vista clara y directa.</p>
           </div>
           <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700">Seguridad</p>
-            <h3 class="mt-3 text-lg font-bold text-slate-900">Proteccion activa</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Contrasenas robustas y preguntas de seguridad para validar identidad.</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Ubicacion</p>
+            <h3 class="mt-3 text-lg font-bold text-slate-900">Encuentranos facil</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Acceso directo a Google Maps del local.</p>
           </div>
           <div class="rounded-3xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-700">Organizacion</p>
-            <h3 class="mt-3 text-lg font-bold text-slate-900">Flujo ordenado</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">Registro y acceso en un mismo lugar con una experiencia visual mas profesional.</p>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700">Imagen</p>
+            <h3 class="mt-3 text-lg font-bold text-slate-900">Identidad visual</h3>
+            <p class="mt-2 text-sm leading-6 text-slate-600">Una bienvenida alineada al logo y al local.</p>
           </div>
         </div>
       </div>
       <section aria-label="Resumen visual de la clinica">
         <div class="rounded-[28px] border border-white/70 bg-white/95 p-5 shadow-2xl shadow-slate-900/10 backdrop-blur sm:p-6">
-          <div class="mb-6 flex items-start justify-between gap-4 rounded-3xl bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 p-5 text-white shadow-lg shadow-cyan-600/15">
+          <div class="mb-5 flex items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-blue-800 via-blue-700 to-sky-600 p-5 text-white shadow-lg shadow-blue-700/20">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">Panel de bienvenida</p>
-              <h2 class="mt-2 text-2xl font-bold">Tu sistema listo para comenzar</h2>
-              <p class="mt-2 text-sm leading-6 text-cyan-50/90">Accede o registra una cuenta en una vista organizada, con mejor lectura y mayor confianza visual.</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Bienvenida</p>
+              <h2 class="mt-2 text-2xl font-bold">Complejo Dental Lopez Molinari</h2>
+              <p class="mt-1 text-sm text-blue-50/90">Acceso, registro y ubicacion en un solo lugar.</p>
             </div>
-            <div class="hidden h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-xl text-white sm:flex">+</div>
+            <img src="{{ asset('images/logo-icon.jpg') }}" alt="Icono dental" class="hidden h-14 w-14 rounded-full border border-white/15 bg-white/10 object-cover p-1 sm:block">
           </div>
-          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
             <div class="space-y-4">
-              <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm font-semibold text-slate-900">Acceso rapido</p>
-                    <p class="mt-1 text-sm text-slate-600">Entra con tus credenciales y continua tu flujo de trabajo.</p>
-                  </div>
-                  <div class="rounded-2xl bg-cyan-100 px-3 py-2 text-xs font-semibold text-cyan-800">Activo</div>
-                </div>
-              </div>
               <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1200&auto=format&fit=crop" alt="Ilustracion clinica" class="h-[250px] w-full rounded-2xl object-cover sm:h-[320px]">
+                <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[260px] w-full rounded-2xl object-cover sm:h-[340px]">
+              </div>
+              <div class="rounded-3xl border border-blue-100 bg-blue-50/80 p-4">
+                <p class="text-sm font-semibold text-slate-900">Visitanos en nuestra ubicacion</p>
+                <p class="mt-1 text-sm text-slate-600">Abre la direccion del local directamente en Google Maps.</p>
+                <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-700 hover:text-white">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
+                  Ver ubicacion en Google Maps
+                </a>
               </div>
             </div>
             <div class="space-y-4">
               <div class="rounded-3xl bg-slate-900 p-5 text-white shadow-xl shadow-slate-900/20">
-                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-300">Registro guiado</p>
-                <p class="mt-3 text-sm leading-6 text-slate-300">Formulario completo con datos personales, seguridad y vista previa de usuario.</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-300">Acceso</p>
+                <p class="mt-3 text-sm leading-6 text-slate-300">Ingreso seguro y registro ordenado para pacientes del sistema.</p>
               </div>
               <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p class="text-sm font-semibold text-slate-900">Seguridad</p>
+                <p class="text-sm font-semibold text-slate-900">Que puedes hacer aqui</p>
                 <ul class="mt-3 space-y-3 text-sm text-slate-600">
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500"></span><span>Credenciales con validacion clara</span></li>
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-cyan-500"></span><span>Preguntas de seguridad obligatorias</span></li>
-                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-slate-400"></span><span>Experiencia visual limpia y consistente</span></li>
+                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-blue-600"></span><span>Iniciar sesion rapidamente</span></li>
+                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-sky-500"></span><span>Crear una nueva cuenta</span></li>
+                  <li class="flex gap-3"><span class="mt-1 h-2.5 w-2.5 rounded-full bg-slate-400"></span><span>Ubicar el local desde Google Maps</span></li>
                 </ul>
               </div>
             </div>
@@ -151,10 +155,12 @@
   </main>
 
   <footer class="mx-auto max-w-7xl px-6 pb-10 lg:px-8">
-    <div class="rounded-[28px] border border-white/80 bg-white/75 px-6 py-5 text-sm text-slate-500 shadow-lg shadow-slate-900/5 backdrop-blur">
+      <div class="rounded-[28px] border border-white/80 bg-white/75 px-6 py-5 text-sm text-slate-500 shadow-lg shadow-slate-900/5 backdrop-blur">
       <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p>&copy; {{ date('Y') }} Complejo Dental Lopez Molinari</p>
-        <p>Sistema de acceso y registro con una experiencia mas clara y profesional.</p>
+        <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-700 transition hover:text-blue-800">
+          Abrir ubicacion del local
+        </a>
       </div>
     </div>
   </footer>
@@ -187,7 +193,7 @@
           </div>
         </div>
         <div class="space-y-4 px-6 py-6">
-          <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">Tu cuenta fue creada correctamente.</div>
+          <div class="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">Tu cuenta fue creada correctamente.</div>
           <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Usuario generado</p>
             <p class="mt-2 font-mono text-lg font-semibold text-slate-900">{{ session('username_generado') }}</p>
@@ -195,7 +201,7 @@
           <p class="text-sm leading-6 text-slate-600">Por seguridad, ahora inicia sesion con tus credenciales para continuar.</p>
         </div>
         <div class="flex justify-end border-t border-slate-200 px-6 py-4">
-          <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700" @click="showRegisterSuccess=false">Aceptar</button>
+          <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800" @click="showRegisterSuccess=false">Aceptar</button>
         </div>
       </div>
     </div>
@@ -204,12 +210,12 @@
       <div class="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" @click="showLogin=false"></div>
 
       <div x-transition class="modal-panel modal-card relative w-full max-w-md overflow-hidden">
-        <div class="bg-gradient-to-r from-cyan-600 to-teal-600 px-6 py-5 text-white">
+        <div class="bg-gradient-to-r from-blue-800 to-blue-600 px-6 py-5 text-white">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">Acceso seguro</p>
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100">Acceso seguro</p>
               <h3 class="mt-2 text-xl font-bold">Iniciar sesion</h3>
-              <p class="mt-2 text-sm text-cyan-50/90">Ingresa con tu usuario o correo y continua en el sistema.</p>
+              <p class="mt-2 text-sm text-blue-50/90">Ingresa con tu usuario o correo y continua en el sistema.</p>
             </div>
             <button class="rounded-xl p-2 text-white/80 transition hover:bg-white/10 hover:text-white" @click="showLogin=false" aria-label="Cerrar">x</button>
           </div>
@@ -240,12 +246,12 @@
 
             <div class="flex items-center justify-between gap-3">
               <label for="remember_me" class="inline-flex items-center gap-2 text-sm text-slate-600">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-cyan-600 shadow-sm focus:ring-cyan-500" name="remember">
+                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-700 shadow-sm focus:ring-blue-500" name="remember">
                 <span>{{ __('Recordarme') }}</span>
               </label>
 
               @if (Route::has('password.request'))
-                <a class="text-sm font-medium text-cyan-700 transition hover:text-cyan-800" href="{{ route('password.request') }}">
+                <a class="text-sm font-medium text-blue-700 transition hover:text-blue-800" href="{{ route('password.request') }}">
                   {{ __('Olvide mi contrasena') }}
                 </a>
               @endif
@@ -285,8 +291,8 @@
             {{-- Header: usuario autogenerado (discreto) --}}
             <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div><p class="section-kicker">Seccion 1</p><h2 class="mt-2 text-lg font-bold text-slate-900">Datos personales</h2><p class="mt-1 text-sm text-slate-600">Ingresa tu informacion principal para crear tu perfil dentro del sistema.</p></div>
-              <div id="username-pill" class="hidden rounded-2xl border border-cyan-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
-                <span class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-700">Usuario asignado</span>
+              <div id="username-pill" class="hidden rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                <span class="block text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">Usuario asignado</span>
                 <code id="username-preview" class="font-semibold"></code>
               </div>
             </div>
@@ -379,7 +385,7 @@
             <div class="mt-4">
               <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
               <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
-                        class="mt-1 block w-full rounded-md border-slate-300 focus:border-cyan-500 focus:ring-cyan-500"
+                        class="mt-1 block w-full rounded-md border-slate-300 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Col. Centro, Calle 1 #123">{{ old('REFERENCIA') }}</textarea>
               <x-input-error :messages="$errors->register->get('REFERENCIA')" class="mt-2" />
             </div>
