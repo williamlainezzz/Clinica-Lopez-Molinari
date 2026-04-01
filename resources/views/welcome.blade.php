@@ -108,6 +108,7 @@
               <span>
                 <span class="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Ubicacion</span>
                 <span class="block text-sm font-semibold text-slate-900">Visitanos en nuestra sede principal</span>
+                <span class="mt-1 block text-xs leading-5 text-slate-500">Toca aqui para abrir la direccion del local en Google Maps.</span>
               </span>
             </a>
           </div>
