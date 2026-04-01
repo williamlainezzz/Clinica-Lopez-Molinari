@@ -85,7 +85,7 @@
             </span>
 
             <div class="space-y-3 pt-2">
-              <h1 class="max-w-3xl text-4xl font-black leading-[0.96] tracking-tight text-slate-950 sm:text-[4.2rem]">
+              <h1 class="max-w-3xl text-[3.2rem] font-black leading-[0.97] tracking-tight text-slate-950 sm:text-[3.7rem]">
                 Tu Sonrisa en un
                 <span class="text-blue-600">Santuario</span>
                 de Precision.
@@ -99,16 +99,15 @@
 
         <section aria-label="Foto del local" class="pt-4">
           <div class="relative rounded-[26px] border border-blue-100 bg-white p-3 shadow-lg shadow-slate-900/8">
-            <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[250px] w-full rounded-[22px] object-cover sm:h-[325px]">
+            <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[280px] w-full rounded-[22px] object-cover sm:h-[350px]">
 
-            <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="absolute bottom-2 right-2 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-xl shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-2xl">
-              <span class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+            <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="absolute bottom-2 right-2 flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-xl shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-2xl">
+              <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 4.97 5.24 11.91 6.05 12.97a1.2 1.2 0 0 0 1.9 0C13.76 20.91 19 13.97 19 9a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z"/></svg>
               </span>
               <span>
                 <span class="block text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Ubicacion</span>
                 <span class="block text-sm font-semibold text-slate-900">Visitanos en nuestra sede principal</span>
-                <span class="mt-1 block text-xs leading-5 text-slate-500">Toca aqui para abrir la direccion del local en Google Maps.</span>
               </span>
             </a>
           </div>
