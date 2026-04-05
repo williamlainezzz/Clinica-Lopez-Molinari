@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordEs;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +14,10 @@ class Usuario extends Authenticatable
     protected $table = 'tbl_usuario';
     protected $primaryKey = 'COD_USUARIO';
 
-    // ❗ Tu tabla NO tiene created_at/updated_at
     public $timestamps = false;
     const CREATED_AT = null;
     const UPDATED_AT = null;
 
-    // La tabla no tiene remember_token
     protected $rememberTokenName = null;
 
     protected $fillable = [
@@ -31,19 +30,16 @@ class Usuario extends Authenticatable
 
     protected $hidden = ['PWD_USUARIO'];
 
-    /** Password para Auth: está en PWD_USUARIO */
     public function getAuthPassword()
     {
         return $this->PWD_USUARIO;
     }
 
-    /** Alias por si alguna vista usa Auth::user()->name */
     public function getNameAttribute()
     {
         return $this->USR_USUARIO;
     }
 
-    /** Email a usar para reset de contraseña (desde tbl_correo por persona) */
     public function getEmailForPasswordReset()
     {
         return DB::table('tbl_correo')
@@ -52,10 +48,14 @@ class Usuario extends Authenticatable
             ->value('CORREO');
     }
 
-    /** Canal de notificaciones por mail -> usa el correo anterior */
     public function routeNotificationForMail($notification = null)
     {
         return $this->getEmailForPasswordReset();
+    }
+
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordEs($token));
     }
 
     public function usuarioPreguntas()
@@ -83,16 +83,8 @@ class Usuario extends Authenticatable
         return $this->belongsTo(Rol::class, 'FK_COD_ROL', 'COD_ROL');
     }
 
-    /**
-     * Verifica si el usuario tiene permiso sobre un objeto / acción
-     * usando la función MySQL fn_tiene_permiso(FK_COD_ROL, OBJETO, ACCION).
-     *
-     * Ejemplo de uso:
-     *   auth()->user()->tienePermiso('SEGURIDAD_USUARIOS', 'VER');
-     */
     public function tienePermiso(string $objeto, string $accion): bool
     {
-        // Si quieres que el rol ADMIN (COD_ROL = 1) tenga acceso total:
         if ((int) $this->FK_COD_ROL === 1) {
             return true;
         }

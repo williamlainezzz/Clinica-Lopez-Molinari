@@ -3,18 +3,20 @@
 
 @isset($saludo)
 {{ $saludo }}
+@else
+Hola,
 @endisset
 
 @component('mail::panel')
 - **Paciente:** {{ $paciente ?? 'Paciente' }}
 - **Doctor(a):** {{ $doctor ?? 'Doctor' }}
-- **Clínica:** {{ $clinica ?? 'Clínica Dental' }}
+- **Clinica:** {{ $clinica ?? 'Clinica Dental' }}
 - **Fecha:** {{ $fecha ?? '' }}
 - **Hora:** {{ $hora ?? '' }}
-- **Tipo de notificación:** {{ $tipo_legible ?? $tipo ?? 'Cita' }}
+- **Tipo de notificacion:** {{ $tipo_legible ?? $tipo ?? 'Cita' }}
 @endcomponent
 
-{{ $mensaje ?? 'Le esperamos en la clínica para su cita programada.' }}
+{{ $mensaje ?? 'Le esperamos en la clinica para su cita programada.' }}
 
 @isset($nota)
 > {{ $nota }}
@@ -24,6 +26,6 @@
 Ver detalles
 @endcomponent
 
-Gracias por confiar en nosotros,
-{{ $clinica ?? config('app.name') }}
+Gracias por confiar en nosotros,  
+**{{ $clinica ?? config('app.name') }}**
 @endcomponent

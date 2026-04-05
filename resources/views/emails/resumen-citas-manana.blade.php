@@ -1,12 +1,12 @@
 @component('mail::message')
-# Resumen de citas para mañana
+# Resumen de citas para manana
 
 Fecha: **{{ $fecha_legible ?? $fecha ?? '' }}**
 
 @isset($intro)
 {{ $intro }}
 @else
-Este es el listado de citas programadas para mañana.  
+Este es el listado de citas programadas para manana.
 @endisset
 
 @component('mail::panel')
@@ -18,10 +18,10 @@ Este es el listado de citas programadas para mañana.
 
 ---
 @empty
-No hay citas programadas para mañana.
+No hay citas programadas para manana.
 @endforelse
 @endcomponent
 
-Gracias por coordinar la agenda de la clínica,  
-{{ $clinica ?? config('app.name') }}
+Gracias por coordinar la agenda de la clinica,  
+**{{ $clinica ?? config('app.name') }}**
 @endcomponent

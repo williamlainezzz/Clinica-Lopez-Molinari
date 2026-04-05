@@ -2,24 +2,6 @@
 
 @section('title', 'Usuario')
 
-@php
-    $nombreCompleto = trim(collect([
-        $user->persona->PRIMER_NOMBRE ?? '',
-        $user->persona->SEGUNDO_NOMBRE ?? '',
-        $user->persona->PRIMER_APELLIDO ?? '',
-        $user->persona->SEGUNDO_APELLIDO ?? '',
-    ])->filter()->implode(' '));
-
-    $nombreMostrar = $nombreCompleto !== '' ? $nombreCompleto : 'Usuario sin nombre registrado';
-    $correoMostrar = $correo ?: 'No registrado';
-    $rolMostrar = $user->rol->NOM_ROL ?? 'No asignado';
-    $iniciales = collect(explode(' ', $nombreCompleto !== '' ? $nombreCompleto : $user->USR_USUARIO))
-        ->filter()
-        ->take(2)
-        ->map(fn ($segmento) => strtoupper(substr($segmento, 0, 1)))
-        ->implode('');
-@endphp
-
 @section('content_header')
     <h1>Usuario / Perfil</h1>
 @stop
@@ -286,7 +268,7 @@
     @endif
 
     @if (session('status') === 'password-updated')
-        <x-adminlte-alert theme="success" title="Exito" dismissable>Tu contrase&ntilde;a fue actualizada correctamente.</x-adminlte-alert>
+        <x-adminlte-alert theme="success" title="Éxito" dismissable>Tu contraseña fue actualizada correctamente.</x-adminlte-alert>
     @endif
 
     @if ($errors->usuarioPassword->any())
@@ -295,139 +277,329 @@
         </x-adminlte-alert>
     @endif
 
-    <div class="profile-shell">
-        <div class="card profile-panel mb-0">
-            <div class="profile-summary">
-                <div class="profile-avatar">{{ $iniciales !== '' ? $iniciales : 'US' }}</div>
-                <div class="profile-kicker">
-                    <i class="fas fa-user-shield"></i>
-                    <span>Acceso personal</span>
-                </div>
-                <h2>{{ $nombreMostrar }}</h2>
-                <p>Gestiona tu informacion de acceso, revisa tus datos y mant&eacute;n tu cuenta protegida desde un solo lugar.</p>
-
-                <div class="profile-meta">
-                    <div class="profile-meta-item">
-                        <span>Usuario</span>
-                        <strong>{{ $user->USR_USUARIO }}</strong>
-                    </div>
-                    <div class="profile-meta-item">
-                        <span>Rol actual</span>
-                        <strong>{{ $rolMostrar }}</strong>
-                    </div>
-                    <div class="profile-meta-item">
-                        <span>Correo vinculado</span>
-                        <strong>{{ $correoMostrar }}</strong>
-                    </div>
-                </div>
-            </div>
+    <div class="card card-outline card-primary">
+        <div class="card-header p-0 border-bottom-0">
+            <ul class="nav nav-tabs" id="usuario-tabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" id="tab-perfil" data-toggle="pill" href="#pane-perfil" role="tab">Mi perfil</a></li>
+                <li class="nav-item"><a class="nav-link" id="tab-pwd" data-toggle="pill" href="#pane-pwd" role="tab">Cambiar contraseña</a></li>
+                <li class="nav-item"><a class="nav-link" id="tab-preguntas" data-toggle="pill" href="#pane-preguntas" role="tab">Mis preguntas de seguridad</a></li>
+            </ul>
         </div>
+        <div class="card-body">
+            <div class="tab-content" id="usuario-tabs-content">
+                <div class="tab-pane fade show active" id="pane-perfil" role="tabpanel">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-3">Usuario</dt>
+                        <dd class="col-sm-9">{{ $user->USR_USUARIO }}</dd>
 
-        <div>
-            <div class="card profile-panel mb-4">
-                <div class="panel-header">
-                    <h3>Resumen del perfil</h3>
-                    <p>Informacion principal de tu cuenta dentro del sistema.</p>
+                        <dt class="col-sm-3">Nombre</dt>
+                        <dd class="col-sm-9">{{ trim(($user->persona->PRIMER_NOMBRE ?? '') . ' ' . ($user->persona->SEGUNDO_NOMBRE ?? '') . ' ' . ($user->persona->PRIMER_APELLIDO ?? '') . ' ' . ($user->persona->SEGUNDO_APELLIDO ?? '')) }}</dd>
+
+                        <dt class="col-sm-3">Correo</dt>
+                        <dd class="col-sm-9">{{ $correo ?: 'No registrado' }}</dd>
+
+                        <dt class="col-sm-3">Rol</dt>
+                        <dd class="col-sm-9">{{ $user->rol->NOM_ROL ?? 'No asignado' }}</dd>
+                    </dl>
                 </div>
-                <div class="panel-body">
-                    <div class="info-grid">
-                        <div class="info-card">
-                            <span><i class="fas fa-id-badge"></i> Usuario</span>
-                            <strong>{{ $user->USR_USUARIO }}</strong>
+
+                <div class="tab-pane fade" id="pane-pwd" role="tabpanel">
+                    <form method="POST" action="{{ route('usuario.password.update') }}" id="password-form">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="form-group">
+                            <label for="current_password">Contraseña actual</label>
+                            <input type="password" class="form-control" name="current_password" id="current_password" required>
                         </div>
-                        <div class="info-card">
-                            <span><i class="fas fa-user-tag"></i> Rol</span>
-                            <strong>{{ $rolMostrar }}</strong>
+
+                        <div class="form-group">
+                            <label for="password">Nueva contraseña</label>
+                            <input type="password" class="form-control" name="password" id="password" required>
                         </div>
-                        <div class="info-card">
-                            <span><i class="fas fa-address-card"></i> Nombre completo</span>
-                            <strong>{{ $nombreMostrar }}</strong>
+
+                        <div id="pw-rules" class="mb-3 small">
+                            <div data-rule="len" class="text-danger">Mínimo 10 caracteres.</div>
+                            <div data-rule="upper" class="text-danger">Incluye una letra mayúscula.</div>
+                            <div data-rule="lower" class="text-danger">Incluye una letra minúscula.</div>
+                            <div data-rule="num" class="text-danger">Incluye un número.</div>
+                            <div data-rule="sym" class="text-danger">Incluye un símbolo.</div>
                         </div>
-                        <div class="info-card">
-                            <span><i class="fas fa-envelope"></i> Correo electronico</span>
-                            <strong>{{ $correoMostrar }}</strong>
+
+                        <div class="form-group">
+                            <label for="password_confirmation">Confirmar nueva contraseña</label>
+                            <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" required>
+                            <small id="match-msg" class="text-danger">La confirmación debe coincidir.</small>
                         </div>
-                    </div>
+
+                        <button class="btn btn-primary">Actualizar contraseña</button>
+                    </form>
                 </div>
-            </div>
 
-            <div class="card security-panel mb-4">
-                <div class="panel-header">
-                    <h3>Seguridad de acceso</h3>
-                    <p>Actualiza tu contrase&ntilde;a con una combinacion segura y facil de recordar para ti.</p>
-                </div>
-                <div class="panel-body">
-                    <div class="security-layout">
-                        <div>
-                            <form method="POST" action="{{ route('usuario.password.update') }}" id="password-form">
-                                @csrf
-                                @method('PUT')
-
-                                <div class="form-group">
-                                    <label for="current_password">Contrase&ntilde;a actual</label>
-                                    <input type="password" class="form-control" name="current_password" id="current_password" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="password">Nueva contrase&ntilde;a</label>
-                                    <input type="password" class="form-control" name="password" id="password" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="password_confirmation">Confirmar nueva contrase&ntilde;a</label>
-                                    <input type="password" class="form-control" name="password_confirmation" id="password_confirmation" required>
-                                    <small id="match-msg" class="text-danger">La confirmacion debe coincidir.</small>
-                                </div>
-
-                                <button class="btn btn-primary px-4">Actualizar contrase&ntilde;a</button>
-                            </form>
-                        </div>
-
-                        <div class="security-guide">
-                            <h4>Requisitos de seguridad</h4>
-                            <ul>
-                                <li>Evita usar informacion personal o claves anteriores.</li>
-                                <li>Combina letras, numeros y simbolos para mayor fortaleza.</li>
-                                <li>Si la compartiste o la olvidaste, actualizala de inmediato.</li>
-                            </ul>
-
-                            <div id="pw-rules" class="rule-list">
-                                <div data-rule="len" class="rule-item text-danger"><i class="fas fa-circle"></i><span>Minimo 10 caracteres.</span></div>
-                                <div data-rule="upper" class="rule-item text-danger"><i class="fas fa-circle"></i><span>Incluye una letra mayuscula.</span></div>
-                                <div data-rule="lower" class="rule-item text-danger"><i class="fas fa-circle"></i><span>Incluye una letra minuscula.</span></div>
-                                <div data-rule="num" class="rule-item text-danger"><i class="fas fa-circle"></i><span>Incluye un numero.</span></div>
-                                <div data-rule="sym" class="rule-item text-danger"><i class="fas fa-circle"></i><span>Incluye un simbolo.</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card questions-panel mb-0">
-                <div class="panel-header">
-                    <h3>Preguntas de seguridad</h3>
-                    <p>Estas preguntas ayudan a validar tu identidad cuando se requiere una verificacion adicional.</p>
-                </div>
-                <div class="panel-body">
+                <div class="tab-pane fade" id="pane-preguntas" role="tabpanel">
                     @if($preguntas->isEmpty())
-                        <div class="text-muted">No tienes preguntas de seguridad configuradas.</div>
+                        <p class="text-muted mb-0">No tienes preguntas de seguridad configuradas.</p>
                     @else
-                        <div class="questions-list">
-                            @foreach($preguntas as $indice => $p)
-                                <div class="question-item">
-                                    <div class="question-index">{{ $indice + 1 }}</div>
-                                    <div>
-                                        <p>{{ $p->pregunta->TEXTO_PREGUNTA ?? 'Pregunta no disponible' }}</p>
-                                        <small>La respuesta permanece oculta por motivos de seguridad.</small>
-                                    </div>
-                                </div>
+                        <ol class="mb-0 pl-3">
+                            @foreach($preguntas as $p)
+                                <li class="mb-2">{{ $p->pregunta->TEXTO_PREGUNTA ?? 'Pregunta no disponible' }}</li>
                             @endforeach
-                        </div>
+                        </ol>
+                        <small class="text-muted">Por seguridad, las respuestas no se muestran.</small>
                     @endif
                 </div>
             </div>
-        </div>
+        </section>
     </div>
+@stop
+
+@section('css')
+<style>
+    .profile-shell {
+        display: grid;
+        gap: 1.25rem;
+    }
+
+    .profile-section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .profile-section-copy {
+        color: #56708f;
+        font-size: 1rem;
+    }
+
+    .profile-summary-header,
+    .profile-security-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.35rem;
+    }
+
+    .profile-summary-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.65rem 0.9rem;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.08);
+        color: #1d4ed8;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .profile-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .profile-info-card {
+        padding: 1.15rem 1.2rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(191, 219, 254, 0.8);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 255, 0.96));
+        min-height: 102px;
+    }
+
+    .profile-info-card--wide {
+        grid-column: span 2;
+    }
+
+    .profile-info-label {
+        display: inline-block;
+        margin-bottom: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.78rem;
+        color: #5d7596;
+        font-weight: 700;
+    }
+
+    .profile-info-value {
+        display: block;
+        color: #0f172a;
+        font-size: 1.15rem;
+        line-height: 1.35;
+    }
+
+    .profile-security-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.95fr);
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    .password-guidance-card {
+        padding: 1.2rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(191, 219, 254, 0.8);
+        background: linear-gradient(180deg, rgba(248, 250, 255, 0.98), rgba(239, 246, 255, 0.96));
+    }
+
+    .password-guidance-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .password-guidance-card__header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .password-guidance-copy {
+        color: #5d7596;
+    }
+
+    .password-strength-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .strength-empty,
+    .strength-low {
+        background: rgba(248, 113, 113, 0.12);
+        color: #dc2626;
+    }
+
+    .strength-medium {
+        background: rgba(245, 158, 11, 0.14);
+        color: #b45309;
+    }
+
+    .strength-high {
+        background: rgba(34, 197, 94, 0.15);
+        color: #15803d;
+    }
+
+    .password-rules {
+        display: grid;
+        gap: 0.7rem;
+    }
+
+    .password-rule {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.85rem 0.95rem;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(203, 213, 225, 0.9);
+        background: #ffffff;
+        transition: all 0.18s ease;
+    }
+
+    .password-rule__icon {
+        width: 1.4rem;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .password-rule.is-pending {
+        color: #64748b;
+    }
+
+    .password-rule.is-pending .password-rule__icon {
+        color: #94a3b8;
+    }
+
+    .password-rule.is-valid {
+        border-color: rgba(74, 222, 128, 0.7);
+        background: rgba(240, 253, 244, 0.95);
+        color: #166534;
+    }
+
+    .password-rule.is-valid .password-rule__icon {
+        color: #16a34a;
+    }
+
+    .password-rule.is-invalid {
+        border-color: rgba(252, 165, 165, 0.9);
+        background: rgba(254, 242, 242, 0.96);
+        color: #dc2626;
+    }
+
+    .password-rule.is-invalid .password-rule__icon {
+        color: #ef4444;
+    }
+
+    .password-match-hint {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.55rem 0.8rem;
+        border-radius: 0.8rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .password-match-hint.is-pending {
+        background: rgba(226, 232, 240, 0.65);
+        color: #64748b;
+    }
+
+    .password-match-hint.is-valid {
+        background: rgba(220, 252, 231, 0.9);
+        color: #166534;
+    }
+
+    .password-match-hint.is-invalid {
+        background: rgba(254, 226, 226, 0.95);
+        color: #dc2626;
+    }
+
+    .security-questions-list {
+        display: grid;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+
+    .security-question-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.95rem 1rem;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(191, 219, 254, 0.75);
+        background: rgba(248, 250, 255, 0.95);
+        color: #1e3a8a;
+        font-weight: 600;
+    }
+
+    .security-question-item i {
+        color: #2563eb;
+    }
+
+    @media (max-width: 991.98px) {
+        .profile-summary-grid,
+        .profile-security-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-info-card--wide {
+            grid-column: span 1;
+        }
+
+        .profile-summary-header,
+        .profile-security-header,
+        .password-guidance-card__header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
 @stop
 
 @section('js')
@@ -435,29 +607,25 @@
 (() => {
     const pass = document.getElementById('password');
     const conf = document.getElementById('password_confirmation');
+    const matchMsg = document.getElementById('match-msg');
+    const strengthBadge = document.getElementById('password-strength');
 
-    if (!pass || !conf) {
+    if (!pass || !conf || !matchMsg || !strengthBadge) {
         return;
     }
 
     const rules = {
-        len: v => v.length >= 10,
-        upper: v => /[A-Z]/.test(v),
-        lower: v => /[a-z]/.test(v),
-        num: v => /\d/.test(v),
-        sym: v => /[^A-Za-z0-9]/.test(v),
+        len: value => value.length >= 10,
+        upper: value => /[A-Z]/.test(value),
+        lower: value => /[a-z]/.test(value),
+        num: value => /\d/.test(value),
+        sym: value => /[^A-Za-z0-9]/.test(value),
     };
 
     function paint(el, ok) {
         if (!el) return;
         el.classList.toggle('text-success', ok);
         el.classList.toggle('text-danger', !ok);
-
-        const icon = el.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-check-circle', ok);
-            icon.classList.toggle('fa-circle', !ok);
-        }
     }
 
     function updateRules() {
@@ -468,13 +636,13 @@
 
         const match = conf.value.length > 0 && conf.value === val;
         const msg = document.getElementById('match-msg');
-        msg.textContent = match ? 'Confirmacion correcta.' : 'La confirmacion debe coincidir.';
+        msg.textContent = match ? 'Confirmación correcta.' : 'La confirmación debe coincidir.';
         paint(msg, match);
     }
 
-    pass.addEventListener('input', updateRules);
-    conf.addEventListener('input', updateRules);
-    updateRules();
+    pass.addEventListener('input', refresh);
+    conf.addEventListener('input', refresh);
+    refresh();
 })();
 </script>
 @stop

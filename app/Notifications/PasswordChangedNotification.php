@@ -26,14 +26,12 @@ class PasswordChangedNotification extends Notification
         $months = (int) config('security.password_expiry_months_label', 2);
 
         return (new MailMessage)
-            ->subject('Confirmación de cambio de contraseña')
-            ->greeting('Hola,')
-            ->line('Se confirmó correctamente un cambio de contraseña en tu cuenta del sistema clínico.')
-            ->line('**Usuario:** ' . $this->username)
-            ->line('**Nueva contraseña:** ' . $this->newPassword)
-            ->line('Por seguridad, esta contraseña vence en ' . $months . ' meses.')
-            ->line('Recomendación: no compartas tu contraseña con nadie y cámbiala inmediatamente si no reconoces este cambio.')
-            ->line('Si no reconoces este cambio, comunícate de inmediato con soporte.')
-            ->salutation('Clínica Dental López Molinari');
+            ->subject('Confirmacion de cambio de contrasena')
+            ->markdown('emails.password-changed', [
+                'username' => $this->username,
+                'newPassword' => $this->newPassword,
+                'months' => $months,
+                'appName' => config('app.name'),
+            ]);
     }
 }

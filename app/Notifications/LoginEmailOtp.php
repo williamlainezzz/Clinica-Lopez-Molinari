@@ -3,17 +3,18 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class LoginEmailOtp extends Notification
 {
     use Queueable;
 
     public function __construct(
-        public string $code,           // Código OTP (ej. 6 dígitos)
-        public int $ttlMinutes = 5     // Minutos de validez
-    ) {}
+        public string $code,
+        public int $ttlMinutes = 5
+    ) {
+    }
 
     public function via($notifiable)
     {
@@ -23,11 +24,11 @@ class LoginEmailOtp extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->subject('Tu código de verificación')
+            ->subject('Tu codigo de verificacion')
             ->markdown('emails.login-otp', [
-                'code'       => $this->code,
+                'code' => $this->code,
                 'ttlMinutes' => $this->ttlMinutes,
-                'appName'    => config('app.name', 'Clínica Odontológica'),
+                'appName' => config('app.name', 'Clinica Odontologica'),
             ]);
     }
 }

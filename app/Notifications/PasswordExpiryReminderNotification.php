@@ -24,13 +24,12 @@ class PasswordExpiryReminderNotification extends Notification
         $days = (int) config('security.password_reminder_days', 15);
 
         return (new MailMessage)
-            ->subject('Recordatorio de caducidad de contraseña')
-            ->greeting('Hola,')
-            ->line('Tu contraseña del sistema clínico está próxima a vencer.')
-            ->line('**Usuario:** ' . $this->username)
-            ->line('Te recomendamos cambiarla antes de los próximos ' . $days . ' días.')
-            ->line('Ingresa al sistema para renovarla antes del vencimiento.')
-            ->action('Ir al sistema', url('/usuario/perfil'))
-            ->salutation('Clínica Dental López Molinari');
+            ->subject('Recordatorio de caducidad de contrasena')
+            ->markdown('emails.password-expiry-reminder', [
+                'username' => $this->username,
+                'days' => $days,
+                'profileUrl' => url('/usuario/perfil'),
+                'appName' => config('app.name'),
+            ]);
     }
 }
