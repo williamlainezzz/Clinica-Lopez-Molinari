@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Usuario;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Password;
@@ -16,7 +18,7 @@ class PasswordResetLinkController extends Controller
         return view('auth.forgot-password');
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email']]);
 
@@ -37,7 +39,20 @@ class PasswordResetLinkController extends Controller
         }
 
         $token = Password::broker()->createToken($user);
-        $user->sendPasswordResetNotification($token);
+
+        try {
+            $user->sendPasswordResetNotification($token);
+        } catch (\Throwable $e) {
+            Log::error('No se pudo enviar el correo de recuperacion de contrasena.', [
+                'email' => $request->email,
+                'user_id' => $user->COD_USUARIO ?? null,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'email' => 'No se pudo enviar el correo de recuperacion en este momento. Intentalo nuevamente en unos minutos.',
+            ]);
+        }
 
         return $generic;
     }
