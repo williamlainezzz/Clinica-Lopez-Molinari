@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -138,7 +139,20 @@ class TwoFactorEmailController extends Controller
         ], now()->addMinutes($ttl));
 
         // Enviar
-        $user->notify(new LoginEmailOtp($code, $ttl));
+        try {
+            $user->notify(new LoginEmailOtp($code, $ttl));
+        } catch (\Throwable $e) {
+            Cache::forget("login_otp:{$userId}");
+
+            Log::error('No se pudo reenviar el OTP de inicio de sesion.', [
+                'user_id' => $userId,
+                'message' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'code' => 'No pudimos reenviar el codigo al correo configurado. Revisa la configuracion del correo e intentalo nuevamente.',
+            ]);
+        }
 
         return back()->with('status', 'Te enviamos un nuevo código a tu correo.');
     }

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use App\Notifications\LoginEmailOtp;
 
 
@@ -56,7 +57,26 @@ class AuthenticatedSessionController extends Controller
     ], now()->addMinutes($ttl));
 
     // 5) Enviar correo con el OTP
-    $user->notify(new LoginEmailOtp($code, $ttl));
+    try {
+        $user->notify(new LoginEmailOtp($code, $ttl));
+    } catch (\Throwable $e) {
+        Cache::forget("login_otp:{$userId}");
+        Auth::logout();
+        $request->session()->forget(['2fa:user_id', '2fa:remember']);
+        $request->session()->regenerateToken();
+
+        Log::error('No se pudo enviar el OTP de inicio de sesion.', [
+            'user_id' => $userId,
+            'message' => $e->getMessage(),
+        ]);
+
+        return back()
+            ->withErrors([
+                'login' => 'No pudimos enviar el codigo de verificacion al correo configurado. Revisa la configuracion del correo e intentalo nuevamente.',
+            ], 'login')
+            ->withInput()
+            ->with('modal', 'login');
+    }
 
     // 6) Marcar sesión como "pendiente de 2FA" (sin completar login todavía)
     session([
