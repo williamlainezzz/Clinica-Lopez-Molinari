@@ -140,7 +140,7 @@
         </div>
 
         <div class="flex items-center justify-between mt-6">
-            <a href="{{ route('welcome') }}" class="text-sm text-gray-600 hover:text-gray-900">
+            <a href="{{ url('/') }}" class="text-sm text-gray-600 hover:text-gray-900">
                 {{ __('Volver a iniciar sesión') }}
             </a>
 
