@@ -32,11 +32,12 @@ use App\Http\Controllers\RegistroPacienteController;
 use App\Http\Controllers\ReportesController;
 use App\Http\Controllers\NotificacionController;
 use App\Http\Controllers\Usuario\UsuarioModuleController;
+use App\Http\Controllers\WelcomeController;
 
 /* =========================
 |  Público / Dashboard
 ========================= */
-Route::get('/', fn() => view('welcome'))->name('welcome');
+Route::get('/', WelcomeController::class)->name('welcome');
 Route::view('/dashboard', 'dashboard')->middleware(['auth', 'password.expiry'])->name('dashboard');
 
 Route::middleware('guest')->get('/registro/paciente', [RegistroPacienteController::class, 'create'])
