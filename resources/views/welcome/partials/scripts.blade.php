@@ -1,6 +1,7 @@
 <script>
   (function () {
     const maxLen = 50;
+    let registerFieldsBound = false;
 
     function splitFullName(value) {
       const parts = (value || '').trim().split(/\s+/).filter(Boolean);
@@ -20,6 +21,7 @@
       const $out2 = document.getElementById('username-preview-inline');
 
       if (!$fullNames || !$fullSurnames || !$firstName || !$firstSurname) {
+        registerFieldsBound = false;
         return;
       }
 
@@ -52,10 +54,14 @@
         }
       }
 
-      ['input', 'change'].forEach(e => {
-        $fullNames.addEventListener(e, syncHiddenFields);
-        $fullSurnames.addEventListener(e, syncHiddenFields);
-      });
+      if (!registerFieldsBound) {
+        ['input', 'change'].forEach(e => {
+          $fullNames.addEventListener(e, syncHiddenFields);
+          $fullSurnames.addEventListener(e, syncHiddenFields);
+        });
+
+        registerFieldsBound = true;
+      }
 
       syncHiddenFields();
     }

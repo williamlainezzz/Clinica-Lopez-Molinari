@@ -1,7 +1,7 @@
 @php
     $brandName = config('mail.from.name', 'Complejo Dental Lopez Molinari');
     $appUrl = 'https://cdentallopezmolinari.com/';
-    $logoUrl = 'https://cdentallopezmolinari.com/images/logo-horizontal.jpg';
+    $logoUrl = 'https://cdentallopezmolinari.com/images/logo-horizontal.avif';
 @endphp
 
 <x-mail::layout>

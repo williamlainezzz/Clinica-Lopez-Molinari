@@ -1,3 +1,60 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    .welcome-shell {
+        @apply min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,78,216,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_34%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_48%,_#f8fbff_100%)] text-slate-800 relative;
+    }
+
+    .welcome-orb {
+        @apply absolute rounded-full blur-3xl;
+    }
+
+    .modal-panel input[type="text"],
+    .modal-panel input[type="email"],
+    .modal-panel input[type="password"],
+    .modal-panel input[type="number"],
+    .modal-panel textarea,
+    .modal-panel select {
+        @apply block w-full mt-1 rounded-xl border border-slate-300 bg-white placeholder-slate-400 text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
+    }
+
+    .modal-panel label {
+        @apply text-[13px] font-semibold tracking-[0.02em] text-slate-700;
+    }
+
+    .modal-card {
+        @apply rounded-[28px] border border-white/70 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur;
+    }
+
+    .section-kicker {
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700;
+    }
+
+    .auth-shell {
+        @apply min-h-screen bg-slate-100 text-slate-900;
+    }
+
+    .auth-card {
+        @apply w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg shadow-slate-900/10;
+    }
+
+    .auth-input {
+        @apply block w-full rounded-xl border-slate-300 bg-white px-4 py-2.5 text-slate-800 shadow-sm focus:border-blue-500 focus:ring-blue-500;
+    }
+
+    .auth-link {
+        @apply text-sm font-medium text-blue-700 transition hover:text-blue-800;
+    }
+
+    .auth-action {
+        @apply inline-flex items-center justify-center rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-semibold tracking-[0.08em] text-white shadow-md shadow-slate-900/15 transition hover:bg-slate-700;
+    }
+}

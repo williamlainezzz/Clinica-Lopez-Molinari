@@ -99,8 +99,8 @@
 
             <div>
               <x-input-label for="CORREO" :value="__('Correo electronico')" />
-              <x-text-input id="CORREO" type="email" name="CORREO" :value="old('CORREO')" required class="block mt-1 w-full {{ ($errors->register ?? $errors)->has('CORREO') ? 'is-invalid' : '' }}" />
-              <x-input-error :messages="($errors->register ?? $errors)->get('CORREO')" class="mt-2" />
+              <x-text-input id="CORREO" type="email" name="CORREO" :value="old('CORREO')" required class="block mt-1 w-full {{ $errors->register->has('CORREO') || $errors->has('CORREO') ? 'is-invalid' : '' }}" />
+              <x-input-error :messages="array_merge($errors->register->get('CORREO'), $errors->get('CORREO'))" class="mt-2" />
             </div>
           </div>
 

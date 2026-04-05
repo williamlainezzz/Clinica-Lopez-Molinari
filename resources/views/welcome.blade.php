@@ -5,45 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bienvenido - Clinica Dental</title>
   <link rel="icon" href="{{ asset('favicon.ico') }}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <style>[x-cloak]{display:none!important}</style>
-
-  <style type="text/tailwindcss">
-    @layer components {
-      .modal-panel input[type="text"],
-      .modal-panel input[type="email"],
-      .modal-panel input[type="password"],
-      .modal-panel input[type="number"],
-      .modal-panel textarea,
-      .modal-panel select {
-        @apply block w-full mt-1 rounded-xl
-               border border-slate-300 bg-white
-               placeholder-slate-400 text-slate-800
-               shadow-sm
-               focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
-      }
-
-      .modal-panel label {
-        @apply text-[13px] font-semibold tracking-[0.02em] text-slate-700;
-      }
-
-      .modal-card {
-        @apply rounded-[28px] border border-white/70 bg-white/95 shadow-2xl shadow-slate-900/10 backdrop-blur;
-      }
-
-      .section-kicker {
-        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700;
-      }
-    }
-  </style>
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,78,216,0.12),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_34%),linear-gradient(180deg,_#f8fbff_0%,_#eef4ff_48%,_#f8fbff_100%)] text-slate-800 relative">
+<body class="welcome-shell">
 
   <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-    <div class="absolute left-[-8rem] top-[-7rem] h-80 w-80 rounded-full bg-blue-200/40 blur-3xl"></div>
-    <div class="absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl"></div>
-    <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
+    <div class="welcome-orb left-[-8rem] top-[-7rem] h-80 w-80 bg-blue-200/40"></div>
+    <div class="welcome-orb right-[-6rem] top-28 h-72 w-72 bg-sky-200/40"></div>
+    <div class="welcome-orb bottom-[-8rem] left-1/3 h-96 w-96 bg-indigo-100/50"></div>
   </div>
 
   <header class="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -222,17 +191,17 @@
       @if ($errors->register->any()) showRegister = true; @endif
     "
   >
-    <template x-if="showRegisterSuccess">
+    <div x-show="showRegisterSuccess" x-cloak>
       @include('welcome.partials.register-success-modal')
-    </template>
+    </div>
 
-    <template x-if="showLogin">
+    <div x-show="showLogin" x-cloak>
       @include('welcome.partials.login-modal')
-    </template>
+    </div>
 
-    <template x-if="showRegister">
+    <div x-show="showRegister" x-cloak>
       @include('welcome.partials.register-modal', ['preguntasSeg' => $preguntasSeg])
-    </template>
+    </div>
   </div>
 
   @include('welcome.partials.scripts')

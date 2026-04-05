@@ -178,7 +178,8 @@ class RegisteredUserController extends Controller
             if ($e->getCode() === '23000') {
                 return back()
                     ->withErrors(['CORREO' => 'Este correo ya está registrado.'])
-                    ->withInput();
+                    ->withInput()
+                    ->with('modal', 'register');
             }
             throw $e;
         }
