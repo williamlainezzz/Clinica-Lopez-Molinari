@@ -140,21 +140,6 @@ Route::middleware(['auth', 'password.expiry'])
     });
 
 /* =========================
-|  Reset Password
-========================= */
-Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
-    ->middleware('guest')->name('password.request');
-
-Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
-    ->middleware(['guest','throttle:6,1'])->name('password.email');
-
-Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
-    ->middleware('guest')->name('password.reset');
-
-Route::post('/reset-password', [NewPasswordController::class, 'store'])
-    ->middleware('guest')->name('password.store');
-
-/* =========================
 |  2FA por Email (guest)
 ========================= */
 Route::middleware('guest')->group(function () {
