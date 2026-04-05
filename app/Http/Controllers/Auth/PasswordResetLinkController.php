@@ -24,23 +24,22 @@ class PasswordResetLinkController extends Controller
 
         App::setLocale(config('app.locale', 'es'));
 
-        $user = Usuario::query()
-            ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'tbl_usuario.FK_COD_PERSONA')
-            ->join('tbl_correo as c', 'c.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
-            ->where('c.CORREO', $request->email)
-            ->select('tbl_usuario.*')
-            ->first();
-
         $translatedStatus = Lang::get('passwords.sent');
         $generic = back()->with('status', $translatedStatus);
 
-        if (!$user) {
-            return $generic;
-        }
-
-        $token = Password::broker()->createToken($user);
-
         try {
+            $user = Usuario::query()
+                ->join('tbl_persona as p', 'p.COD_PERSONA', '=', 'tbl_usuario.FK_COD_PERSONA')
+                ->join('tbl_correo as c', 'c.FK_COD_PERSONA', '=', 'p.COD_PERSONA')
+                ->where('c.CORREO', $request->email)
+                ->select('tbl_usuario.*')
+                ->first();
+
+            if (!$user) {
+                return $generic;
+            }
+
+            $token = Password::broker()->createToken($user);
             $user->sendPasswordResetNotification($token);
         } catch (\Throwable $e) {
             Log::error('No se pudo enviar el correo de recuperacion de contrasena.', [
@@ -49,9 +48,7 @@ class PasswordResetLinkController extends Controller
                 'message' => $e->getMessage(),
             ]);
 
-            return back()->withErrors([
-                'email' => 'No se pudo enviar el correo de recuperacion en este momento. Intentalo nuevamente en unos minutos.',
-            ]);
+            return $generic;
         }
 
         return $generic;
