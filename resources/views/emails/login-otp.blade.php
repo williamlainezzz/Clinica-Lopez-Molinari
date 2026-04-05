@@ -1,21 +1,23 @@
 @component('mail::message')
+# Verificacion en dos pasos
 
-# Verificación en dos pasos
+Hola,
 
-Para continuar con tu inicio de sesión en **{{ $appName }}**, ingresa el siguiente código:
+Recibimos una solicitud para validar tu acceso en **{{ $appName }}**. Usa este codigo de seguridad para continuar:
 
 @component('mail::panel')
-<h2 style="margin:0; text-align:center; letter-spacing:2px;">
-  {{ $code }}
+<h2 style="margin: 0; text-align: center; letter-spacing: 6px; font-size: 32px; color: #1d4ed8;">
+    {{ $code }}
 </h2>
+<p style="margin: 12px 0 0; text-align: center; font-size: 13px; color: #64748b;">
+    Codigo de un solo uso
+</p>
 @endcomponent
 
-Este código es de **un solo uso** y caduca en **{{ $ttlMinutes }} minutos**.
+Este codigo vence en **{{ $ttlMinutes }} minutos** y solo puede utilizarse una vez.
 
-Si tú no iniciaste este proceso, puedes ignorar este mensaje.
+Si no reconoces este intento de acceso, ignora este correo y cambia tu contrasena desde el sistema.
 
-Gracias,  
-Equipo {{ $appName }}
-
+Gracias por cuidar tu cuenta,  
+**{{ $appName }}**
 @endcomponent
-

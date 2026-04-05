@@ -365,13 +365,6 @@ return [
             ],
         ],
 
-        [
-            'text'  => 'Usuario',
-            'route' => 'usuario.perfil',
-            'icon'  => 'fas fa-user-cog',
-            'active' => ['usuario/*'],
-        ],
-
     ],
 
     /*
@@ -406,4 +399,3 @@ return [
 
     'livewire' => false,
 ];
-
