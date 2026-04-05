@@ -35,7 +35,7 @@ class ResetPasswordEs extends Notification implements ShouldQueue
                 ]),
                 'email' => $email,
                 'count' => $expire,
-                'appName' => config('app.name'),
+                'appName' => config('mail.from.name', 'Complejo Dental Lopez Molinari'),
             ]);
     }
 }

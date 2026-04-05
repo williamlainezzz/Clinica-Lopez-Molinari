@@ -31,7 +31,7 @@ class PasswordChangedNotification extends Notification
                 'username' => $this->username,
                 'newPassword' => $this->newPassword,
                 'months' => $months,
-                'appName' => config('app.name'),
+                'appName' => config('mail.from.name', 'Complejo Dental Lopez Molinari'),
             ]);
     }
 }

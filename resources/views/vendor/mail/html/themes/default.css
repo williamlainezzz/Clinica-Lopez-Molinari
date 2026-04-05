@@ -104,6 +104,14 @@ img {
     margin: 0 auto;
 }
 
+.brand-fallback {
+    display: inline-block;
+    color: #0f172a;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
 .body {
     background-color: transparent;
     border: none;

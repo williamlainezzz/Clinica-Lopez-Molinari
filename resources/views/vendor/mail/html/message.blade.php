@@ -1,17 +1,18 @@
 @php
-    $emailLogoPath = public_path('images/email-logo.jpg');
-    $emailLogo = file_exists($emailLogoPath)
-        ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($emailLogoPath))
-        : null;
+    $brandName = config('mail.from.name', 'Complejo Dental Lopez Molinari');
+    $appUrl = config('app.url');
+    $host = parse_url((string) $appUrl, PHP_URL_HOST);
+    $isLocalHost = in_array($host, ['127.0.0.1', 'localhost'], true);
+    $logoUrl = !$isLocalHost ? asset('images/email-logo.jpg') : null;
 @endphp
 
 <x-mail::layout>
 <x-slot:header>
-<x-mail::header :url="config('app.url')">
-@if($emailLogo)
-<img src="{{ $emailLogo }}" alt="{{ config('app.name') }}" class="brand-logo-image">
+<x-mail::header :url="$appUrl">
+@if($logoUrl)
+<img src="{{ $logoUrl }}" alt="{{ $brandName }}" class="brand-logo-image">
 @else
-{{ config('app.name') }}
+<span class="brand-fallback">{{ $brandName }}</span>
 @endif
 </x-mail::header>
 </x-slot:header>
@@ -28,7 +29,7 @@
 
 <x-slot:footer>
 <x-mail::footer>
-Este mensaje fue enviado por **{{ config('app.name') }}**. Si necesitas ayuda, responde a este correo o comunicate con el equipo de la clinica.
+Este mensaje fue enviado por **{{ $brandName }}**. Si necesitas ayuda, responde a este correo o comunicate con el equipo de la clinica.
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

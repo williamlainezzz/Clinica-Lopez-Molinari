@@ -29,7 +29,7 @@ class PasswordExpiryReminderNotification extends Notification
                 'username' => $this->username,
                 'days' => $days,
                 'profileUrl' => url('/usuario/perfil'),
-                'appName' => config('app.name'),
+                'appName' => config('mail.from.name', 'Complejo Dental Lopez Molinari'),
             ]);
     }
 }

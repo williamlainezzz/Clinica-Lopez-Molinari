@@ -28,7 +28,7 @@ class LoginEmailOtp extends Notification
             ->markdown('emails.login-otp', [
                 'code' => $this->code,
                 'ttlMinutes' => $this->ttlMinutes,
-                'appName' => config('app.name', 'Clinica Odontologica'),
+                'appName' => config('mail.from.name', 'Complejo Dental Lopez Molinari'),
             ]);
     }
 }
