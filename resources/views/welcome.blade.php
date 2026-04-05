@@ -50,7 +50,7 @@
     <div class="rounded-[28px] border border-white/80 bg-white/75 px-4 py-3 shadow-lg shadow-slate-900/5 backdrop-blur sm:rounded-full sm:px-5">
       <div class="flex items-center justify-between gap-3">
         <div class="flex min-w-0 items-center gap-3">
-          <img src="{{ asset('images/logo-icon.jpg') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
+          <img src="{{ asset('images/logo-icon.avif') }}" class="h-11 w-11 rounded-full object-cover ring-4 ring-blue-50" alt="Logo">
           <div class="min-w-0">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-blue-700">Sistema Clinico</p>
             <p class="text-sm font-semibold leading-tight text-slate-900 sm:text-lg">Complejo Dental <span class="text-slate-500">Lopez Molinari</span></p>
@@ -89,7 +89,7 @@
         <div class="space-y-5 pt-3">
           <div class="space-y-4">
             <div class="flex items-center">
-              <img src="{{ asset('images/logo-horizontal.jpg') }}" alt="Complejo Dental Lopez Molinari" class="h-18 w-auto sm:h-24">
+              <img src="{{ asset('images/logo-horizontal.avif') }}" alt="Complejo Dental Lopez Molinari" class="h-18 w-auto sm:h-24">
             </div>
 
             <span class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-800">
@@ -112,7 +112,7 @@
 
         <section aria-label="Foto del local" class="pt-4">
           <div class="relative rounded-[26px] border border-blue-100 bg-white p-3 shadow-lg shadow-slate-900/8">
-            <img src="{{ asset('images/clinic-local.png') }}" alt="Fachada del local" class="h-[280px] w-full rounded-[22px] object-cover sm:h-[350px]">
+            <img src="{{ asset('images/clinic-local.avif') }}" alt="Fachada del local" class="h-[280px] w-full rounded-[22px] object-cover sm:h-[350px]">
 
             <a href="https://maps.app.goo.gl/c1FejDNUYQRaAQUS9" target="_blank" rel="noopener noreferrer" class="absolute bottom-2 right-2 flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-xl shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-2xl">
               <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-700">

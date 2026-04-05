@@ -5,15 +5,12 @@
         <form method="POST" action="{{ route('register') }}" class="p-6 md:p-8">
           @csrf
 
-          {{-- Header: título (sin la pastilla aquí) --}}
           <div class="flex items-center justify-between mb-6">
             <h1 class="text-xl md:text-2xl font-semibold text-slate-800">Crear cuenta</h1>
           </div>
 
-          {{-- ===== DATOS PERSONALES ===== --}}
           <h2 class="text-sm font-semibold text-slate-700 mb-3">Datos personales</h2>
 
-          {{-- Nombres (2 columnas) --}}
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="PRIMER_NOMBRE" :value="__('Primer nombre')" />
@@ -29,7 +26,6 @@
             </div>
           </div>
 
-          {{-- Apellidos (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="PRIMER_APELLIDO" :value="__('Primer apellido')" />
@@ -45,7 +41,6 @@
             </div>
           </div>
 
-          {{-- Género + Teléfono (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="TIPO_GENERO" :value="__('Género')" />
@@ -61,12 +56,11 @@
               <x-input-label for="NUM_TELEFONO" :value="__('Teléfono')" />
               <x-text-input id="NUM_TELEFONO" class="block mt-1 w-full" type="text" name="NUM_TELEFONO"
                             :value="old('NUM_TELEFONO')" placeholder="99991234" />
-              <p class="text-[11px] text-slate-500 mt-1">Solo números. (8–10 dígitos).</p>
+              <p class="text-[11px] text-slate-500 mt-1">Solo números. (8-10 dígitos).</p>
               <x-input-error :messages="$errors->get('NUM_TELEFONO')" class="mt-2" />
             </div>
           </div>
 
-          {{-- Departamento + Municipio (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="DEPARTAMENTO" :value="__('Departamento')" />
@@ -82,7 +76,6 @@
             </div>
           </div>
 
-          {{-- Ciudad + Colonia (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="CIUDAD" :value="__('Ciudad')" />
@@ -98,7 +91,6 @@
             </div>
           </div>
 
-          {{-- Dirección / Referencia (ancho) --}}
           <div class="mt-4">
             <x-input-label for="REFERENCIA" :value="__('Dirección / Referencia')" />
             <textarea id="REFERENCIA" name="REFERENCIA" rows="3"
@@ -107,10 +99,8 @@
             <x-input-error :messages="$errors->get('REFERENCIA')" class="mt-2" />
           </div>
 
-          {{-- ===== DATOS DE LA CUENTA ===== --}}
           <h2 class="text-sm font-semibold text-slate-700 mt-8 mb-3">Datos de la cuenta</h2>
 
-          {{-- Correo (ancho) --}}
           <div>
             <x-input-label for="CORREO" :value="__('Correo electrónico')" />
             <x-text-input id="CORREO" class="block mt-1 w-full" type="email" name="CORREO"
@@ -118,7 +108,6 @@
             <x-input-error :messages="$errors->get('CORREO')" class="mt-2" />
           </div>
 
-          {{-- AVISO: Usuario autogenerado (movido aquí, antes de contraseña) --}}
           <div id="username-pill" class="hidden bg-amber-50 border border-amber-200 text-amber-800 rounded-md px-4 py-3 text-sm leading-5 mt-4">
             <div class="font-semibold mb-1">Este será tu usuario para iniciar sesión.</div>
             <div>
@@ -127,7 +116,6 @@
             </div>
           </div>
 
-          {{-- Password + Confirmación (2 columnas) --}}
           <div class="mt-4 grid gap-4 md:grid-cols-2">
             <div>
               <x-input-label for="password" :value="__('Contraseña')" />
@@ -153,7 +141,6 @@
     </div>
   </div>
 
-  {{-- Script: genera y muestra el usuario en la nueva ubicación --}}
   <script>
     (function () {
       const maxLen = 50;

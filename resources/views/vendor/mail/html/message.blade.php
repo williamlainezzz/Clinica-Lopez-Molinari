@@ -1,9 +1,7 @@
 @php
     $brandName = config('mail.from.name', 'Complejo Dental Lopez Molinari');
     $appUrl = 'https://cdentallopezmolinari.com/';
-    $host = parse_url((string) $appUrl, PHP_URL_HOST);
-    $isLocalHost = in_array($host, ['127.0.0.1', 'localhost'], true);
-    $logoUrl = !$isLocalHost ? asset('images/email-logo.jpg') : null;
+    $logoUrl = 'https://cdentallopezmolinari.com/images/logo-horizontal.jpg';
 @endphp
 
 <x-mail::layout>

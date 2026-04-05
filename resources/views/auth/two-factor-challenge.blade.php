@@ -1,5 +1,4 @@
 <x-guest-layout>
-    {{-- Mensaje / estado --}}
     @if (session('status'))
         <div class="mb-4 font-medium text-sm text-green-600">
             {{ session('status') }}
@@ -40,5 +39,3 @@
         </button>
     </form>
 </x-guest-layout>
-
-  

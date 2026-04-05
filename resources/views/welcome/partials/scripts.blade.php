@@ -2,14 +2,26 @@
   (function () {
     const maxLen = 50;
 
-    function bindUsernamePreview() {
-      const $n = document.getElementById('PRIMER_NOMBRE');
-      const $a = document.getElementById('PRIMER_APELLIDO');
-      const $pill = document.getElementById('username-pill');
-      const $out1 = document.getElementById('username-preview');
+    function splitFullName(value) {
+      const parts = (value || '').trim().split(/\s+/).filter(Boolean);
+      return {
+        first: parts[0] || '',
+        second: parts.slice(1).join(' '),
+      };
+    }
+
+    function bindRegisterFields() {
+      const $fullNames = document.getElementById('NOMBRES_COMPLETOS');
+      const $fullSurnames = document.getElementById('APELLIDOS_COMPLETOS');
+      const $firstName = document.getElementById('PRIMER_NOMBRE');
+      const $secondName = document.getElementById('SEGUNDO_NOMBRE');
+      const $firstSurname = document.getElementById('PRIMER_APELLIDO');
+      const $secondSurname = document.getElementById('SEGUNDO_APELLIDO');
       const $out2 = document.getElementById('username-preview-inline');
 
-      if (!$n || !$a) return;
+      if (!$fullNames || !$fullSurnames || !$firstName || !$firstSurname) {
+        return;
+      }
 
       function strip(s) {
         return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -23,25 +35,29 @@
         return (base || 'user').slice(0, maxLen);
       }
 
-      function up() {
-        const u = mk($n.value, $a.value);
-        if (($n.value.trim() || $a.value.trim())) {
-          $pill?.classList.remove('hidden');
-          if ($out1) $out1.textContent = u;
-          if ($out2) $out2.textContent = u;
+      function syncHiddenFields() {
+        const names = splitFullName($fullNames.value);
+        const surnames = splitFullName($fullSurnames.value);
+
+        $firstName.value = names.first;
+        if ($secondName) $secondName.value = names.second;
+        $firstSurname.value = surnames.first;
+        if ($secondSurname) $secondSurname.value = surnames.second;
+
+        const username = mk(names.first, surnames.first);
+        if (($fullNames.value.trim() || $fullSurnames.value.trim())) {
+          if ($out2) $out2.textContent = username;
         } else {
-          $pill?.classList.add('hidden');
-          if ($out1) $out1.textContent = '';
           if ($out2) $out2.textContent = '';
         }
       }
 
       ['input', 'change'].forEach(e => {
-        $n.addEventListener(e, up);
-        $a.addEventListener(e, up);
+        $fullNames.addEventListener(e, syncHiddenFields);
+        $fullSurnames.addEventListener(e, syncHiddenFields);
       });
 
-      up();
+      syncHiddenFields();
     }
 
     document.addEventListener('click', function (e) {
@@ -54,12 +70,12 @@
     });
 
     window.addEventListener('open-register', function () {
-      requestAnimationFrame(bindUsernamePreview);
+      requestAnimationFrame(bindRegisterFields);
     });
 
     document.addEventListener('alpine:init', function () {
       if (@json((bool) ($errors->register->any() || session('modal') === 'register' || request()->query('modal') === 'register'))) {
-        requestAnimationFrame(bindUsernamePreview);
+        requestAnimationFrame(bindRegisterFields);
       }
     });
   })();

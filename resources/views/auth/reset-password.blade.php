@@ -66,21 +66,11 @@
                     style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"
                 >
                     <svg class="h-5 w-5 eye-open" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.8"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         <circle cx="12" cy="12" r="3" stroke-width="1.8" />
                     </svg>
                     <svg class="h-5 w-5 eye-closed hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.8"
-                            d="M3 3l18 18M10.584 10.587A3 3 0 0113.414 13.41M9.88 4.6A9.98 9.98 0 0112 4c4.477 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.082 3.354M6.7 6.704A10.05 10.05 0 004.458 11 10.05 10.05 0 007.7 15.296M12 7a5 5 0 015 5"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.584 10.587A3 3 0 0113.414 13.41M9.88 4.6A9.98 9.98 0 0112 4c4.477 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.082 3.354M6.7 6.704A10.05 10.05 0 004.458 11 10.05 10.05 0 007.7 15.296M12 7a5 5 0 015 5" />
                     </svg>
                 </button>
             </div>
@@ -115,21 +105,11 @@
                     style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"
                 >
                     <svg class="h-5 w-5 eye-open" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.8"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         <circle cx="12" cy="12" r="3" stroke-width="1.8" />
                     </svg>
                     <svg class="h-5 w-5 eye-closed hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.8"
-                            d="M3 3l18 18M10.584 10.587A3 3 0 0113.414 13.41M9.88 4.6A9.98 9.98 0 0112 4c4.477 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.082 3.354M6.7 6.704A10.05 10.05 0 004.458 11 10.05 10.05 0 007.7 15.296M12 7a5 5 0 015 5"
-                        />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.584 10.587A3 3 0 0113.414 13.41M9.88 4.6A9.98 9.98 0 0112 4c4.477 0 8.268 2.943 9.542 7a10.05 10.05 0 01-2.082 3.354M6.7 6.704A10.05 10.05 0 004.458 11 10.05 10.05 0 007.7 15.296M12 7a5 5 0 015 5" />
                     </svg>
                 </button>
             </div>
@@ -202,20 +182,12 @@
 
                     if (input.type === 'password') {
                         input.type = 'text';
-                        if (open) {
-                            open.classList.add('hidden');
-                        }
-                        if (closed) {
-                            closed.classList.remove('hidden');
-                        }
+                        if (open) open.classList.add('hidden');
+                        if (closed) closed.classList.remove('hidden');
                     } else {
                         input.type = 'password';
-                        if (open) {
-                            open.classList.remove('hidden');
-                        }
-                        if (closed) {
-                            closed.classList.add('hidden');
-                        }
+                        if (open) open.classList.remove('hidden');
+                        if (closed) closed.classList.add('hidden');
                     }
                 });
             });

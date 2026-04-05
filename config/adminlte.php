@@ -39,7 +39,7 @@ return [
 
     'logo' => '<span style="white-space:normal;line-height:1.1;font-size:0.95rem;display:inline-block"><b>Complejo Dental</b><br>Lopez Molinari</span>',
 
-    'logo_img' => 'images/logo-icon.jpg',
+    'logo_img' => 'images/logo-icon.avif',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
@@ -54,7 +54,7 @@ return [
     'auth_logo' => [
         'enabled' => true,
         'img' => [
-            'path' => 'images/logo-horizontal.jpg',
+            'path' => 'images/logo-horizontal.avif',
             'alt' => 'Complejo Dental Lopez Molinari',
             'class' => '',
             'width' => 220,
@@ -72,7 +72,7 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'images/logo-icon.jpg',
+            'path' => 'images/logo-icon.avif',
             'alt' => 'Complejo Dental Lopez Molinari',
             'effect' => 'animation__shake',
             'width' => 60,
