@@ -10,9 +10,9 @@
 <body class="welcome-shell">
 
   <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-    <div class="welcome-orb left-[-8rem] top-[-7rem] h-80 w-80 bg-blue-200/40"></div>
-    <div class="welcome-orb right-[-6rem] top-28 h-72 w-72 bg-sky-200/40"></div>
-    <div class="welcome-orb bottom-[-8rem] left-1/3 h-96 w-96 bg-indigo-100/50"></div>
+    <div class="absolute left-[-8rem] top-[-7rem] h-80 w-80 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-[-6rem] top-28 h-72 w-72 rounded-full bg-sky-200/40 blur-3xl"></div>
+    <div class="absolute bottom-[-8rem] left-1/3 h-96 w-96 rounded-full bg-indigo-100/50 blur-3xl"></div>
   </div>
 
   <header class="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -191,17 +191,17 @@
       @if ($errors->register->any()) showRegister = true; @endif
     "
   >
-    <div x-show="showRegisterSuccess" x-cloak>
+    <template x-if="showRegisterSuccess">
       @include('welcome.partials.register-success-modal')
-    </div>
+    </template>
 
-    <div x-show="showLogin" x-cloak>
+    <template x-if="showLogin">
       @include('welcome.partials.login-modal')
-    </div>
+    </template>
 
-    <div x-show="showRegister" x-cloak>
+    <template x-if="showRegister">
       @include('welcome.partials.register-modal', ['preguntasSeg' => $preguntasSeg])
-    </div>
+    </template>
   </div>
 
   @include('welcome.partials.scripts')
