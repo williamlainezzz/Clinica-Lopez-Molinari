@@ -21,7 +21,7 @@
     </div>
 
     <div class="max-h-[85vh] overflow-y-auto p-6">
-      <form method="POST" action="{{ route('register') }}" novalidate class="space-y-6">
+      <form id="welcome-register-form" method="POST" action="{{ route('register') }}" novalidate class="space-y-6">
         @csrf
 
         <input type="hidden" id="PRIMER_NOMBRE" name="PRIMER_NOMBRE" value="{{ old('PRIMER_NOMBRE') }}">
@@ -194,7 +194,7 @@
               <div>
                 <x-input-label for="password" :value="__('Contrasena')" />
                 <div class="relative">
-                  <x-text-input id="password" name="password" x-bind:type="showPwd ? 'text' : 'password'" class="register-password-input block mt-1 w-full pr-10" required autocomplete="new-password" x-model="pwd" />
+                  <x-text-input id="password" name="password" x-bind:type="showPwd ? 'text' : 'password'" class="register-password-input block mt-1 w-full pr-10" required autocomplete="new-password" x-model.debounce.75ms="pwd" />
                   <button type="button" class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700" @click="showPwd = !showPwd" :aria-label="showPwd ? 'Ocultar contrasena' : 'Mostrar contrasena'">
                     <svg x-show="!showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <svg x-show="showPwd" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
@@ -206,7 +206,7 @@
               <div>
                 <x-input-label for="password_confirmation" :value="__('Confirmar contrasena')" />
                 <div class="relative">
-                  <x-text-input id="password_confirmation" name="password_confirmation" x-bind:type="showConfirm ? 'text' : 'password'" class="register-password-input block mt-1 w-full pr-10" required autocomplete="new-password" x-model="confirm" />
+                  <x-text-input id="password_confirmation" name="password_confirmation" x-bind:type="showConfirm ? 'text' : 'password'" class="register-password-input block mt-1 w-full pr-10" required autocomplete="new-password" x-model.debounce.75ms="confirm" />
                   <button type="button" class="absolute inset-y-0 right-2 mt-1 flex items-center text-slate-500 hover:text-slate-700" @click="showConfirm = !showConfirm" :aria-label="showConfirm ? 'Ocultar confirmacion' : 'Mostrar confirmacion'">
                     <svg x-show="!showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <svg x-show="showConfirm" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3l18 18M10.58 10.58A3 3 0 0012 15a3 3 0 002.42-4.42M9.88 5.09A9.96 9.96 0 0112 5c4.477 0 8.268 2.943 9.542 7-.39 1.24-1.02 2.36-1.85 3.33M6.27 6.27C4.39 7.58 3.03 9.54 2.46 12c1.274 4.057 5.065 7 9.542 7a9.96 9.96 0 004.12-.87"/></svg>
@@ -239,7 +239,7 @@
             <button type="button" class="text-sm font-medium text-slate-600 transition hover:text-slate-900" @click="showRegister=false">
               Cancelar
             </button>
-            <x-primary-button class="px-6">Crear cuenta</x-primary-button>
+            <x-primary-button id="welcome-register-submit" class="px-6">Crear cuenta</x-primary-button>
           </div>
         </div>
       </form>
