@@ -29,9 +29,9 @@
           <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
             Iniciar sesion
           </button>
-          <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
+          <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
             Crear cuenta
-          </button>
+          </a>
         </div>
       </div>
 
@@ -39,9 +39,9 @@
         <button type="button" data-open="login" class="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
           Iniciar sesion
         </button>
-        <button type="button" data-open="register" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
+        <a href="{{ route('register') }}" class="inline-flex items-center justify-center rounded-full bg-blue-700 px-3 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-700/20 transition hover:bg-blue-800">
           Crear cuenta
-        </button>
+        </a>
       </div>
     </div>
   </header>
@@ -179,16 +179,13 @@
   </main>
 
   <div
-    x-data="{ showLogin:false, showRegister:false, showRegisterSuccess:false }"
+    x-data="{ showLogin:false, showRegisterSuccess:false }"
     x-on:open-login.window="showLogin = true"
-    x-on:open-register.window="showRegister = true"
-    x-on:close-modals.window="showLogin = false; showRegister = false; showRegisterSuccess = false"
+    x-on:close-modals.window="showLogin = false; showRegisterSuccess = false"
     x-init="
       @if (session('modal') === 'login' || request()->query('modal') === 'login') showLogin = true; @endif
-      @if (session('modal') === 'register' || request()->query('modal') === 'register') showRegister = true; @endif
       @if (session('modal') === 'welcome-register-success') showRegisterSuccess = true; @endif
       @if ($errors->login->any()) showLogin = true; @endif
-      @if ($errors->register->any()) showRegister = true; @endif
     "
   >
     <template x-if="showRegisterSuccess">
@@ -197,10 +194,6 @@
 
     <template x-if="showLogin">
       @include('welcome.partials.login-modal')
-    </template>
-
-    <template x-if="showRegister">
-      @include('welcome.partials.register-modal', ['preguntasSeg' => $preguntasSeg])
     </template>
   </div>
 

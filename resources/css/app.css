@@ -57,4 +57,48 @@
     .auth-action {
         @apply inline-flex items-center justify-center rounded-xl bg-slate-800 px-5 py-2.5 text-sm font-semibold tracking-[0.08em] text-white shadow-md shadow-slate-900/15 transition hover:bg-slate-700;
     }
+
+    .register-shell {
+        @apply min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(29,78,216,0.10),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%),linear-gradient(180deg,_#f7fbff_0%,_#edf4ff_50%,_#f8fbff_100%)] text-slate-900;
+    }
+
+    .register-card {
+        @apply rounded-[28px] border border-white/80 bg-white shadow-[0_18px_48px_rgba(15,23,42,0.08)] backdrop-blur;
+    }
+
+    .register-card-soft {
+        @apply rounded-[24px] border border-slate-200 bg-slate-50;
+    }
+
+    .register-hero {
+        @apply rounded-[30px] bg-[linear-gradient(135deg,_#0f2f69_0%,_#184b9b_52%,_#2b77d8_100%)] text-white shadow-[0_22px_60px_rgba(15,23,42,0.18)];
+    }
+
+    .register-kicker {
+        @apply text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-700;
+    }
+
+    .register-form label {
+        @apply text-[13px] font-semibold tracking-[0.02em] text-slate-700;
+    }
+
+    .register-form input[type="text"],
+    .register-form input[type="email"],
+    .register-form input[type="password"],
+    .register-form textarea,
+    .register-form select {
+        @apply block w-full rounded-2xl border border-slate-300 bg-white text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15;
+    }
+
+    .register-form textarea {
+        @apply min-h-[112px];
+    }
+
+    .register-stat {
+        @apply rounded-2xl border border-white/15 bg-white/10 px-4 py-4;
+    }
+
+    .register-pill {
+        @apply inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-700;
+    }
 }

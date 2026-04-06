@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Persona;
+use App\Models\PreguntaSeguridad;
 use App\Models\Usuario;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -23,7 +24,16 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        return view('auth.register');
+        $preguntasSeg = Cache::remember('auth.register.active_security_questions', now()->addMinutes(30), function () {
+            return PreguntaSeguridad::query()
+                ->where('ESTADO', 1)
+                ->orderBy('TEXTO_PREGUNTA')
+                ->get();
+        });
+
+        return view('auth.register', [
+            'preguntasSeg' => $preguntasSeg,
+        ]);
     }
 
     /**
