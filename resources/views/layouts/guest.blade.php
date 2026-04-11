@@ -13,6 +13,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('layouts.partials.theme-head')
     </head>
     @php
         $isWideAuthRoute = request()->routeIs('register') || request()->routeIs('registro.paciente');

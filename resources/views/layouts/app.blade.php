@@ -13,12 +13,13 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @include('layouts.partials.theme-head')
 
         {{-- Quitar fondo/figura azul heredada de otros estilos --}}
         <style>
             body {
                 background-image: none !important;
-                background-color: #f4f6f9 !important; /* estilo tipo AdminLTE */
+                background-color: transparent !important;
                 background-repeat: no-repeat;
                 background-size: auto;
             }

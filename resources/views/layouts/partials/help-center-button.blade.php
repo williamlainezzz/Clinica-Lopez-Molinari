@@ -1,7 +1,7 @@
 <li class="nav-item d-flex align-items-center mr-2">
     <button
         type="button"
-        class="btn btn-outline-primary btn-sm font-weight-semibold brand-navbar-btn"
+        class="btn btn-sm font-weight-semibold brand-navbar-btn brand-navbar-pill brand-navbar-pill--help"
         data-toggle="modal"
         data-target="#helpCenterModal"
     >

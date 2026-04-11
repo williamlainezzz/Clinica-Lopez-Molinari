@@ -407,6 +407,99 @@
         color: #2563eb;
     }
 
+    html[data-theme='dark'] .profile-section-title {
+        color: #e5eefc;
+    }
+
+    html[data-theme='dark'] .profile-section-copy {
+        color: #9fb1cb;
+    }
+
+    html[data-theme='dark'] .profile-summary-badge {
+        background: rgba(37, 99, 235, 0.16);
+        color: #93c5fd;
+    }
+
+    html[data-theme='dark'] .profile-info-card {
+        border-color: rgba(96, 165, 250, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
+        box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.05);
+    }
+
+    html[data-theme='dark'] .profile-info-label {
+        color: #8da5c8;
+    }
+
+    html[data-theme='dark'] .profile-info-value {
+        color: #e5eefc;
+    }
+
+    html[data-theme='dark'] .password-guidance-card {
+        border-color: rgba(96, 165, 250, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
+        box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.05);
+    }
+
+    html[data-theme='dark'] .password-guidance-card__header h3 {
+        color: #e5eefc;
+    }
+
+    html[data-theme='dark'] .password-guidance-copy {
+        color: #9fb1cb;
+    }
+
+    html[data-theme='dark'] .password-rule {
+        border-color: rgba(96, 165, 250, 0.14);
+        background: rgba(15, 23, 42, 0.9);
+        color: #c7d5eb;
+    }
+
+    html[data-theme='dark'] .password-rule.is-pending {
+        color: #9fb1cb;
+    }
+
+    html[data-theme='dark'] .password-rule.is-pending .password-rule__icon {
+        color: #7f93b4;
+    }
+
+    html[data-theme='dark'] .password-rule.is-valid {
+        border-color: rgba(74, 222, 128, 0.32);
+        background: rgba(20, 83, 45, 0.28);
+        color: #bbf7d0;
+    }
+
+    html[data-theme='dark'] .password-rule.is-invalid {
+        border-color: rgba(248, 113, 113, 0.3);
+        background: rgba(127, 29, 29, 0.28);
+        color: #fecaca;
+    }
+
+    html[data-theme='dark'] .password-match-hint.is-pending {
+        background: rgba(51, 65, 85, 0.72);
+        color: #cbd5e1;
+    }
+
+    html[data-theme='dark'] .password-match-hint.is-valid {
+        background: rgba(20, 83, 45, 0.32);
+        color: #bbf7d0;
+    }
+
+    html[data-theme='dark'] .password-match-hint.is-invalid {
+        background: rgba(127, 29, 29, 0.3);
+        color: #fecaca;
+    }
+
+    html[data-theme='dark'] .security-question-item {
+        border-color: rgba(96, 165, 250, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
+        color: #cfe0ff;
+        box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.05);
+    }
+
+    html[data-theme='dark'] .security-question-item i {
+        color: #60a5fa;
+    }
+
     @media (max-width: 991.98px) {
         .profile-summary-grid,
         .profile-security-layout {

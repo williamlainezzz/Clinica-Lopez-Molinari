@@ -9,7 +9,7 @@
 <li class="nav-item dropdown d-flex align-items-center">
     <a
         href="#"
-        class="btn btn-outline-danger btn-sm brand-logout-toggle brand-navbar-btn text-danger"
+        class="btn btn-sm brand-logout-toggle brand-navbar-btn brand-navbar-pill brand-navbar-pill--danger"
         data-toggle="dropdown"
         aria-haspopup="true"
         aria-expanded="false"
