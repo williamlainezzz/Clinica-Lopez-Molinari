@@ -2,11 +2,179 @@
 
 @section('title', 'Panel')
 
+@section('css')
+<style>
+  .welcome-hero-card {
+    border: 1px solid #dde6f3;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fcfdff 0%, #f4f7fc 100%);
+    box-shadow: 0 6px 18px rgba(15, 52, 96, 0.08);
+    margin-bottom: 1rem;
+  }
+
+  .welcome-hero-title {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #1f2d3d;
+    line-height: 1.25;
+  }
+
+  .welcome-hero-name {
+    color: #114b9b;
+  }
+
+  .welcome-hero-copy {
+    margin: .65rem 0 0;
+    color: #49586f;
+    max-width: 840px;
+    font-size: .98rem;
+  }
+
+  .welcome-role-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: .28rem .78rem;
+    font-size: .78rem;
+    font-weight: 600;
+    color: #0b4b84;
+    background: #e8f2ff;
+    border: 1px solid #c8dcfa;
+    letter-spacing: .01em;
+    margin-top: .85rem;
+  }
+
+  .welcome-role-pill i {
+    margin-right: .38rem;
+    font-size: .76rem;
+    opacity: .82;
+  }
+
+  .content-wrapper .small-box {
+    border-radius: 1rem !important;
+    overflow: hidden;
+  }
+
+  .content-wrapper .small-box .small-box-footer {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+  }
+
+  .content-wrapper .card .card-header {
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+  }
+
+  .content-wrapper .card .card-body {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+  }
+
+  html[data-theme='dark'] .welcome-hero-card {
+    border-color: rgba(96, 165, 250, 0.22);
+    background: linear-gradient(135deg, rgba(10, 22, 46, 0.96) 0%, rgba(11, 27, 56, 0.92) 100%);
+  }
+
+  html[data-theme='dark'] .welcome-hero-title {
+    color: #edf4ff;
+  }
+
+  html[data-theme='dark'] .welcome-hero-name {
+    color: #75b4ff;
+  }
+
+  html[data-theme='dark'] .welcome-hero-copy {
+    color: #c6d5ec;
+  }
+
+  html[data-theme='dark'] .welcome-role-pill {
+    color: #d7e9ff;
+    background: rgba(59, 130, 246, 0.16);
+    border-color: rgba(96, 165, 250, 0.4);
+  }
+
+  @media (max-width: 767.98px) {
+    .welcome-hero-title {
+      font-size: 1.28rem;
+    }
+
+    .welcome-hero-copy {
+      font-size: .92rem;
+    }
+  }
+</style>
+@endsection
+
 @section('content_header')
   <h1></h1>
 @endsection
 
 @section('content')
+@php
+  $usuario = auth()->user();
+  $persona = optional($usuario)->persona;
+  $rol = optional($usuario)->rol;
+
+  $nombreBase = trim((string) ($persona->PRIMER_NOMBRE ?? ''));
+  $apellidoBase = trim((string) ($persona->PRIMER_APELLIDO ?? ''));
+  $nombreCompleto = trim($nombreBase . ' ' . $apellidoBase);
+
+  if ($nombreCompleto === '') {
+      $nombreCompleto = trim((string) ($persona->nombre_completo ?? ''));
+  }
+
+  if ($nombreCompleto === '') {
+      $nombreCompleto = trim((string) ($usuario->USR_USUARIO ?? 'Usuario'));
+  }
+
+  $generoRaw = trim((string) ($persona->TIPO_GENERO ?? ''));
+  $generoNormalizado = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($generoRaw));
+  $esFemenino = in_array($generoNormalizado, ['f', 'femenino', 'mujer', 'female'], true);
+
+  $rolRaw = trim((string) ($rol->NOM_ROL ?? ''));
+  $rolNormalizado = \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($rolRaw));
+  $esDoctor = \Illuminate\Support\Str::contains($rolNormalizado, 'doctor');
+
+  $saludoBase = $esFemenino ? 'Bienvenida' : 'Bienvenido';
+  $encabezadoBienvenida = $saludoBase . ', ' . $nombreCompleto;
+
+  if ($esDoctor) {
+      $prefijoDoctor = $esFemenino ? 'Dra.' : 'Dr.';
+      $encabezadoBienvenida = $saludoBase . ', ' . $prefijoDoctor . ' ' . $nombreCompleto;
+  }
+
+  $etiquetaRol = 'Usuario del sistema';
+  if ($esDoctor) {
+      $etiquetaRol = $esFemenino ? 'Doctora' : 'Doctor';
+  } elseif (\Illuminate\Support\Str::contains($rolNormalizado, 'admin')) {
+      $etiquetaRol = 'Administrador del sistema';
+  } elseif (\Illuminate\Support\Str::contains($rolNormalizado, 'recep')) {
+      $etiquetaRol = 'Recepcionista';
+  } elseif (\Illuminate\Support\Str::contains($rolNormalizado, 'pacient')) {
+      $etiquetaRol = 'Paciente';
+  } elseif ($rolRaw !== '') {
+      $etiquetaRol = \Illuminate\Support\Str::title(\Illuminate\Support\Str::lower($rolRaw));
+  }
+@endphp
+
+<div class="card welcome-hero-card">
+  <div class="card-body py-4 px-4 px-md-5">
+    <h2 class="welcome-hero-title">
+      {!! str_replace($nombreCompleto, '<span class="welcome-hero-name">'.e($nombreCompleto).'</span>', e($encabezadoBienvenida)) !!}
+    </h2>
+
+    <p class="welcome-hero-copy">
+      Le damos la bienvenida al sistema del Complejo Dental López Molinari. Desde este panel podrá gestionar sus actividades de forma segura, rápida y organizada.
+    </p>
+
+    <span class="welcome-role-pill">
+      <i class="fas fa-tooth" aria-hidden="true"></i>
+      {{ $etiquetaRol }}
+    </span>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-lg-3 col-6">
     <div class="small-box bg-info">
