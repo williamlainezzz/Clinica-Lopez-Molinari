@@ -15,7 +15,7 @@
     {{-- Title --}}
     <title>
         @yield('title_prefix', config('adminlte.title_prefix', ''))
-        @yield('title', config('adminlte.title', 'AdminLTE 3'))
+        @yield('title', config('adminlte.title', 'Complejo Dental Lopez Molinari'))
         @yield('title_postfix', config('adminlte.title_postfix', ''))
     </title>
 
