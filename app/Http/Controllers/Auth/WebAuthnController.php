@@ -189,6 +189,15 @@ class WebAuthnController extends Controller
         ]);
     }
 
+    public function destroyCredential(Request $request, WebauthnCredential $credential)
+    {
+        abort_unless((int) $credential->FK_COD_USUARIO === (int) $request->user()->COD_USUARIO, 403);
+
+        $credential->delete();
+
+        return back()->with('status', 'passkey-deleted');
+    }
+
     private function resolveUser(string $login): ?Usuario
     {
         if (filter_var($login, FILTER_VALIDATE_EMAIL)) {

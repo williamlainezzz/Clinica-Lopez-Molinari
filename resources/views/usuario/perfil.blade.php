@@ -32,6 +32,10 @@
         <x-adminlte-alert theme="success" title="Exito" dismissable>Tu contrasena fue actualizada correctamente.</x-adminlte-alert>
     @endif
 
+    @if (session('status') === 'passkey-deleted')
+        <x-adminlte-alert theme="success" title="Listo" dismissable>El dispositivo biometrico fue eliminado correctamente.</x-adminlte-alert>
+    @endif
+
     @if ($errors->usuarioPassword->any())
         <x-adminlte-alert theme="danger" title="Errores" dismissable>
             <ul class="mb-0">@foreach ($errors->usuarioPassword->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
@@ -180,6 +184,40 @@
                         @endunless
                         <div id="passkey-message" class="passkey-message" role="status"></div>
                     </div>
+                </div>
+
+                <div class="passkey-list">
+                    @if($passkeys->isEmpty())
+                        <div class="passkey-empty">
+                            <i class="fas fa-fingerprint"></i>
+                            <span>No hay dispositivos biometricos registrados todavia.</span>
+                        </div>
+                    @else
+                        @foreach($passkeys as $passkey)
+                            <article class="passkey-device">
+                                <div class="passkey-device__icon">
+                                    <i class="fas fa-fingerprint"></i>
+                                </div>
+                                <div class="passkey-device__body">
+                                    <strong>{{ $passkey->NOMBRE ?: 'Dispositivo biometrico' }}</strong>
+                                    <span>
+                                        Registrado {{ optional($passkey->created_at)->format('d/m/Y H:i') ?? 'sin fecha' }}
+                                        @if(!empty($passkey->TRANSPORTS))
+                                            · {{ implode(', ', $passkey->TRANSPORTS) }}
+                                        @endif
+                                    </span>
+                                </div>
+                                <form method="POST" action="{{ route('webauthn.credentials.destroy', $passkey) }}" onsubmit="return confirm('Deseas eliminar el acceso biometrico de este dispositivo?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="fas fa-trash-alt mr-1"></i>
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </article>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </section>
@@ -335,6 +373,58 @@
         display: block;
         background: rgba(254, 226, 226, 0.95);
         color: #dc2626;
+    }
+
+    .passkey-list {
+        display: grid;
+        gap: 0.8rem;
+        margin-top: 1.2rem;
+    }
+
+    .passkey-empty,
+    .passkey-device {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 0.95rem 1rem;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(191, 219, 254, 0.75);
+        background: rgba(248, 250, 255, 0.95);
+    }
+
+    .passkey-empty {
+        color: #5d7596;
+        font-weight: 600;
+    }
+
+    .passkey-device__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.4rem;
+        height: 2.4rem;
+        flex-shrink: 0;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.1);
+        color: #1d4ed8;
+    }
+
+    .passkey-device__body {
+        display: grid;
+        gap: 0.2rem;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .passkey-device__body strong {
+        color: #0f172a;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .passkey-device__body span {
+        color: #64748b;
+        font-size: 0.9rem;
     }
 
     .password-guidance-card {
@@ -533,6 +623,30 @@
         color: #fecaca;
     }
 
+    html[data-theme='dark'] .passkey-empty,
+    html[data-theme='dark'] .passkey-device {
+        border-color: rgba(96, 165, 250, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
+        box-shadow: inset 0 1px 0 rgba(147, 197, 253, 0.05);
+    }
+
+    html[data-theme='dark'] .passkey-empty {
+        color: #9fb1cb;
+    }
+
+    html[data-theme='dark'] .passkey-device__icon {
+        background: rgba(37, 99, 235, 0.18);
+        color: #93c5fd;
+    }
+
+    html[data-theme='dark'] .passkey-device__body strong {
+        color: #e5eefc;
+    }
+
+    html[data-theme='dark'] .passkey-device__body span {
+        color: #9fb1cb;
+    }
+
     html[data-theme='dark'] .password-guidance-card {
         border-color: rgba(96, 165, 250, 0.16);
         background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
@@ -613,6 +727,11 @@
         .passkey-actions {
             justify-items: stretch;
             width: 100%;
+        }
+
+        .passkey-device {
+            align-items: flex-start;
+            flex-direction: column;
         }
 
         .profile-info-card--wide {

@@ -72,6 +72,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:6,1')
         ->name('webauthn.register');
 
+    Route::delete('webauthn/credentials/{credential}', [WebAuthnController::class, 'destroyCredential'])
+        ->name('webauthn.credentials.destroy');
+
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });

@@ -24,11 +24,14 @@ class UsuarioModuleController extends Controller
             ->where('FK_COD_USUARIO', $user->COD_USUARIO)
             ->get();
         $passkeyTableReady = Schema::hasTable('tbl_webauthn_credential');
-        $passkeyCount = $passkeyTableReady
-            ? WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->count()
-            : 0;
+        $passkeys = $passkeyTableReady
+            ? WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)
+                ->latest()
+                ->get()
+            : collect();
+        $passkeyCount = $passkeys->count();
 
-        return view('usuario.perfil', compact('user', 'correo', 'preguntas', 'passkeyCount', 'passkeyTableReady'));
+        return view('usuario.perfil', compact('user', 'correo', 'preguntas', 'passkeys', 'passkeyCount', 'passkeyTableReady'));
     }
 
     public function editPassword()
