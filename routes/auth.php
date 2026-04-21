@@ -23,14 +23,6 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
-    Route::post('webauthn/authentication-options', [WebAuthnController::class, 'authenticationOptions'])
-        ->middleware('throttle:10,1')
-        ->name('webauthn.authentication-options');
-
-    Route::post('webauthn/authenticate', [WebAuthnController::class, 'authenticate'])
-        ->middleware('throttle:10,1')
-        ->name('webauthn.authenticate');
-
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -44,6 +36,14 @@ Route::middleware('guest')->group(function () {
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
 });
+
+Route::post('webauthn/authentication-options', [WebAuthnController::class, 'authenticationOptions'])
+    ->middleware('throttle:10,1')
+    ->name('webauthn.authentication-options');
+
+Route::post('webauthn/authenticate', [WebAuthnController::class, 'authenticate'])
+    ->middleware('throttle:10,1')
+    ->name('webauthn.authenticate');
 
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)

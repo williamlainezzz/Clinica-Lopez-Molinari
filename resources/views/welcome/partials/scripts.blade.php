@@ -64,6 +64,10 @@
         throw new Error(data.message || 'No se pudo completar la verificacion biometrica.');
       }
 
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('La sesion cambio mientras se solicitaba la biometria. Recarga la pagina e intenta de nuevo.');
+      }
+
       return data;
     }
 
@@ -115,6 +119,10 @@
           try {
             const optionsResponse = await postJson('{{ route('webauthn.authentication-options') }}', { login });
             const publicKey = optionsResponse.publicKey;
+
+            if (!publicKey || !publicKey.challenge) {
+              throw new Error(optionsResponse.message || 'No se recibio el reto biometrico. Recarga la pagina e intenta de nuevo.');
+            }
 
             publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
             publicKey.allowCredentials = (publicKey.allowCredentials || []).map(credential => ({
