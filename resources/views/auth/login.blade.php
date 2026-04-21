@@ -51,7 +51,7 @@
                 type="button"
                 class="hidden inline-flex items-center justify-center px-4 py-2 bg-white border border-indigo-300 rounded-md font-semibold text-xs text-indigo-700 uppercase tracking-widest shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed sm:ms-3"
             >
-                Iniciar sesion con biometria
+                Entrar con biometria
             </button>
 
             <x-primary-button class="ms-3">{{ __('Iniciar sesión') }}</x-primary-button>

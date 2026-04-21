@@ -60,7 +60,7 @@
             <span class="inline-flex h-5 w-5 items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.81 4.47A8.47 8.47 0 0 0 12 2.25a8.5 8.5 0 0 0-8.5 8.5v.75a1 1 0 1 0 2 0v-.75a6.5 6.5 0 0 1 11.11-4.6 1 1 0 0 0 1.2-1.68ZM12 6.25a4.5 4.5 0 0 0-4.5 4.5v1.5a1 1 0 1 0 2 0v-1.5a2.5 2.5 0 0 1 4.27-1.77 1 1 0 0 0 1.41-1.41A4.48 4.48 0 0 0 12 6.25Zm8.49 4.72a1 1 0 0 0-1.98.28c.14 1.02.03 2.02-.31 2.95a1 1 0 1 0 1.88.69 8.47 8.47 0 0 0 .41-3.92ZM12 10.25a1 1 0 0 0-1 1v2.25a6.5 6.5 0 0 1-1.7 4.38l-.77.84a1 1 0 0 0 1.48 1.35l.77-.84A8.5 8.5 0 0 0 13 13.5v-2.25a1 1 0 0 0-1-1Zm3.96 1.3a1 1 0 0 0-.96 1.04v.91a10.5 10.5 0 0 1-2.73 7.07 1 1 0 1 0 1.47 1.36A12.5 12.5 0 0 0 17 13.5v-.91a1 1 0 0 0-1.04-1.04ZM7.5 14.75a1 1 0 0 0-2 0 4.5 4.5 0 0 1-1.15 3.01l-.6.67a1 1 0 0 0 1.5 1.32l.59-.67a6.5 6.5 0 0 0 1.66-4.33Z"/></svg>
             </span>
-            Iniciar sesion con biometria
+            Entrar con biometria
           </button>
 
           <x-primary-button class="w-full justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold shadow-lg shadow-slate-900/15 hover:bg-slate-800">

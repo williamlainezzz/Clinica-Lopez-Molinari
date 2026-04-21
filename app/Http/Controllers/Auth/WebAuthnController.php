@@ -87,7 +87,7 @@ class WebAuthnController extends Controller
                 'FK_COD_USUARIO' => $user->COD_USUARIO,
                 'PUBLIC_KEY_COSE' => $verified['public_key_cose'],
                 'SIGN_COUNT' => $verified['sign_count'],
-                'NOMBRE' => $request->userAgent() ? Str::limit($request->userAgent(), 120, '') : 'Dispositivo biometrico',
+                'NOMBRE' => $request->userAgent() ? Str::limit($request->userAgent(), 255, '') : 'Dispositivo biometrico',
                 'TRANSPORTS' => $payload['response']['transports'] ?? ['internal'],
             ]
         );

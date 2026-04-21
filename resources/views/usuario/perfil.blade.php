@@ -199,7 +199,7 @@
                                     <i class="fas fa-fingerprint"></i>
                                 </div>
                                 <div class="passkey-device__body">
-                                    <strong>{{ $passkey->NOMBRE ?: 'Dispositivo biometrico' }}</strong>
+                                    <strong>{{ $passkey->display_name }}</strong>
                                     <span>
                                         Registrado {{ optional($passkey->created_at)->format('d/m/Y H:i') ?? 'sin fecha' }}
                                         @if(!empty($passkey->TRANSPORTS))
