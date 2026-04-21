@@ -173,6 +173,11 @@
                             <i class="fas fa-fingerprint mr-2"></i>
                             Activar inicio con biometria
                         </button>
+                        @unless($passkeyTableReady)
+                            <div class="passkey-message is-error">
+                                La tabla de biometria aun no esta creada. Ejecuta la migracion antes de activar esta opcion.
+                            </div>
+                        @endunless
                         <div id="passkey-message" class="passkey-message" role="status"></div>
                     </div>
                 </div>
@@ -629,6 +634,7 @@
 (() => {
     const button = document.getElementById('passkey-register-button');
     const message = document.getElementById('passkey-message');
+    const passkeyTableReady = @json($passkeyTableReady);
 
     if (!button || !message) {
         return;
@@ -637,6 +643,21 @@
     function showMessage(text, type = 'info') {
         message.textContent = text;
         message.className = `passkey-message is-${type}`;
+    }
+
+    if (!passkeyTableReady) {
+        button.disabled = true;
+        return;
+    }
+
+    function isInvalidWebAuthnHost(hostname) {
+        return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':');
+    }
+
+    if (isInvalidWebAuthnHost(window.location.hostname)) {
+        button.disabled = true;
+        showMessage('Para activar biometria en pruebas locales, abre el sistema como http://localhost:8000 en lugar de 127.0.0.1.', 'error');
+        return;
     }
 
     if (!window.PublicKeyCredential) {

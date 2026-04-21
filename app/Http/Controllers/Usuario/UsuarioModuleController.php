@@ -10,6 +10,7 @@ use App\Support\PasswordSecurityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rules\Password;
 
 class UsuarioModuleController extends Controller
@@ -22,9 +23,12 @@ class UsuarioModuleController extends Controller
         $preguntas = UsuarioPregunta::with('pregunta')
             ->where('FK_COD_USUARIO', $user->COD_USUARIO)
             ->get();
-        $passkeyCount = WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->count();
+        $passkeyTableReady = Schema::hasTable('tbl_webauthn_credential');
+        $passkeyCount = $passkeyTableReady
+            ? WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->count()
+            : 0;
 
-        return view('usuario.perfil', compact('user', 'correo', 'preguntas', 'passkeyCount'));
+        return view('usuario.perfil', compact('user', 'correo', 'preguntas', 'passkeyCount', 'passkeyTableReady'));
     }
 
     public function editPassword()

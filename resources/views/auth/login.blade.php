@@ -83,6 +83,16 @@
             message.classList.add('border-indigo-200', 'bg-indigo-50', 'text-indigo-700');
         }
 
+        function isInvalidWebAuthnHost(hostname) {
+            return /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':');
+        }
+
+        if (isInvalidWebAuthnHost(window.location.hostname)) {
+            button.disabled = true;
+            showMessage('Para usar biometria en pruebas locales, abre el sistema como http://localhost:8000 en lugar de 127.0.0.1.', 'error');
+            return;
+        }
+
         function base64UrlToBuffer(value) {
             const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
             const padded = base64.padEnd(base64.length + ((4 - base64.length % 4) % 4), '=');
