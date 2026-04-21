@@ -8,7 +8,21 @@
 
 @section('content')
     @if(session('warning'))
-        <x-adminlte-alert theme="warning" title="Aviso" dismissable>{{ session('warning') }}</x-adminlte-alert>
+        <div class="alert alert-warning border-0 shadow-sm" role="alert">
+            <div class="d-flex align-items-start">
+                <div class="mr-3">
+                    <i class="fas fa-shield-alt fa-2x"></i>
+                </div>
+                <div>
+                    <h2 class="h5 font-weight-bold mb-2">Actualiza tu contraseña para continuar</h2>
+                    <p class="mb-2">{{ session('warning') }}</p>
+                    <p class="mb-0">
+                        Ingresa tu contraseña actual, crea una nueva contraseña que cumpla las reglas de seguridad
+                        y confirma el cambio. Al finalizar podrás continuar usando el sistema normalmente.
+                    </p>
+                </div>
+            </div>
+        </div>
     @endif
 
     @if (session('status') === 'password-updated')
@@ -21,7 +35,13 @@
         </x-adminlte-alert>
     @endif
 
-    <div class="card">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h3 class="h6 mb-1">Cambio de contraseña requerido</h3>
+            <p class="text-muted mb-0">
+                Por seguridad, la nueva contraseña debe ser diferente y cumplir con los requisitos indicados.
+            </p>
+        </div>
         <div class="card-body">
             <form method="POST" action="{{ route('usuario.password.update') }}" id="password-form">
                 @csrf
