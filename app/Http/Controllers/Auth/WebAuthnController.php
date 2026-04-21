@@ -101,40 +101,48 @@ class WebAuthnController extends Controller
     public function authenticationOptions(Request $request, WebAuthnService $webauthn): JsonResponse
     {
         $request->validate([
-            'login' => ['required', 'string'],
+            'login' => ['nullable', 'string'],
         ]);
 
-        $user = $this->resolveUser($request->string('login')->trim()->toString());
-
-        if (!$user) {
-            return response()->json(['message' => 'No encontramos una cuenta con ese usuario o correo.'], 404);
-        }
-
-        $credentials = WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->get();
-
-        if ($credentials->isEmpty()) {
-            return response()->json(['message' => 'Esta cuenta aun no tiene biometria activada.'], 404);
-        }
-
         $challenge = Base64Url::encode(random_bytes(32));
+        $login = $request->string('login')->trim()->toString();
+        $options = [
+            'challenge' => $challenge,
+            'rpId' => $webauthn->rpId($request),
+            'timeout' => 60000,
+            'userVerification' => 'required',
+        ];
+
+        if ($login !== '') {
+            $user = $this->resolveUser($login);
+
+            if (!$user) {
+                return response()->json(['message' => 'No encontramos una cuenta con ese usuario o correo.'], 404);
+            }
+
+            $credentials = WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->get();
+
+            if ($credentials->isEmpty()) {
+                return response()->json(['message' => 'Esta cuenta aun no tiene biometria activada. Inicia sesion con usuario y contrasena, luego activala desde Usuario / Perfil.'], 404);
+            }
+
+            $userId = $user->COD_USUARIO;
+            $options['allowCredentials'] = $credentials->map(fn ($credential) => [
+                'type' => 'public-key',
+                'id' => $credential->CREDENTIAL_ID,
+                'transports' => $credential->TRANSPORTS ?: ['internal'],
+            ])->values();
+        } else {
+            $userId = null;
+        }
 
         $request->session()->put('webauthn.login', [
             'challenge' => $challenge,
-            'user_id' => $user->COD_USUARIO,
+            'user_id' => $userId,
         ]);
 
         return response()->json([
-            'publicKey' => [
-                'challenge' => $challenge,
-                'rpId' => $webauthn->rpId($request),
-                'allowCredentials' => $credentials->map(fn ($credential) => [
-                    'type' => 'public-key',
-                    'id' => $credential->CREDENTIAL_ID,
-                    'transports' => $credential->TRANSPORTS ?: ['internal'],
-                ])->values(),
-                'timeout' => 60000,
-                'userVerification' => 'required',
-            ],
+            'publicKey' => $options,
         ]);
     }
 
@@ -156,12 +164,16 @@ class WebAuthnController extends Controller
         }
 
         $credentialId = $payload['rawId'];
-        $credential = WebauthnCredential::where('FK_COD_USUARIO', $loginState['user_id'])
-            ->where('CREDENTIAL_ID', $credentialId)
-            ->first();
+        $credentialQuery = WebauthnCredential::where('CREDENTIAL_ID', $credentialId);
+
+        if (!empty($loginState['user_id'])) {
+            $credentialQuery->where('FK_COD_USUARIO', $loginState['user_id']);
+        }
+
+        $credential = $credentialQuery->first();
 
         if (!$credential) {
-            return response()->json(['message' => 'Este dispositivo no esta registrado para la cuenta.'], 404);
+            return response()->json(['message' => 'No encontramos biometria registrada en este dispositivo. Inicia sesion con usuario y contrasena, luego activala desde Usuario / Perfil.'], 404);
         }
 
         try {
@@ -173,7 +185,7 @@ class WebAuthnController extends Controller
         $credential->SIGN_COUNT = $newSignCount;
         $credential->save();
 
-        $user = Usuario::find($loginState['user_id']);
+        $user = Usuario::find($credential->FK_COD_USUARIO);
 
         if (!$user) {
             return response()->json(['message' => 'La cuenta ya no esta disponible.'], 404);

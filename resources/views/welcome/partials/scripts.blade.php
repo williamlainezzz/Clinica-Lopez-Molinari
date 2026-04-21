@@ -106,18 +106,14 @@
 
         event.preventDefault();
 
-        if (!login) {
-          showWebAuthnMessage(modal, 'Escribe tu usuario o correo antes de usar biometria.', 'error');
-          loginInput?.focus();
-          return;
-        }
-
         webauthnButton.disabled = true;
-        showWebAuthnMessage(modal, 'Solicitando verificacion biometrica del dispositivo...');
+        showWebAuthnMessage(modal, login
+          ? 'Solicitando verificacion biometrica del dispositivo...'
+          : 'Buscando biometria registrada en este dispositivo...');
 
         (async () => {
           try {
-            const optionsResponse = await postJson('{{ route('webauthn.authentication-options') }}', { login });
+            const optionsResponse = await postJson('{{ route('webauthn.authentication-options') }}', login ? { login } : {});
             const publicKey = optionsResponse.publicKey;
 
             if (!publicKey || !publicKey.challenge) {
@@ -125,10 +121,12 @@
             }
 
             publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
-            publicKey.allowCredentials = (publicKey.allowCredentials || []).map(credential => ({
-              ...credential,
-              id: base64UrlToBuffer(credential.id),
-            }));
+            if (Array.isArray(publicKey.allowCredentials)) {
+              publicKey.allowCredentials = publicKey.allowCredentials.map(credential => ({
+                ...credential,
+                id: base64UrlToBuffer(credential.id),
+              }));
+            }
 
             const assertion = await navigator.credentials.get({ publicKey });
             const result = await postJson('{{ route('webauthn.authenticate') }}', {
