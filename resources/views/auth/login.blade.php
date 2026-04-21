@@ -140,6 +140,25 @@
             return data;
         }
 
+        function friendlyWebAuthnError(error) {
+            const message = error?.message || '';
+            const name = error?.name || '';
+
+            if (name === 'NotAllowedError' || message.includes('timed out') || message.includes('not allowed')) {
+                return 'Cancelaste la verificacion biometrica o se agoto el tiempo. Puedes intentarlo de nuevo cuando quieras.';
+            }
+
+            if (name === 'AbortError') {
+                return 'La verificacion biometrica fue cancelada. Puedes intentarlo nuevamente.';
+            }
+
+            if (name === 'NotSupportedError') {
+                return 'Este dispositivo o navegador no permite usar biometria para iniciar sesion.';
+            }
+
+            return message || 'No se pudo iniciar sesion con biometria.';
+        }
+
         button.addEventListener('click', async () => {
             const login = loginInput.value.trim();
 
@@ -179,7 +198,7 @@
 
                 window.location.href = result.redirect || '{{ route('dashboard') }}';
             } catch (error) {
-                showMessage(error.message || 'No se pudo iniciar sesion con biometria.', 'error');
+                showMessage(friendlyWebAuthnError(error), 'error');
                 button.disabled = false;
             }
         });
