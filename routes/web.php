@@ -43,6 +43,16 @@ Route::view('/dashboard', 'dashboard')->middleware(['auth', 'password.expiry'])-
 Route::middleware('guest')->get('/registro/paciente', [RegistroPacienteController::class, 'create'])
     ->name('registro.paciente');
 
+Route::middleware(['signed', 'throttle:10,1'])->group(function () {
+    Route::get('/citas/{id}/confirmacion-paciente', [AgendaController::class, 'mostrarConfirmacionPaciente'])
+        ->whereNumber('id')
+        ->name('agenda.citas.confirmacion.show');
+
+    Route::post('/citas/{id}/confirmacion-paciente', [AgendaController::class, 'confirmarAsistenciaPaciente'])
+        ->whereNumber('id')
+        ->name('agenda.citas.confirmacion.store');
+});
+
 require __DIR__ . '/auth.php';
 
 /* =========================

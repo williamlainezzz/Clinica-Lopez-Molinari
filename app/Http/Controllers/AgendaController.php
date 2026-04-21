@@ -1608,6 +1608,68 @@ class AgendaController extends Controller
         );
     }
 
+    public function mostrarConfirmacionPaciente(Request $request, int $id)
+    {
+        $cita = $this->buscarCitaParaConfirmacion($id);
+
+        abort_unless($cita, 404);
+
+        return view('citas.confirmacion-paciente', [
+            'cita' => $cita,
+            'estado' => $this->estadoConfirmacionPaciente($cita),
+            'confirmUrl' => \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                'agenda.citas.confirmacion.store',
+                now()->addMinutes(30),
+                ['id' => $id]
+            ),
+        ]);
+    }
+
+    public function confirmarAsistenciaPaciente(Request $request, int $id)
+    {
+        $cita = $this->buscarCitaParaConfirmacion($id);
+
+        abort_unless($cita, 404);
+
+        $estado = $this->estadoConfirmacionPaciente($cita);
+
+        if ($estado === 'pendiente') {
+            $estadoId = $this->findEstadoId('CONFIRMADA');
+
+            if ($estadoId) {
+                $data = ['ESTADO_CITA' => $estadoId];
+
+                if (auth()->check() && DB::getSchemaBuilder()->hasColumn('tbl_cita', 'USUARIO_MOD')) {
+                    $data['USUARIO_MOD'] = auth()->id();
+                }
+
+                $actualizada = DB::table('tbl_cita')
+                    ->where('COD_CITA', $id)
+                    ->update($data) > 0;
+
+                if ($actualizada) {
+                    try {
+                        $this->notificacionCitaService->enviarNotificacionConfirmacionPaciente($id);
+                    } catch (\Throwable $e) {
+                    }
+
+                    $cita = $this->buscarCitaParaConfirmacion($id) ?? $cita;
+                    $estado = 'confirmada';
+                } else {
+                    $estado = 'error';
+                }
+            } else {
+                $estado = 'error';
+            }
+        }
+
+        return view('citas.confirmacion-paciente', [
+            'cita' => $cita,
+            'estado' => $estado,
+            'confirmUrl' => null,
+        ]);
+    }
+
     public function store(Request $request)
     {
         if (!$this->citaTableExists()) {
@@ -1690,6 +1752,55 @@ class AgendaController extends Controller
             'La cita se eliminó correctamente.',
             'No se pudo eliminar la cita.'
         );
+    }
+
+    private function buscarCitaParaConfirmacion(int $id): ?object
+    {
+        if (!$this->citaTableExists()) {
+            return null;
+        }
+
+        return DB::table('tbl_cita as c')
+            ->join('tbl_persona as p', 'c.FK_COD_PACIENTE', '=', 'p.COD_PERSONA')
+            ->join('tbl_persona as d', 'c.FK_COD_DOCTOR', '=', 'd.COD_PERSONA')
+            ->leftJoin('tbl_estado_cita as e', 'c.ESTADO_CITA', '=', 'e.COD_ESTADO')
+            ->select([
+                'c.COD_CITA',
+                'c.FEC_CITA',
+                'c.HOR_CITA',
+                'c.HOR_FIN',
+                'c.MOT_CITA',
+                'c.OBSERVACIONES',
+                'e.NOM_ESTADO as estado_nombre',
+                DB::raw("CONCAT(p.PRIMER_NOMBRE, ' ', p.PRIMER_APELLIDO) as paciente_nombre"),
+                DB::raw("CONCAT(d.PRIMER_NOMBRE, ' ', d.PRIMER_APELLIDO) as doctor_nombre"),
+            ])
+            ->where('c.COD_CITA', $id)
+            ->first();
+    }
+
+    private function estadoConfirmacionPaciente(object $cita): string
+    {
+        $estado = strtoupper(trim((string) ($cita->estado_nombre ?? 'PENDIENTE')));
+
+        if ($estado === 'CONFIRMADA') {
+            return 'confirmada';
+        }
+
+        if (in_array($estado, ['CANCELADA', 'COMPLETADA', 'NO_SHOW'], true)) {
+            return 'no_disponible';
+        }
+
+        try {
+            $fechaHora = Carbon::parse(sprintf('%s %s', $cita->FEC_CITA, $cita->HOR_CITA));
+
+            if ($fechaHora->isPast()) {
+                return 'vencida';
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return 'pendiente';
     }
 
     private function findEstadoId(string $nombre): ?int

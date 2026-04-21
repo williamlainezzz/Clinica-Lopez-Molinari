@@ -22,9 +22,18 @@ Hola,
 > {{ $nota }}
 @endisset
 
-@component('mail::button', ['url' => $url ?? url('/')])
-Ver detalles
+@isset($action_hint)
+{{ $action_hint }}
+@endisset
+
+@component('mail::button', ['url' => $action_url ?? $url ?? url('/')])
+{{ $action_label ?? 'Ver detalles' }}
 @endcomponent
+
+@isset($action_url)
+Si el boton no abre correctamente, copie y pegue este enlace en su navegador:
+{{ $action_url }}
+@endisset
 
 Gracias por confiar en nosotros,  
 **{{ $clinica ?? config('app.name') }}**

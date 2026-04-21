@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 
 class NotificacionCitaService
 {
@@ -75,15 +76,17 @@ class NotificacionCitaService
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
         $clinica = config('app.name', 'Clinica');
 
+        $payloadPaciente = $this->agregarAccionConfirmacionPaciente($cita, [
+            'subject'      => "{$clinica} - Cita reprogramada",
+            'titulo'       => 'Cita reprogramada',
+            'tipo'         => 'MANUAL',
+            'tipo_legible' => 'Reprogramacion de cita',
+            'mensaje'      => "Su cita con {$cita->doctor_nombre} fue reprogramada para el {$fecha} a las {$hora}.",
+        ]);
+
         $this->enviarNotificacionPersonalizada(
             $cita,
-            [
-                'subject'      => "{$clinica} - Cita reprogramada",
-                'titulo'       => 'Cita reprogramada',
-                'tipo'         => 'MANUAL',
-                'tipo_legible' => 'Reprogramacion de cita',
-                'mensaje'      => "Su cita con {$cita->doctor_nombre} fue reprogramada para el {$fecha} a las {$hora}.",
-            ],
+            $payloadPaciente,
             [
                 'subject'      => "{$clinica} - Cita reprogramada con paciente",
                 'titulo'       => 'Cita reprogramada',
@@ -94,6 +97,41 @@ class NotificacionCitaService
             'La cita fue reprogramada correctamente.',
             'MANUAL'
         );
+    }
+
+    public function enviarNotificacionConfirmacionPaciente(int $codCita): void
+    {
+        $cita = $this->buscarCita($codCita);
+
+        if (!$cita) {
+            return;
+        }
+
+        $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
+        $hora = $this->formatearHora($cita->HOR_CITA ?? null);
+        $clinica = config('app.name', 'Clinica');
+
+        $this->registrarNotificacion(
+            (int) $cita->COD_CITA,
+            "El paciente {$cita->paciente_nombre} confirmo asistencia desde el correo para el {$fecha} a las {$hora}.",
+            'MANUAL'
+        );
+
+        $this->enviarCorreo((int) $cita->doctor_persona_id, [
+            'subject'      => "{$clinica} - Paciente confirmo asistencia",
+            'titulo'       => 'Paciente confirmo asistencia',
+            'paciente'     => $cita->paciente_nombre,
+            'doctor'       => $cita->doctor_nombre,
+            'clinica'      => $clinica,
+            'fecha'        => $fecha,
+            'hora'         => $hora,
+            'tipo'         => 'MANUAL',
+            'tipo_legible' => 'Confirmacion del paciente',
+            'mensaje'      => "El paciente {$cita->paciente_nombre} confirmo que asistira a su cita programada para el {$fecha} a las {$hora}.",
+            'nota'         => 'Esta confirmacion fue realizada por el paciente desde el enlace enviado por correo.',
+            'action_label' => 'Ver agenda',
+            'action_url'   => route('agenda.citas'),
+        ]);
     }
 
     public function enviarNotificacionActualizacionCita(int $codCita): void
@@ -377,7 +415,7 @@ class NotificacionCitaService
             $titulo = $tipoLegible;
         }
 
-        return [
+        $payload = [
             'subject' => $subject,
             'titulo' => $titulo,
             'paciente' => $cita->paciente_nombre,
@@ -390,6 +428,25 @@ class NotificacionCitaService
             'mensaje' => $mensaje,
             'nota' => $cita->OBSERVACIONES,
         ];
+
+        if ($destinatario !== 'doctor' && in_array($tipo, ['CREACION'], true)) {
+            return $this->agregarAccionConfirmacionPaciente($cita, $payload);
+        }
+
+        return $payload;
+    }
+
+    private function agregarAccionConfirmacionPaciente(object $cita, array $payload): array
+    {
+        $payload['action_label'] = 'Confirmar asistencia';
+        $payload['action_url'] = URL::temporarySignedRoute(
+            'agenda.citas.confirmacion.show',
+            now()->addDays(3),
+            ['id' => (int) $cita->COD_CITA]
+        );
+        $payload['action_hint'] = 'Por seguridad, el enlace vence en 72 horas.';
+
+        return $payload;
     }
 
     private function formatearFecha(?string $fecha): string
