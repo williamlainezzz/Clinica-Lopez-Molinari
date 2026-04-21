@@ -10,7 +10,7 @@ Hola,
 @component('mail::panel')
 - **Paciente:** {{ $paciente ?? 'Paciente' }}
 - **Doctor(a):** {{ $doctor ?? 'Doctor' }}
-- **Clinica:** {{ $clinica ?? 'Clinica Dental' }}
+- **Clinica:** {{ $clinica ?? 'Complejo Dental Lopez Molinari' }}
 - **Fecha:** {{ $fecha ?? '' }}
 - **Hora:** {{ $hora ?? '' }}
 - **Tipo de notificacion:** {{ $tipo_legible ?? $tipo ?? 'Cita' }}
@@ -36,5 +36,5 @@ Si el boton no abre correctamente, copie y pegue este enlace en su navegador:
 @endisset
 
 Gracias por confiar en nosotros,  
-**{{ $clinica ?? config('app.name') }}**
+**{{ $clinica ?? 'Complejo Dental Lopez Molinari' }}**
 @endcomponent

@@ -41,24 +41,25 @@ class NotificacionCitaService
         $estadoLegible = $this->nombreEstadoLegible($estadoNuevo);
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
-        $clinica = config('app.name', 'Clinica');
+        $clinica = $this->nombreClinica();
+        $basePayload = $this->payloadBaseCita($cita, $clinica, $fecha, $hora);
 
         $this->enviarNotificacionPersonalizada(
             $cita,
-            [
+            array_merge($basePayload, [
                 'subject'      => "{$clinica} - Cita {$estadoLegible}",
                 'titulo'       => "Cita {$estadoLegible}",
                 'tipo'         => 'MANUAL',
                 'tipo_legible' => "Cambio de estado a {$estadoLegible}",
                 'mensaje'      => "Su cita con {$cita->doctor_nombre} ha sido marcada como {$estadoLegible} para el {$fecha} a las {$hora}.",
-            ],
-            [
+            ]),
+            array_merge($basePayload, [
                 'subject'      => "{$clinica} - Cita del paciente {$estadoLegible}",
                 'titulo'       => "Cita {$estadoLegible}",
                 'tipo'         => 'MANUAL',
                 'tipo_legible' => "Cambio de estado a {$estadoLegible}",
                 'mensaje'      => "La cita con {$cita->paciente_nombre} ha sido marcada como {$estadoLegible} para el {$fecha} a las {$hora}.",
-            ],
+            ]),
             "La cita fue actualizada a estado {$estadoLegible}.",
             'MANUAL'
         );
@@ -74,26 +75,27 @@ class NotificacionCitaService
 
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
-        $clinica = config('app.name', 'Clinica');
+        $clinica = $this->nombreClinica();
+        $basePayload = $this->payloadBaseCita($cita, $clinica, $fecha, $hora);
 
-        $payloadPaciente = $this->agregarAccionConfirmacionPaciente($cita, [
+        $payloadPaciente = $this->agregarAccionConfirmacionPaciente($cita, array_merge($basePayload, [
             'subject'      => "{$clinica} - Cita reprogramada",
             'titulo'       => 'Cita reprogramada',
             'tipo'         => 'MANUAL',
             'tipo_legible' => 'Reprogramacion de cita',
             'mensaje'      => "Su cita con {$cita->doctor_nombre} fue reprogramada para el {$fecha} a las {$hora}.",
-        ]);
+        ]));
 
         $this->enviarNotificacionPersonalizada(
             $cita,
             $payloadPaciente,
-            [
+            array_merge($basePayload, [
                 'subject'      => "{$clinica} - Cita reprogramada con paciente",
                 'titulo'       => 'Cita reprogramada',
                 'tipo'         => 'MANUAL',
                 'tipo_legible' => 'Reprogramacion de cita',
                 'mensaje'      => "La cita con {$cita->paciente_nombre} fue reprogramada para el {$fecha} a las {$hora}.",
-            ],
+            ]),
             'La cita fue reprogramada correctamente.',
             'MANUAL'
         );
@@ -109,7 +111,7 @@ class NotificacionCitaService
 
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
-        $clinica = config('app.name', 'Clinica');
+        $clinica = $this->nombreClinica();
 
         $this->registrarNotificacion(
             (int) $cita->COD_CITA,
@@ -144,24 +146,25 @@ class NotificacionCitaService
 
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
-        $clinica = config('app.name', 'Clinica');
+        $clinica = $this->nombreClinica();
+        $basePayload = $this->payloadBaseCita($cita, $clinica, $fecha, $hora);
 
         $this->enviarNotificacionPersonalizada(
             $cita,
-            [
+            array_merge($basePayload, [
                 'subject'      => "{$clinica} - Cita actualizada",
                 'titulo'       => 'Cita actualizada',
                 'tipo'         => 'MANUAL',
                 'tipo_legible' => 'Actualizacion de cita',
                 'mensaje'      => "Su cita con {$cita->doctor_nombre} fue actualizada para el {$fecha} a las {$hora}.",
-            ],
-            [
+            ]),
+            array_merge($basePayload, [
                 'subject'      => "{$clinica} - Cita actualizada con paciente",
                 'titulo'       => 'Cita actualizada',
                 'tipo'         => 'MANUAL',
                 'tipo_legible' => 'Actualizacion de cita',
                 'mensaje'      => "La cita con {$cita->paciente_nombre} fue actualizada para el {$fecha} a las {$hora}.",
-            ],
+            ]),
             'La cita fue actualizada correctamente.',
             'MANUAL'
         );
@@ -389,7 +392,7 @@ class NotificacionCitaService
         $fecha = $this->formatearFecha($cita->FEC_CITA ?? null);
         $hora = $this->formatearHora($cita->HOR_CITA ?? null);
         $tipoLegible = $this->tipoLegible($tipo);
-        $clinica = config('app.name', 'Clinica');
+        $clinica = $this->nombreClinica();
 
         if ($destinatario === 'doctor') {
             $mensaje = match ($tipo) {
@@ -415,19 +418,13 @@ class NotificacionCitaService
             $titulo = $tipoLegible;
         }
 
-        $payload = [
+        $payload = array_merge($this->payloadBaseCita($cita, $clinica, $fecha, $hora), [
             'subject' => $subject,
             'titulo' => $titulo,
-            'paciente' => $cita->paciente_nombre,
-            'doctor' => $cita->doctor_nombre,
-            'clinica' => $clinica,
-            'fecha' => $fecha,
-            'hora' => $hora,
             'tipo' => $tipo,
             'tipo_legible' => $tipoLegible,
             'mensaje' => $mensaje,
-            'nota' => $cita->OBSERVACIONES,
-        ];
+        ]);
 
         if ($destinatario !== 'doctor' && in_array($tipo, ['CREACION'], true)) {
             return $this->agregarAccionConfirmacionPaciente($cita, $payload);
@@ -447,6 +444,27 @@ class NotificacionCitaService
         $payload['action_hint'] = 'Por seguridad, el enlace vence en 72 horas.';
 
         return $payload;
+    }
+
+    private function payloadBaseCita(object $cita, string $clinica, string $fecha, string $hora): array
+    {
+        return [
+            'paciente' => $cita->paciente_nombre,
+            'doctor' => $cita->doctor_nombre,
+            'clinica' => $clinica,
+            'fecha' => $fecha,
+            'hora' => $hora,
+            'nota' => $cita->OBSERVACIONES,
+        ];
+    }
+
+    private function nombreClinica(): string
+    {
+        $nombre = trim((string) config('app.name', ''));
+
+        return $nombre === '' || strcasecmp($nombre, 'Laravel') === 0
+            ? 'Complejo Dental Lopez Molinari'
+            : $nombre;
     }
 
     private function formatearFecha(?string $fecha): string
