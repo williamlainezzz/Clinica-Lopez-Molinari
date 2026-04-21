@@ -37,14 +37,136 @@
             </label>
         </div>
 
-        <div class="flex items-center justify-end mt-4">
+        <div id="webauthn-login-message" class="hidden mt-4 rounded-md border px-3 py-2 text-sm"></div>
+
+        <div class="flex flex-col gap-3 mt-4 sm:flex-row sm:items-center sm:justify-end">
             @if (Route::has('password.request'))
                 <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
                     {{ __('¿Olvidaste tu contraseña?') }}
                 </a>
             @endif
 
+            <button
+                id="webauthn-login-button"
+                type="button"
+                class="hidden inline-flex items-center justify-center px-4 py-2 bg-white border border-indigo-300 rounded-md font-semibold text-xs text-indigo-700 uppercase tracking-widest shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed sm:ms-3"
+            >
+                Iniciar sesion con biometria
+            </button>
+
             <x-primary-button class="ms-3">{{ __('Iniciar sesión') }}</x-primary-button>
         </div>
     </form>
+
+    <script>
+    (() => {
+        const button = document.getElementById('webauthn-login-button');
+        const loginInput = document.getElementById('login');
+        const message = document.getElementById('webauthn-login-message');
+        const csrf = document.querySelector('input[name="_token"]')?.value;
+
+        if (!button || !loginInput || !message || !csrf || !window.PublicKeyCredential) {
+            return;
+        }
+
+        button.classList.remove('hidden');
+
+        function showMessage(text, type = 'info') {
+            message.textContent = text;
+            message.className = 'mt-4 rounded-md border px-3 py-2 text-sm';
+
+            if (type === 'error') {
+                message.classList.add('border-red-200', 'bg-red-50', 'text-red-700');
+                return;
+            }
+
+            message.classList.add('border-indigo-200', 'bg-indigo-50', 'text-indigo-700');
+        }
+
+        function base64UrlToBuffer(value) {
+            const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64.padEnd(base64.length + ((4 - base64.length % 4) % 4), '=');
+            const binary = atob(padded);
+            const bytes = new Uint8Array(binary.length);
+
+            for (let i = 0; i < binary.length; i += 1) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+
+            return bytes.buffer;
+        }
+
+        function bufferToBase64Url(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+
+            bytes.forEach(byte => {
+                binary += String.fromCharCode(byte);
+            });
+
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        async function postJson(url, body) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                body: JSON.stringify(body),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.message || 'No se pudo completar la verificacion biometrica.');
+            }
+
+            return data;
+        }
+
+        button.addEventListener('click', async () => {
+            const login = loginInput.value.trim();
+
+            if (!login) {
+                showMessage('Escribe tu usuario o correo antes de usar biometria.', 'error');
+                loginInput.focus();
+                return;
+            }
+
+            button.disabled = true;
+            showMessage('Solicitando verificacion biometrica del dispositivo...');
+
+            try {
+                const optionsResponse = await postJson('{{ route('webauthn.authentication-options') }}', { login });
+                const publicKey = optionsResponse.publicKey;
+
+                publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
+                publicKey.allowCredentials = (publicKey.allowCredentials || []).map(credential => ({
+                    ...credential,
+                    id: base64UrlToBuffer(credential.id),
+                }));
+
+                const assertion = await navigator.credentials.get({ publicKey });
+
+                const result = await postJson('{{ route('webauthn.authenticate') }}', {
+                    id: assertion.id,
+                    rawId: bufferToBase64Url(assertion.rawId),
+                    type: assertion.type,
+                    response: {
+                        clientDataJSON: bufferToBase64Url(assertion.response.clientDataJSON),
+                        authenticatorData: bufferToBase64Url(assertion.response.authenticatorData),
+                        signature: bufferToBase64Url(assertion.response.signature),
+                    },
+                });
+
+                window.location.href = result.redirect || '{{ route('dashboard') }}';
+            } catch (error) {
+                showMessage(error.message || 'No se pudo iniciar sesion con biometria.', 'error');
+                button.disabled = false;
+            }
+        });
+    })();
+    </script>
 </x-guest-layout>

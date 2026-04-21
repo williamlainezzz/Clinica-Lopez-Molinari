@@ -156,6 +156,29 @@
             </div>
         </section>
 
+        <section class="card card-outline card-primary passkey-card">
+            <div class="card-body">
+                <div class="passkey-panel">
+                    <div>
+                        <h2 class="profile-section-title mb-2">Inicio con biometria</h2>
+                        <p class="profile-section-copy mb-2">Activa el acceso con la biometria, PIN o metodo seguro configurado en este dispositivo.</p>
+                        <span class="passkey-count-badge">
+                            <i class="fas fa-fingerprint mr-2"></i>
+                            {{ $passkeyCount }} dispositivo{{ $passkeyCount === 1 ? '' : 's' }} activado{{ $passkeyCount === 1 ? '' : 's' }}
+                        </span>
+                    </div>
+
+                    <div class="passkey-actions">
+                        <button type="button" class="btn btn-primary" id="passkey-register-button">
+                            <i class="fas fa-fingerprint mr-2"></i>
+                            Activar inicio con biometria
+                        </button>
+                        <div id="passkey-message" class="passkey-message" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="card card-outline card-primary">
             <div class="card-body">
                 <h2 class="profile-section-title mb-2">Preguntas de seguridad</h2>
@@ -256,6 +279,57 @@
         grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.95fr);
         gap: 1.25rem;
         align-items: start;
+    }
+
+    .passkey-panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+    }
+
+    .passkey-count-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.55rem 0.8rem;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, 0.08);
+        color: #1d4ed8;
+        font-weight: 700;
+    }
+
+    .passkey-actions {
+        display: grid;
+        gap: 0.75rem;
+        justify-items: end;
+        min-width: min(100%, 280px);
+    }
+
+    .passkey-message {
+        display: none;
+        width: 100%;
+        padding: 0.65rem 0.8rem;
+        border-radius: 0.75rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+    }
+
+    .passkey-message.is-info {
+        display: block;
+        background: rgba(219, 234, 254, 0.9);
+        color: #1d4ed8;
+    }
+
+    .passkey-message.is-success {
+        display: block;
+        background: rgba(220, 252, 231, 0.9);
+        color: #166534;
+    }
+
+    .passkey-message.is-error {
+        display: block;
+        background: rgba(254, 226, 226, 0.95);
+        color: #dc2626;
     }
 
     .password-guidance-card {
@@ -434,6 +508,26 @@
         color: #e5eefc;
     }
 
+    html[data-theme='dark'] .passkey-count-badge {
+        background: rgba(37, 99, 235, 0.16);
+        color: #93c5fd;
+    }
+
+    html[data-theme='dark'] .passkey-message.is-info {
+        background: rgba(30, 64, 175, 0.28);
+        color: #bfdbfe;
+    }
+
+    html[data-theme='dark'] .passkey-message.is-success {
+        background: rgba(20, 83, 45, 0.32);
+        color: #bbf7d0;
+    }
+
+    html[data-theme='dark'] .passkey-message.is-error {
+        background: rgba(127, 29, 29, 0.3);
+        color: #fecaca;
+    }
+
     html[data-theme='dark'] .password-guidance-card {
         border-color: rgba(96, 165, 250, 0.16);
         background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(11, 18, 32, 0.96));
@@ -506,6 +600,16 @@
             grid-template-columns: 1fr;
         }
 
+        .passkey-panel {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .passkey-actions {
+            justify-items: stretch;
+            width: 100%;
+        }
+
         .profile-info-card--wide {
             grid-column: span 1;
         }
@@ -521,6 +625,109 @@
 @stop
 
 @section('js')
+<script>
+(() => {
+    const button = document.getElementById('passkey-register-button');
+    const message = document.getElementById('passkey-message');
+
+    if (!button || !message) {
+        return;
+    }
+
+    function showMessage(text, type = 'info') {
+        message.textContent = text;
+        message.className = `passkey-message is-${type}`;
+    }
+
+    if (!window.PublicKeyCredential) {
+        button.disabled = true;
+        showMessage('Este navegador no soporta inicio con biometria.', 'error');
+        return;
+    }
+
+    function base64UrlToBuffer(value) {
+        const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + ((4 - base64.length % 4) % 4), '=');
+        const binary = atob(padded);
+        const bytes = new Uint8Array(binary.length);
+
+        for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+
+        return bytes.buffer;
+    }
+
+    function bufferToBase64Url(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+
+        bytes.forEach(byte => {
+            binary += String.fromCharCode(byte);
+        });
+
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+    }
+
+    async function postJson(url, body = {}) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+            body: JSON.stringify(body),
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            throw new Error(data.message || 'No se pudo completar la activacion biometrica.');
+        }
+
+        return data;
+    }
+
+    button.addEventListener('click', async () => {
+        button.disabled = true;
+        showMessage('Solicitando verificacion del dispositivo...');
+
+        try {
+            const optionsResponse = await postJson('{{ route('webauthn.register-options') }}');
+            const publicKey = optionsResponse.publicKey;
+
+            publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
+            publicKey.user.id = base64UrlToBuffer(publicKey.user.id);
+            publicKey.excludeCredentials = (publicKey.excludeCredentials || []).map(credential => ({
+                ...credential,
+                id: base64UrlToBuffer(credential.id),
+            }));
+
+            const credential = await navigator.credentials.create({ publicKey });
+
+            await postJson('{{ route('webauthn.register') }}', {
+                id: credential.id,
+                rawId: bufferToBase64Url(credential.rawId),
+                type: credential.type,
+                response: {
+                    clientDataJSON: bufferToBase64Url(credential.response.clientDataJSON),
+                    attestationObject: bufferToBase64Url(credential.response.attestationObject),
+                    transports: typeof credential.response.getTransports === 'function'
+                        ? credential.response.getTransports()
+                        : ['internal'],
+                },
+            });
+
+            showMessage('Inicio con biometria activado en este dispositivo.', 'success');
+        } catch (error) {
+            showMessage(error.message || 'No se pudo activar la biometria.', 'error');
+        } finally {
+            button.disabled = false;
+        }
+    });
+})();
+</script>
+
 <script>
 (() => {
     const pass = document.getElementById('password');

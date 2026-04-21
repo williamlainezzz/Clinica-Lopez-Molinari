@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Usuario;
 
 use App\Http\Controllers\Controller;
 use App\Models\UsuarioPregunta;
+use App\Models\WebauthnCredential;
 use App\Notifications\PasswordChangedNotification;
 use App\Support\PasswordSecurityService;
 use Illuminate\Http\RedirectResponse;
@@ -21,8 +22,9 @@ class UsuarioModuleController extends Controller
         $preguntas = UsuarioPregunta::with('pregunta')
             ->where('FK_COD_USUARIO', $user->COD_USUARIO)
             ->get();
+        $passkeyCount = WebauthnCredential::where('FK_COD_USUARIO', $user->COD_USUARIO)->count();
 
-        return view('usuario.perfil', compact('user', 'correo', 'preguntas'));
+        return view('usuario.perfil', compact('user', 'correo', 'preguntas', 'passkeyCount'));
     }
 
     public function editPassword()
