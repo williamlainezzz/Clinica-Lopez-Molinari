@@ -144,6 +144,7 @@ class AgendaController extends Controller
         if ($rolSlug === 'paciente') {
             $patientHasRealData = false;
             $personaId = (int) ($user->FK_COD_PERSONA ?? optional($user->persona)->COD_PERSONA ?? 0);
+            $doctorAsignado = $personaId > 0 ? $this->doctorAsignadoPaciente($personaId) : null;
 
             if ($personaId > 0 && DB::getSchemaBuilder()->hasTable('tbl_cita')) {
                 try {
@@ -151,6 +152,8 @@ class AgendaController extends Controller
 
                     if ($citasPaciente->isNotEmpty()) {
                         $patientRecord = $this->buildPatientRecordFromDb($personaId, $citasPaciente);
+                        $patientRecord['profile']['doctor'] = $doctorAsignado['nombre'] ?? $patientRecord['profile']['doctor'];
+                        $patientRecord['profile']['especialidad'] = $doctorAsignado['especialidad'] ?? $patientRecord['profile']['especialidad'];
 
                         $calendarBundle = $this->buildCalendarEventsForPatient($citasPaciente);
                         $calendarEvents = $calendarBundle['byDate'];
@@ -175,7 +178,7 @@ class AgendaController extends Controller
                     'profile' => [
                         'codigo'       => $personaId > 0 ? 'PAC-' . str_pad($personaId, 4, '0', STR_PAD_LEFT) : null,
                         'nombre'       => $nombrePersona !== '' ? $nombrePersona : 'Paciente',
-                        'doctor'       => 'Sin doctor asignado',
+                        'doctor'       => $doctorAsignado['nombre'] ?? 'Sin doctor asignado',
                         'especialidad' => 'Odontología',
                         'estado'       => 'Sin citas',
                         'correo'       => null,
@@ -632,6 +635,41 @@ class AgendaController extends Controller
             })->all();
         } catch (\Throwable $e) {
             return [];
+        }
+    }
+
+    private function doctorAsignadoPaciente(int $pacientePersonaId): ?array
+    {
+        try {
+            if (
+                !DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente') ||
+                !DB::getSchemaBuilder()->hasTable('tbl_persona')
+            ) {
+                return null;
+            }
+
+            $row = DB::table('tbl_doctor_paciente as dp')
+                ->join('tbl_persona as d', 'd.COD_PERSONA', '=', 'dp.FK_COD_DOCTOR')
+                ->where('dp.FK_COD_PACIENTE', $pacientePersonaId)
+                ->where('dp.ACTIVO', 1)
+                ->orderByDesc('dp.FEC_ASIGNACION')
+                ->select([
+                    'd.COD_PERSONA',
+                    DB::raw("CONCAT(d.PRIMER_NOMBRE, ' ', d.PRIMER_APELLIDO) as doctor_nombre"),
+                ])
+                ->first();
+
+            if (!$row) {
+                return null;
+            }
+
+            return [
+                'persona_id' => (int) $row->COD_PERSONA,
+                'nombre' => $row->doctor_nombre,
+                'especialidad' => 'Odontologia',
+            ];
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 

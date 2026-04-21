@@ -170,6 +170,10 @@ class UsuarioController extends Controller
         $plainPassword = null;
 
         DB::transaction(function () use ($request, $id, &$plainPassword, $passwordSecurityService) {
+            $usuarioActual = DB::table('tbl_usuario')->where('COD_USUARIO', $id)->first();
+            $eraDoctor = $usuarioActual ? $this->rolEsDoctor((int) $usuarioActual->FK_COD_ROL) : false;
+            $seraDoctor = $this->rolEsDoctor((int) $request->FK_COD_ROL);
+
             $data = [
                 'FK_COD_PERSONA' => (int) $request->FK_COD_PERSONA,
                 'USR_USUARIO' => $request->USR_USUARIO,
@@ -183,6 +187,13 @@ class UsuarioController extends Controller
             }
 
             DB::table('tbl_usuario')->where('COD_USUARIO', $id)->update($data);
+
+            if ($eraDoctor && !$seraDoctor && $usuarioActual && DB::getSchemaBuilder()->hasTable('tbl_doctor_paciente')) {
+                DB::table('tbl_doctor_paciente')
+                    ->where('FK_COD_DOCTOR', (int) $usuarioActual->FK_COD_PERSONA)
+                    ->where('ACTIVO', 1)
+                    ->update(['ACTIVO' => 0]);
+            }
 
             if ($plainPassword !== null) {
                 $passwordSecurityService->markPasswordChanged((int) $id);
@@ -203,6 +214,21 @@ class UsuarioController extends Controller
         }
 
         return redirect()->route('seguridad.usuarios.edit', $id)->with('success', 'Usuario actualizado.');
+    }
+
+    private function rolEsDoctor(int $rolId): bool
+    {
+        if ($rolId <= 0) {
+            return false;
+        }
+
+        $nombre = DB::table('tbl_rol')
+            ->where('COD_ROL', $rolId)
+            ->value('NOM_ROL');
+
+        $nombre = strtoupper(trim((string) $nombre));
+
+        return in_array($nombre, ['DOCTOR', 'DOCTORA', 'ODONTOLOGO', 'ODONTOLOGA', 'MEDICO', 'MEDICA'], true);
     }
 
     public function destroy($id)
