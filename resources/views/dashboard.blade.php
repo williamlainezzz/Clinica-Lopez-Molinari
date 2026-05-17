@@ -5,28 +5,32 @@
 @section('css')
 <style>
   .welcome-hero-card {
-    border: 1px solid #dde6f3;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #fcfdff 0%, #f4f7fc 100%);
-    box-shadow: 0 6px 18px rgba(15, 52, 96, 0.08);
-    margin-bottom: 1rem;
+    border: 1px solid var(--theme-border, #dde6f3) !important;
+    border-radius: 1.25rem !important;
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.16), transparent 30%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 247, 255, 0.94) 100%) !important;
+    box-shadow: var(--theme-shadow, 0 14px 34px rgba(15, 23, 42, 0.08)) !important;
+    margin-bottom: 1.15rem;
+    overflow: hidden;
   }
 
   .welcome-hero-title {
     margin: 0;
-    font-weight: 700;
-    font-size: 1.6rem;
-    color: #1f2d3d;
+    font-weight: 800;
+    font-size: 1.75rem;
+    color: var(--theme-text, #1f2d3d);
     line-height: 1.25;
+    letter-spacing: 0;
   }
 
   .welcome-hero-name {
-    color: #114b9b;
+    color: var(--theme-accent-start, #114b9b);
   }
 
   .welcome-hero-copy {
     margin: .65rem 0 0;
-    color: #49586f;
+    color: var(--theme-text-soft, #49586f);
     max-width: 840px;
     font-size: .98rem;
   }
@@ -35,13 +39,13 @@
     display: inline-flex;
     align-items: center;
     border-radius: 999px;
-    padding: .28rem .78rem;
+    padding: .42rem .82rem;
     font-size: .78rem;
-    font-weight: 600;
-    color: #0b4b84;
-    background: #e8f2ff;
-    border: 1px solid #c8dcfa;
-    letter-spacing: .01em;
+    font-weight: 800;
+    color: var(--theme-link, #0b4b84);
+    background: var(--theme-accent-soft, #e8f2ff);
+    border: 1px solid var(--theme-toggle-border, #c8dcfa);
+    letter-spacing: 0;
     margin-top: .85rem;
   }
 
@@ -51,29 +55,11 @@
     opacity: .82;
   }
 
-  .content-wrapper .small-box {
-    border-radius: 1rem !important;
-    overflow: hidden;
-  }
-
-  .content-wrapper .small-box .small-box-footer {
-    border-bottom-left-radius: 1rem;
-    border-bottom-right-radius: 1rem;
-  }
-
-  .content-wrapper .card .card-header {
-    border-top-left-radius: 1rem;
-    border-top-right-radius: 1rem;
-  }
-
-  .content-wrapper .card .card-body {
-    border-bottom-left-radius: 1rem;
-    border-bottom-right-radius: 1rem;
-  }
-
   html[data-theme='dark'] .welcome-hero-card {
     border-color: rgba(96, 165, 250, 0.22);
-    background: linear-gradient(135deg, rgba(10, 22, 46, 0.96) 0%, rgba(11, 27, 56, 0.92) 100%);
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 30%),
+      linear-gradient(135deg, rgba(10, 22, 46, 0.96) 0%, rgba(11, 27, 56, 0.92) 100%) !important;
   }
 
   html[data-theme='dark'] .welcome-hero-title {
@@ -165,7 +151,7 @@
     </h2>
 
     <p class="welcome-hero-copy">
-      Le damos la bienvenida al sistema del Complejo Dental López Molinari. Desde este panel podrá gestionar sus actividades de forma segura, rápida y organizada.
+      Le damos la bienvenida al sistema del Complejo Dental Lopez Molinari. Desde este panel podra gestionar sus actividades de forma segura, rapida y organizada.
     </p>
 
     <span class="welcome-role-pill">
@@ -222,7 +208,7 @@
 </div>
 
 <div class="card">
-  <div class="card-header"><h3 class="card-title">Resumen rápido</h3></div>
+  <div class="card-header"><h3 class="card-title">Resumen rapido</h3></div>
   <div class="card-body">
     <ul class="list-inline m-0">
       <li class="list-inline-item mr-4"><i class="far fa-circle text-info"></i> Confirmadas</li>
